@@ -33,6 +33,11 @@ test('a new player sees all eight global and four milestone badges as locked', (
   assert.equal(badge(badges, 'milestone:first-week').description.length > 0, true);
 });
 
+test('every collectible has its own pixel-art symbol', () => {
+  assert.equal(new Set(BADGE_DEFINITIONS.map(({ icon }) => icon)).size, 12);
+  assert.ok(BADGE_DEFINITIONS.every(({ icon }) => /^[a-z-]+$/.test(icon)));
+});
+
 test('ready rewards stay locked in the collection until their claim ID exists', () => {
   const data = board({ achievements: globalIds.map((id) => entry(`global:${id}`, id === 'on-fire' ? 'ready' : 'locked', 7, 7)) });
   const before = badge(collectBadges(data), 'global:on-fire');

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { HabitBoard } from '../types';
 import { collectBadges } from '../services/badgeCollection';
+import BadgeIcon from './BadgeIcon';
 import './BadgeCollection.css';
 
 export default function BadgeCollection({ board }: { board: HabitBoard }) {
@@ -16,16 +17,16 @@ export default function BadgeCollection({ board }: { board: HabitBoard }) {
       <span className="badge-count">{earnedCount} / {badges.length} EARNED</span>
     </div>
     <div className="badge-grid">{badges.map((badge) => <button key={badge.id} type="button"
-      className={`badge-tile badge-${badge.rarity} badge-${badge.id.replace(':', '-')}${badge.earned ? ' is-earned' : ' is-locked'}${selected.id === badge.id ? ' is-selected' : ''}`}
+      className={`badge-tile badge-${badge.rarity} badge-${badge.id.replace(':', '-')}${badge.earned ? ' is-earned' : badge.ready ? ' is-ready' : ' is-locked'}${selected.id === badge.id ? ' is-selected' : ''}`}
       aria-pressed={selected.id === badge.id} aria-label={`${badge.name}, ${badge.earned ? 'earned' : 'locked'}, ${badge.rarity} badge`}
       onClick={() => setSelectedId(badge.id)}>
-      <span className="badge-medallion" aria-hidden="true"><span className="badge-symbol">{badge.icon}</span></span>
+      <span className="badge-medallion" aria-hidden="true"><BadgeIcon name={badge.icon} /></span>
       <span className="badge-tile-name">{badge.name}</span>
       {!badge.earned && <span className="badge-tile-requirement">{badge.description}</span>}
       <span className="badge-tile-status">{badge.earned ? '✓ EARNED' : '🔒 LOCKED'}</span>
     </button>)}</div>
-    <aside className={`badge-detail badge-${selected.rarity} badge-${selected.id.replace(':', '-')}`} aria-live="polite" aria-label={`${selected.name} badge details`}>
-      <div className="badge-detail-icon" aria-hidden="true">{selected.icon}</div>
+    <aside className={`badge-detail badge-${selected.rarity} badge-${selected.id.replace(':', '-')}${selected.earned ? ' is-earned' : selected.ready ? ' is-ready' : ' is-locked'}`} aria-live="polite" aria-label={`${selected.name} badge details`}>
+      <div className="badge-detail-icon" aria-hidden="true"><BadgeIcon name={selected.icon} /></div>
       <div>
         <h4>{selected.name}</h4>
         <strong>{selected.rarity.toUpperCase()} BADGE</strong>

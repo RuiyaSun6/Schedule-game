@@ -1,10 +1,11 @@
 import type { HabitBoard, HabitBoardEntry, HabitReward } from '../types';
+import type { BadgeIconName } from '../components/BadgeIcon';
 
 export type BadgeRarity = 'common' | 'rare' | 'epic' | 'legendary';
 export interface Badge {
   id: string;
   name: string;
-  icon: string;
+  icon: BadgeIconName;
   rarity: BadgeRarity;
   description: string;
   progress: number;
@@ -19,7 +20,7 @@ export interface Badge {
 interface BadgeDefinition {
   id: string;
   name: string;
-  icon: string;
+  icon: BadgeIconName;
   rarity: BadgeRarity;
   // A new player has no per-habit milestone entries yet. These describe the
   // collectible without storing another copy of its ownership or progress.
@@ -30,18 +31,18 @@ const milestone = (description: string, required: number, unit: string, xp: numb
   ({ description, required, unit, reward: { xp, coins, badge, ...(itemName ? { itemName } : {}) } });
 
 export const BADGE_DEFINITIONS: readonly BadgeDefinition[] = [
-  { id: 'global:new-beginning', name: 'New Beginning', icon: '🌱', rarity: 'common' },
-  { id: 'global:dedicated', name: 'Dedicated', icon: '🎯', rarity: 'common' },
-  { id: 'global:on-fire', name: 'On Fire', icon: '🔥', rarity: 'rare' },
-  { id: 'global:perfect-week', name: 'Perfect Week', icon: '🏆', rarity: 'epic' },
-  { id: 'global:balanced-life', name: 'Balanced Life', icon: '🌈', rarity: 'rare' },
-  { id: 'global:never-give-up', name: 'Never Give Up', icon: '🌱', rarity: 'epic' },
-  { id: 'global:habit-master', name: 'Habit Master', icon: '💯', rarity: 'legendary' },
-  { id: 'global:lifequest-master', name: 'LifeQuest Master', icon: '👑', rarity: 'legendary' },
-  { id: 'milestone:first-week', name: 'First Week', icon: '🌱', rarity: 'common', fallback: milestone("Meet a habit's weekly target once.", 1, 'successful weeks', 50, 25, 'First Week') },
-  { id: 'milestone:consistent', name: 'Consistent', icon: '⭐', rarity: 'rare', fallback: milestone("Meet a habit's target in two weeks.", 2, 'successful weeks', 60, 30, 'Consistent', 'Consistency Plant') },
-  { id: 'milestone:habit-builder', name: 'Habit Builder', icon: '🔥', rarity: 'epic', fallback: milestone("Meet a habit's target in four weeks.", 4, 'successful weeks', 150, 75, 'Habit Builder', 'Habit Builder Tree') },
-  { id: 'milestone:long-term', name: 'Long-Term Habit', icon: '🏆', rarity: 'legendary', fallback: milestone('Keep a habit for 30 days and meet four weekly goals.', 30, 'days active', 100, 40, 'Long-Term Habit', 'Monthly Glow Lamp') },
+  { id: 'global:new-beginning', name: 'New Beginning', icon: 'seedling', rarity: 'common' },
+  { id: 'global:dedicated', name: 'Dedicated', icon: 'target', rarity: 'common' },
+  { id: 'global:on-fire', name: 'On Fire', icon: 'flame', rarity: 'rare' },
+  { id: 'global:perfect-week', name: 'Perfect Week', icon: 'calendar-check', rarity: 'epic' },
+  { id: 'global:balanced-life', name: 'Balanced Life', icon: 'scale', rarity: 'rare' },
+  { id: 'global:never-give-up', name: 'Never Give Up', icon: 'mountain', rarity: 'epic' },
+  { id: 'global:habit-master', name: 'Habit Master', icon: 'star-medal', rarity: 'legendary' },
+  { id: 'global:lifequest-master', name: 'LifeQuest Master', icon: 'crown', rarity: 'legendary' },
+  { id: 'milestone:first-week', name: 'First Week', icon: 'calendar-star', rarity: 'common', fallback: milestone("Meet a habit's weekly target once.", 1, 'successful weeks', 50, 25, 'First Week') },
+  { id: 'milestone:consistent', name: 'Consistent', icon: 'loop', rarity: 'rare', fallback: milestone("Meet a habit's target in two weeks.", 2, 'successful weeks', 60, 30, 'Consistent', 'Consistency Plant') },
+  { id: 'milestone:habit-builder', name: 'Habit Builder', icon: 'young-tree', rarity: 'epic', fallback: milestone("Meet a habit's target in four weeks.", 4, 'successful weeks', 150, 75, 'Habit Builder', 'Habit Builder Tree') },
+  { id: 'milestone:long-term', name: 'Long-Term Habit', icon: 'mature-tree', rarity: 'legendary', fallback: milestone('Keep a habit for 30 days and meet four weekly goals.', 30, 'days active', 100, 40, 'Long-Term Habit', 'Monthly Glow Lamp') },
 ];
 
 function bestMilestone(entries: HabitBoardEntry[]): HabitBoardEntry | undefined {
