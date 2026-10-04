@@ -2,10 +2,10 @@
 import cors from "cors";
 import type { ErrorRequestHandler } from "express";
 import dotenv from "dotenv";
-import playerRoutes from "./routes/playerRoutes";
-import questRoutes from "./routes/questRoutes";
-import itemRoutes from "./routes/itemRoutes";
-import shopRoutes from "./routes/shopRoutes";
+import playerRoutes from "./routes/playerRoutes.js";
+import questRoutes from "./routes/questRoutes.js";
+import itemRoutes from "./routes/itemRoutes.js";
+import shopRoutes from "./routes/shopRoutes.js";
 
 dotenv.config();
 

@@ -60,23 +60,26 @@ Returns all quests as an array (`200`), including active and completed quests. T
 Creates an active quest (`201`). Request body:
 
 ```json
-{ "title": "Take a walk", "difficulty": "easy" }
+{ "title": "Take a walk", "difficulty": "easy", "category": "health", "estimatedMinutes": 20 }
 ```
 
-`title` is trimmed and must be 1 to 200 characters. `difficulty` must be exactly `easy`, `medium`, `hard`, or `boss`. The backend assigns rewards; supplied reward fields are ignored. Example response (the ID is generated):
+`title` is trimmed and must be 1 to 200 characters. `difficulty` must be exactly `easy`, `medium`, `hard`, or `boss`. `category` is optional (`study`, `health`, `life`, `social`, or `creative`; default `life`). `estimatedMinutes` is optional (integer 5 to 480; default `30`). The backend assigns rewards; supplied reward fields are ignored. Example response (the ID is generated):
 
 ```json
 {
   "id": "generated-quest-id",
+  "userId": "player-1",
   "title": "Take a walk",
+  "category": "health",
   "difficulty": "easy",
-  "status": "active",
+  "estimatedMinutes": 20,
   "xpReward": 20,
-  "coinReward": 10
+  "coinReward": 10,
+  "completed": false
 }
 ```
 
-Invalid title, difficulty, or body: `400`.
+Invalid title, difficulty, category, estimatedMinutes, or body: `400`.
 
 ### `POST /api/quests/:id/complete`
 
@@ -86,17 +89,21 @@ Completes the named quest once. No request body is needed. Example `200` respons
 {
   "quest": {
     "id": "generated-quest-id",
+    "userId": "player-1",
     "title": "Take a walk",
+    "category": "health",
     "difficulty": "easy",
-    "status": "completed",
+    "estimatedMinutes": 20,
     "xpReward": 20,
-    "coinReward": 10
+    "coinReward": 10,
+    "completed": true
   },
   "player": {
     "id": "player-1",
     "xp": 20,
     "level": 1,
     "coins": 10,
+    "outfit": "default",
     "unlockedAreas": ["village"],
     "ownedItems": []
   }
@@ -111,34 +118,35 @@ Returns the fixed shop catalog as an array (`200`):
 
 ```json
 [
-  { "id": "trail-badge", "name": "Trail Badge", "description": "A badge for your first adventure.", "price": 10, "type": "cosmetic" },
-  { "id": "camp-lantern", "name": "Camp Lantern", "description": "A warm light for your home base.", "price": 25, "type": "decoration" },
-  { "id": "star-banner", "name": "Star Banner", "description": "A banner to mark your achievements.", "price": 50, "type": "decoration" }
+  { "id": "plant", "name": "Plant", "type": "furniture", "price": 20, "asset": "plant.png" },
+  { "id": "flowers", "name": "Flowers", "type": "garden", "price": 30, "asset": "flowers.png" },
+  { "id": "hat", "name": "Hat", "type": "clothing", "price": 40, "asset": "player-hat.png" }
 ]
 ```
 
-Prices are in coins. Item types are `cosmetic` and `decoration`.
+(11 items in total; the list matches the seed data in `src/db/schema.sql`.) Prices are in coins. Item types are `furniture`, `garden`, and `clothing`. `asset` is the image file name for the frontend.
 
 ### `POST /api/shop/purchase`
 
 Buys an item once. Request body:
 
 ```json
-{ "itemId": "trail-badge" }
+{ "itemId": "plant" }
 ```
 
-`itemId` must be a nonempty string. Example `200` response when the player has 10 coins:
+`itemId` must be a nonempty string. Example `200` response when the player has 20 coins:
 
 ```json
 {
-  "item": { "id": "trail-badge", "name": "Trail Badge", "description": "A badge for your first adventure.", "price": 10, "type": "cosmetic" },
+  "item": { "id": "plant", "name": "Plant", "type": "furniture", "price": 20, "asset": "plant.png" },
   "player": {
     "id": "player-1",
-    "xp": 20,
+    "xp": 40,
     "level": 1,
     "coins": 0,
+    "outfit": "default",
     "unlockedAreas": ["village"],
-    "ownedItems": ["trail-badge"]
+    "ownedItems": ["plant"]
   }
 }
 ```
@@ -169,4 +177,4 @@ Buying an item subtracts its catalog price from the player's coins and adds its 
 
 ## Integration notes
 
-The current API has one shared player and no authentication. Client code should use IDs returned by quest creation or the item catalog. The backend owns reward, level, unlock, and price calculations; a Gemini integration should send only quest title and difficulty. A future TiDB integration can replace the process-local storage, but it must preserve once-only quest rewards and purchases.
+The current API has one shared player and no authentication. Client code should use IDs returned by quest creation or the item catalog. The backend owns reward, level, unlock, and price calculations; the Gemini integration (see `PERSON3.md`) decides only title, category, difficulty, and estimated minutes. A future TiDB integration can replace the process-local storage, but it must preserve once-only quest rewards and purchases.

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getAllQuests, postQuest, postQuestCompletion } from "../controllers/questController";
+import { getAllQuests, postQuest, postQuestCompletion } from "../controllers/questController.js";
 
 const router = Router();
 router.get("/", getAllQuests);

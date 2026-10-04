@@ -1,21 +1,25 @@
 {
-  "name": "server",
+  "name": "lifequest-server",
   "version": "1.0.0",
+  "private": true,
   "description": "LifeQuest backend",
+  "type": "module",
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit",
+    "db:init": "tsx src/scripts/initDb.ts",
+    "test:ai": "tsx src/scripts/testGemini.ts",
+    "test:db": "tsx src/scripts/testRepositories.ts"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
+    "@google/genai": "^2.27.0",
     "cors": "^2.8.6",
     "dotenv": "^18.0.5",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "mysql2": "^3.24.5"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",

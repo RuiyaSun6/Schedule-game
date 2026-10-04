@@ -1,4 +1,4 @@
-import type { QuestDifficulty } from "../types/game";
+import type { QuestDifficulty } from "../types/game.js";
 
 const REWARDS: Record<QuestDifficulty, { xpReward: number; coinReward: number }> = {
   easy: { xpReward: 20, coinReward: 10 },

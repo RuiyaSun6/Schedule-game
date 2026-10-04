@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getCurrentPlayer } from "../controllers/playerController";
+import { getCurrentPlayer } from "../controllers/playerController.js";
 
 const router = Router();
 router.get("/", getCurrentPlayer);

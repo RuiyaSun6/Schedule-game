@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { getCatalog, purchaseItem } from "../services/shopService";
+import { getCatalog, purchaseItem } from "../services/shopService.js";
 
 export function getItems(_request: Request, response: Response): void {
   response.json(getCatalog());

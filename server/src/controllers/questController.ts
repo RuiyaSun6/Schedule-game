@@ -1,8 +1,7 @@
 import type { Request, Response } from "express";
-import type { QuestDifficulty } from "../types/game";
-import { completeQuest, createQuest, listQuests } from "../services/questService";
-
-const DIFFICULTIES: QuestDifficulty[] = ["easy", "medium", "hard", "boss"];
+import { QUEST_CATEGORIES, QUEST_DIFFICULTIES as DIFFICULTIES } from "../types/game.js";
+import type { QuestCategory, QuestDifficulty } from "../types/game.js";
+import { completeQuest, createQuest, listQuests } from "../services/questService.js";
 
 export function getAllQuests(_request: Request, response: Response): void {
   response.json(listQuests());
@@ -15,7 +14,7 @@ export function postQuest(request: Request, response: Response): void {
     return;
   }
 
-  const { title, difficulty } = body as Record<string, unknown>;
+  const { title, difficulty, category, estimatedMinutes } = body as Record<string, unknown>;
   if (typeof title !== "string" || !title.trim() || title.trim().length > 200) {
     response.status(400).json({ error: "Title must be 1–200 characters." });
     return;
@@ -24,8 +23,28 @@ export function postQuest(request: Request, response: Response): void {
     response.status(400).json({ error: "Difficulty must be easy, medium, hard, or boss." });
     return;
   }
+  if (category !== undefined && !QUEST_CATEGORIES.includes(category as QuestCategory)) {
+    response.status(400).json({ error: "Category must be study, health, life, social, or creative." });
+    return;
+  }
+  if (
+    estimatedMinutes !== undefined &&
+    (!Number.isInteger(estimatedMinutes) || (estimatedMinutes as number) < 5 || (estimatedMinutes as number) > 480)
+  ) {
+    response.status(400).json({ error: "estimatedMinutes must be an integer from 5 to 480." });
+    return;
+  }
 
-  response.status(201).json(createQuest(title.trim(), difficulty as QuestDifficulty));
+  response
+    .status(201)
+    .json(
+      createQuest(
+        title.trim(),
+        difficulty as QuestDifficulty,
+        category as QuestCategory | undefined,
+        estimatedMinutes as number | undefined,
+      ),
+    );
 }
 
 export function postQuestCompletion(request: Request<{ id: string }>, response: Response): void {

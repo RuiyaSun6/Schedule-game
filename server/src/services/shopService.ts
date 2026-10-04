@@ -1,28 +1,19 @@
-import type { Item, Player } from "../types/game";
-import { getPlayer, savePlayer } from "./storageService";
+import type { Item, Player } from "../types/game.js";
+import { getPlayer, savePlayer } from "./storageService.js";
 
+// Keep in sync with the items seeded in db/schema.sql so in-memory and TiDB storage match.
 const CATALOG: readonly Item[] = [
-  {
-    id: "trail-badge",
-    name: "Trail Badge",
-    description: "A badge for your first adventure.",
-    price: 10,
-    type: "cosmetic",
-  },
-  {
-    id: "camp-lantern",
-    name: "Camp Lantern",
-    description: "A warm light for your home base.",
-    price: 25,
-    type: "decoration",
-  },
-  {
-    id: "star-banner",
-    name: "Star Banner",
-    description: "A banner to mark your achievements.",
-    price: 50,
-    type: "decoration",
-  },
+  { id: "plant", name: "Plant", type: "furniture", price: 20, asset: "plant.png" },
+  { id: "chair", name: "Chair", type: "furniture", price: 40, asset: "chair.png" },
+  { id: "lamp", name: "Lamp", type: "furniture", price: 50, asset: "lamp.png" },
+  { id: "sofa", name: "Sofa", type: "furniture", price: 100, asset: "sofa.png" },
+  { id: "flowers", name: "Flowers", type: "garden", price: 30, asset: "flowers.png" },
+  { id: "tree", name: "Tree", type: "garden", price: 50, asset: "tree.png" },
+  { id: "bench", name: "Bench", type: "garden", price: 80, asset: "bench.png" },
+  { id: "fountain", name: "Fountain", type: "garden", price: 150, asset: "fountain.png" },
+  { id: "hat", name: "Hat", type: "clothing", price: 40, asset: "player-hat.png" },
+  { id: "hoodie", name: "Hoodie", type: "clothing", price: 60, asset: "player-hoodie.png" },
+  { id: "sneakers", name: "Sneakers", type: "clothing", price: 80, asset: "player-sneakers.png" },
 ];
 
 export function getCatalog(): Item[] {

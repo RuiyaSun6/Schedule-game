@@ -1,20 +1,28 @@
 import { randomUUID } from "node:crypto";
-import type { Player, Quest, QuestDifficulty } from "../types/game";
-import { calculateLevel, getUnlockedAreas } from "./levelService";
-import { getRewards } from "./rewardService";
-import { getPlayer, getQuest, getQuests, savePlayer, saveQuest } from "./storageService";
+import type { Player, Quest, QuestCategory, QuestDifficulty } from "../types/game.js";
+import { calculateLevel, getUnlockedAreas } from "./levelService.js";
+import { getRewards } from "./rewardService.js";
+import { getPlayer, getQuest, getQuests, savePlayer, saveQuest } from "./storageService.js";
 
 export function listQuests(): Quest[] {
   return getQuests();
 }
 
-export function createQuest(title: string, difficulty: QuestDifficulty): Quest {
+export function createQuest(
+  title: string,
+  difficulty: QuestDifficulty,
+  category: QuestCategory = "life",
+  estimatedMinutes = 30,
+): Quest {
   const quest: Quest = {
     id: randomUUID(),
+    userId: getPlayer().id,
     title,
+    category,
     difficulty,
-    status: "active",
+    estimatedMinutes,
     ...getRewards(difficulty),
+    completed: false,
   };
   saveQuest(quest);
   return quest;
@@ -28,7 +36,7 @@ type CompletionResult =
 export function completeQuest(id: string): CompletionResult {
   const quest = getQuest(id);
   if (!quest) return { status: "not_found" };
-  if (quest.status === "completed") return { status: "already_completed" };
+  if (quest.completed) return { status: "already_completed" };
 
   const currentPlayer = getPlayer();
   const xp = currentPlayer.xp + quest.xpReward;
@@ -40,7 +48,7 @@ export function completeQuest(id: string): CompletionResult {
     coins: currentPlayer.coins + quest.coinReward,
     unlockedAreas: getUnlockedAreas(level),
   };
-  const completedQuest: Quest = { ...quest, status: "completed" };
+  const completedQuest: Quest = { ...quest, completed: true };
 
   saveQuest(completedQuest);
   savePlayer(updatedPlayer);
