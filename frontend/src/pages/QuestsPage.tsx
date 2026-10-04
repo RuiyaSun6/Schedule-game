@@ -15,7 +15,7 @@ export default function QuestsPage({ quests, onComplete, completingId, errors, n
   return <section className="accepted-quests-page">
     <GameTopBar />
     <span className="eyebrow">YOUR LITTLE ADVENTURES</span>
-    <h1>TODAY’S QUESTS</h1>
+    <h1>ALL QUESTS</h1>
     <p>Take them one step at a time.</p>
     <p role="status" className="planner-notice">{notice}</p>
     {quests.length === 0 ? <p>No quests yet. Open your bedroom computer to plan your day.</p> :

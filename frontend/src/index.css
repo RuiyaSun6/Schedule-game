@@ -360,6 +360,9 @@ h1 { font-family: monospace; font-size: clamp(25px, 5vw, 34px); letter-spacing: 
 .today-task-check:disabled { cursor: default; }
 .today-task-completed .today-task-title { text-decoration: line-through; color: #7a7b68; }
 .today-task-completed .today-task-check { background: #e9e6d8; }
+.today-task-leaving { animation: today-task-out 320ms ease-in forwards; pointer-events: none; }
+@keyframes today-task-out { to { opacity: 0; transform: translateX(10px); } }
+@media (prefers-reduced-motion: reduce) { .today-task-leaving { animation-name: today-task-fade; } @keyframes today-task-fade { to { opacity: 0; } } }
 .today-tasks-list .today-task-error { color: #87432d; }
 .today-tasks-status { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 @media (min-width: 700px) { .home-player-tasks-hud { top: 24px; left: 24px; right: 24px; } }

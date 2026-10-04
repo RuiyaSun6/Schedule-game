@@ -59,7 +59,7 @@ export default function HomePage({ tutorialTab, onAcceptQuest, acceptedCount, qu
       <DailyPlanner onAccept={onAcceptQuest} acceptedCount={acceptedCount} />
     </div>
     <div className="computer-tab-panel computer-view" id="panel-quests" role="tabpanel" aria-labelledby="tab-quests" hidden={shownTab !== 'quests'}>
-      <h2 id="quests-screen-title">TODAY'S QUESTS</h2>
+      <h2 id="quests-screen-title">ALL QUESTS</h2>
       <QuestBoard quests={quests} {...completion} />
     </div>
     <div className="computer-tab-panel computer-view" id="panel-calendar" role="tabpanel" aria-labelledby="tab-calendar" hidden={shownTab !== 'calendar'}>

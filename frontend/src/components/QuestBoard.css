@@ -28,3 +28,16 @@
   .quest-board-tab { font-size: 11px; padding: 8px 4px; }
   .quest-board-list { max-height: 44svh; }
 }
+
+/* While the QUESTS tab is open, the computer window is a fixed-height column: the titlebar, tabs,
+   heading, and filters stay put and only the quest list scrolls (no second scrollbar on the window).
+   Planner and Calendar keep the normal scrolling window. */
+.pixel-modal:is([open], .tutorial-computer-shell):has(#panel-quests:not([hidden])) { display: flex; flex-direction: column; overflow-y: hidden; }
+.pixel-modal:has(#panel-quests:not([hidden])) > .computer-titlebar { flex: none; }
+.pixel-modal:has(#panel-quests:not([hidden])) > .computer-content { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
+.pixel-modal:has(#panel-quests:not([hidden])) .computer-tabs { flex: none; }
+#panel-quests:not([hidden]) { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
+#panel-quests > h2 { flex: none; }
+#panel-quests .quest-board { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
+#panel-quests .quest-board-status, #panel-quests .quest-board-filters { flex: none; }
+#panel-quests .quest-board-list { flex: 1 1 auto; min-height: 120px; max-height: none; }
