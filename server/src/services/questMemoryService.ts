@@ -30,10 +30,12 @@ export async function findSimilarCompletedQuests(userId: string, taskText: strin
   try {
     const embedding = await embedText(taskText);
     if (!embedding) return [];
+    // IGNORE INDEX: TiDB v8.5 fails with "Can't find column user_id" when it combines
+    // idx_memory_user with the vector-distance TopN. Per-user memory is small, so a scan is fine.
     const [rows] = await getPool().query<RowDataPacket[]>(
       `SELECT title, category, difficulty, estimated_minutes,
               VEC_COSINE_DISTANCE(embedding, ?) AS distance
-       FROM quest_memory
+       FROM quest_memory IGNORE INDEX (idx_memory_user)
        WHERE user_id = ?
        ORDER BY distance
        LIMIT ?`,

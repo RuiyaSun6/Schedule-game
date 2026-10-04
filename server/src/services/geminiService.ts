@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { GoogleGenAI } from "@google/genai";
+import { ApiError, GoogleGenAI } from "@google/genai";
 import type { Player, QuestDraft, SimilarQuest } from "../types/game.js";
 import { QUEST_SYSTEM_PROMPT, buildQuestUserPrompt } from "../prompts/questPrompt.js";
 import { parseQuestDrafts } from "./questValidation.js";
@@ -11,7 +11,12 @@ export interface GeneratedQuestResult {
 }
 
 const MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash";
+// One budget for the whole call, retry included, so the endpoint never waits longer than this.
 const TIMEOUT_MS = 12_000;
+const RETRY_DELAY_MS = 1_000;
+
+// 503 = model temporarily overloaded; worth one retry before falling back to mock.
+const isOverloaded = (err: unknown) => err instanceof ApiError && err.status === 503;
 
 let client: GoogleGenAI | null = null;
 function getClient(): GoogleGenAI | null {
@@ -39,8 +44,8 @@ export async function generateQuestsFromText(
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
-  try {
-    const response = await ai.models.generateContent({
+  const request = () =>
+    ai.models.generateContent({
       model: MODEL,
       contents: buildQuestUserPrompt(text, similarTaskContext),
       config: {
@@ -50,6 +55,16 @@ export async function generateQuestsFromText(
         abortSignal: controller.signal,
       },
     });
+  try {
+    let response;
+    try {
+      response = await request();
+    } catch (err) {
+      if (!isOverloaded(err)) throw err;
+      console.warn(`[gemini] 503 overloaded for ${user.id}, retrying once`);
+      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+      response = await request();
+    }
     const quests = parseQuestDrafts(response.text ?? "");
     if (!quests) return fallback("invalid JSON from Gemini");
     return { source: "gemini", quests };
