@@ -54,6 +54,6 @@ export default function RewardBoard({ board, onBoardChange, loadError, onRetry }
         <h3>{group.title}</h3><div className="reward-list">{group.entries.map((entry) => <RewardCard key={entry.id} entry={entry} onClaim={(id) => void claim(id)} busy={busy} />)}</div>
       </section>) : <p>Create a habit in the Planner to begin earning milestones.</p>)}
     {tab === 'achievements' && board && <div className="reward-list">{board.achievements.map((entry) => <RewardCard key={entry.id} entry={entry} onClaim={(id) => void claim(id)} busy={busy} />)}</div>}
-    {tab === 'badges' && board && <BadgeCollection board={board} />}
+    {tab === 'badges' && board && <BadgeCollection board={board} onClaim={(id) => void claim(id)} busy={busy} />}
   </div>;
 }

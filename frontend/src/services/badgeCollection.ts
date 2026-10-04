@@ -12,8 +12,8 @@ export interface Badge {
   required: number;
   unit: string;
   reward: HabitReward;
-  earned: boolean;
-  ready: boolean;
+  state: HabitBoardEntry['state'];
+  claimId: string | null;
   earnedFrom: string[];
 }
 
@@ -53,19 +53,24 @@ function bestMilestone(entries: HabitBoardEntry[]): HabitBoardEntry | undefined 
   }, undefined);
 }
 
-/** A read-only view of the Reward Board; claimed IDs remain the sole ownership source. */
+/** A read-only view of the Reward Board's eligibility and claim states. */
 export function collectBadges(board: HabitBoard): Badge[] {
-  const claims = new Set(board.claimedIds);
   return BADGE_DEFINITIONS.map((definition) => {
     const milestoneId = definition.id.startsWith('milestone:') ? definition.id.slice('milestone:'.length) : null;
     const matches = milestoneId
       ? board.milestones.flatMap((group) => group.entries.filter((entry) => entry.id.endsWith(`:${milestoneId}`))
         .map((entry) => ({ entry, title: group.title })))
       : [];
-    const entry = milestoneId ? bestMilestone(matches.map(({ entry: item }) => item)) : board.achievements.find((item) => item.id === definition.id);
-    const claimedMatches = milestoneId ? board.claimedIds.filter((id) => id.startsWith('habit:') && id.endsWith(`:${milestoneId}`)) : [];
-    const earned = milestoneId ? claimedMatches.length > 0 : claims.has(definition.id);
-    const earnedFrom = matches.filter(({ entry: item }) => claims.has(item.id)).map(({ title }) => title);
+    const claimedMatches = matches.filter(({ entry }) => entry.state === 'claimed');
+    const readyMatches = matches.filter(({ entry }) => entry.state === 'ready');
+    const representative = claimedMatches[0] ?? readyMatches[0];
+    const entry = milestoneId
+      ? representative?.entry ?? bestMilestone(matches.map(({ entry: item }) => item))
+      : board.achievements.find((item) => item.id === definition.id);
+    const state: HabitBoardEntry['state'] = milestoneId
+      ? claimedMatches.length ? 'claimed' : readyMatches.length ? 'ready' : 'locked'
+      : entry?.state ?? 'locked';
+    const earnedFrom = claimedMatches.map(({ title }) => title);
     const fallback = definition.fallback;
     return {
       id: definition.id, name: definition.name, icon: definition.icon, rarity: definition.rarity,
@@ -73,7 +78,7 @@ export function collectBadges(board: HabitBoard): Badge[] {
       progress: entry?.progress ?? 0, required: entry?.required ?? fallback?.required ?? 1,
       unit: entry?.unit ?? fallback?.unit ?? '',
       reward: entry?.reward ?? fallback?.reward ?? { xp: 0, coins: 0, badge: definition.name },
-      earned, ready: !earned && (milestoneId ? matches.some(({ entry: item }) => item.state === 'ready') : entry?.state === 'ready'),
+      state, claimId: state === 'ready' ? entry?.id ?? null : null,
       earnedFrom: [...new Set(earnedFrom)],
     };
   });
