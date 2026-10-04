@@ -28,3 +28,6 @@
 @media (max-width: 480px) {
   .inventory-page .shop-categories .pixel-button { flex: 1 1 calc(33.333% - 10px); min-width: 0; padding: 10px 4px; font-size: 11px; white-space: nowrap; }
 }
+
+/* The Furniture Shop pop-up (GameHudActions) is narrow too: same three-per-row tabs, never split words. */
+.furniture-shop-content .shop-categories .pixel-button { flex: 1 1 calc(33.333% - 10px); min-width: 0; padding: 10px 4px; font-size: 11px; white-space: nowrap; }

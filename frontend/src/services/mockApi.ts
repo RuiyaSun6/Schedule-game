@@ -31,17 +31,15 @@ export function mockCompleteQuest(quest: Quest, player: Player): CompleteQuestRe
 
 // Offline preview of the shop catalog, built from the same art list as the real shop.
 // Prices mirror server/src/services/shopService.ts; purchases still need the backend.
-const FAMILY_PRICE: Record<string, number> = { plant: 20, lamp: 50, chair: 40, sofa: 100, flowers: 30, tree: 50, bench: 80 };
+const FAMILY_PRICE: Record<string, number> = { plant: 20, tree: 50, lamp: 50, chair: 40, sofa: 100 };
 export const mockItems: Item[] = [
-  ...Object.entries(SHOP_SPRITES).map(([id, sprite]) => ({ id, name: sprite.name, type: sprite.type, price: FAMILY_PRICE[sprite.family] ?? 0, asset: `${id}.png` })),
+  // Retired kinds (flowers, benches) are not sold; potted trees are home furniture now.
+  ...Object.entries(SHOP_SPRITES).filter(([, sprite]) => sprite.family in FAMILY_PRICE)
+    .map(([id, sprite]) => ({ id, name: sprite.name, type: 'furniture' as const, price: FAMILY_PRICE[sprite.family], asset: `${id}.png` })),
   { id: 'pet-bowl', name: 'Food Bowl', type: 'furniture', price: 20, asset: 'pet-bowl.png' },
   { id: 'pet-scratcher', name: 'Scratching Post', type: 'furniture', price: 40, asset: 'pet-scratcher.png' },
   { id: 'pet-bed', name: 'Cozy Cat Bed', type: 'furniture', price: 60, asset: 'pet-bed.png' },
   { id: 'pet-tree', name: 'Cat Tree', type: 'furniture', price: 120, asset: 'pet-tree.png' },
-  { id: 'fountain', name: 'Fountain', type: 'garden', price: 150, asset: 'fountain.png' },
-  { id: 'hat', name: 'Hat', type: 'clothing', price: 40, asset: 'player-hat.png' },
-  { id: 'hoodie', name: 'Hoodie', type: 'clothing', price: 60, asset: 'player-hoodie.png' },
-  { id: 'sneakers', name: 'Sneakers', type: 'clothing', price: 80, asset: 'player-sneakers.png' },
 ];
 
 

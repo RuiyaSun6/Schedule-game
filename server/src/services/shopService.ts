@@ -8,11 +8,17 @@ import { DEFAULT_PLAYER_ID } from "../types/defaultPlayer.js";
 // Array order is the shop order; TiDB stores it as items.sort_order.
 // stackable: false keeps the original "own one copy" rule; farm items are stackable.
 export const CATALOG: readonly Item[] = [
-  // Home: plants, lamps, chairs, sofas (one PNG per colour variant, see frontend/scripts/split-shop-sprites.mjs).
+  // Home: plants, trees, lamps, chairs, sofas (one PNG per colour variant, see frontend/scripts/split-shop-sprites.mjs).
+  // Garden (flowers, benches, fountain) and clothing items were retired; db:init removes them unless owned.
   { id: "plant-red-pot", name: "Plant (Red Pot)", type: "furniture", price: 20, asset: "plant-red-pot.png", stackable: false },
   { id: "plant-brown-pot", name: "Plant (Brown Pot)", type: "furniture", price: 20, asset: "plant-brown-pot.png", stackable: false },
   { id: "plant-blue-pot", name: "Plant (Blue Pot)", type: "furniture", price: 20, asset: "plant-blue-pot.png", stackable: false },
   { id: "plant-grey-pot", name: "Plant (Grey Pot)", type: "furniture", price: 20, asset: "plant-grey-pot.png", stackable: false },
+  // Trees (potted, colour variants): sold with the plants.
+  { id: "tree-red-pot", name: "Tree (Red Pot)", type: "furniture", price: 50, asset: "tree-red-pot.png", stackable: false },
+  { id: "tree-brown-pot", name: "Tree (Brown Pot)", type: "furniture", price: 50, asset: "tree-brown-pot.png", stackable: false },
+  { id: "tree-blue-pot", name: "Tree (Blue Pot)", type: "furniture", price: 50, asset: "tree-blue-pot.png", stackable: false },
+  { id: "tree-grey-pot", name: "Tree (Grey Pot)", type: "furniture", price: 50, asset: "tree-grey-pot.png", stackable: false },
   { id: "lamp-black", name: "Black Lamp", type: "furniture", price: 50, asset: "lamp-black.png", stackable: false },
   { id: "lamp-gold", name: "Gold Lamp", type: "furniture", price: 50, asset: "lamp-gold.png", stackable: false },
   { id: "lamp-copper", name: "Copper Lamp", type: "furniture", price: 50, asset: "lamp-copper.png", stackable: false },
@@ -47,28 +53,6 @@ export const CATALOG: readonly Item[] = [
   { id: "pet-scratcher", name: "Scratching Post", type: "furniture", price: 40, asset: "pet-scratcher.png", stackable: false },
   { id: "pet-bed", name: "Cozy Cat Bed", type: "furniture", price: 60, asset: "pet-bed.png", stackable: false },
   { id: "pet-tree", name: "Cat Tree", type: "furniture", price: 120, asset: "pet-tree.png", stackable: false },
-  // Garden. Fountain has no artwork yet.
-  { id: "flowers-red-pot", name: "Flowers (Red Pot)", type: "garden", price: 30, asset: "flowers-red-pot.png", stackable: false },
-  { id: "flowers-brown-pot", name: "Flowers (Brown Pot)", type: "garden", price: 30, asset: "flowers-brown-pot.png", stackable: false },
-  { id: "flowers-blue-pot", name: "Flowers (Blue Pot)", type: "garden", price: 30, asset: "flowers-blue-pot.png", stackable: false },
-  { id: "tree-red-pot", name: "Tree (Red Pot)", type: "garden", price: 50, asset: "tree-red-pot.png", stackable: false },
-  { id: "tree-brown-pot", name: "Tree (Brown Pot)", type: "garden", price: 50, asset: "tree-brown-pot.png", stackable: false },
-  { id: "tree-blue-pot", name: "Tree (Blue Pot)", type: "garden", price: 50, asset: "tree-blue-pot.png", stackable: false },
-  { id: "tree-grey-pot", name: "Tree (Grey Pot)", type: "garden", price: 50, asset: "tree-grey-pot.png", stackable: false },
-  { id: "bench-cream", name: "Cream Bench", type: "garden", price: 80, asset: "bench-cream.png", stackable: false },
-  { id: "bench-caramel", name: "Caramel Bench", type: "garden", price: 80, asset: "bench-caramel.png", stackable: false },
-  { id: "bench-dark-brown", name: "Dark Brown Bench", type: "garden", price: 80, asset: "bench-dark-brown.png", stackable: false },
-  { id: "bench-chestnut", name: "Chestnut Bench", type: "garden", price: 80, asset: "bench-chestnut.png", stackable: false },
-  { id: "bench-grey", name: "Grey Bench", type: "garden", price: 80, asset: "bench-grey.png", stackable: false },
-  { id: "bench-black", name: "Black Bench", type: "garden", price: 80, asset: "bench-black.png", stackable: false },
-  { id: "bench-green", name: "Green Bench", type: "garden", price: 80, asset: "bench-green.png", stackable: false },
-  { id: "bench-teal", name: "Teal Bench", type: "garden", price: 80, asset: "bench-teal.png", stackable: false },
-  { id: "bench-pink", name: "Pink Bench", type: "garden", price: 80, asset: "bench-pink.png", stackable: false },
-  { id: "fountain", name: "Fountain", type: "garden", price: 150, asset: "fountain.png", stackable: false },
-  // Clothing (no artwork yet).
-  { id: "hat", name: "Hat", type: "clothing", price: 40, asset: "player-hat.png", stackable: false },
-  { id: "hoodie", name: "Hoodie", type: "clothing", price: 60, asset: "player-hoodie.png", stackable: false },
-  { id: "sneakers", name: "Sneakers", type: "clothing", price: 80, asset: "player-sneakers.png", stackable: false },
   // Farm (stackable: buy as many as you like). Crops go on tilled soil, decor anywhere on the farm.
   // Art: frontend/public/assets/farm/<id>.png, cropped by frontend/scripts/split-farm-sprites.mjs.
   { id: "crop-pumpkin", name: "Pumpkin", type: "farm", price: 12, asset: "crop-pumpkin.png", stackable: true },
@@ -89,8 +73,13 @@ export const CATALOG: readonly Item[] = [
   { id: "haystack", name: "Haystack", type: "farm", price: 15, asset: "haystack.png", stackable: true },
 ];
 
+// Retired items someone still owns stay in TiDB (see db:init) but are no longer sold.
+const CATALOG_IDS = new Set(CATALOG.map((item) => item.id));
+
 export async function getCatalog(): Promise<Item[]> {
-  return isTiDBEnabled() ? getItems() : CATALOG.map((item) => ({ ...item }));
+  return isTiDBEnabled()
+    ? (await getItems()).filter((item) => CATALOG_IDS.has(item.id))
+    : CATALOG.map((item) => ({ ...item }));
 }
 
 type PurchaseResult =
@@ -101,6 +90,7 @@ type PurchaseResult =
   | { status: "purchased"; item: Item; player: Player };
 
 export async function purchaseItem(itemId: string): Promise<PurchaseResult> {
+  if (!CATALOG_IDS.has(itemId)) return { status: "not_found" };
   if (isTiDBEnabled()) {
     const result = await purchaseItemInDb(DEFAULT_PLAYER_ID, itemId);
     return result.ok

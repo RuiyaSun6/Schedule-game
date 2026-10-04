@@ -334,14 +334,17 @@ h1 { font-family: monospace; font-size: clamp(25px, 5vw, 34px); letter-spacing: 
 
 .monthly-calendar .calendar-quest-time { color: #5f714b; font: 12px monospace; margin: 0 0 8px; }
 
-/* Compact Home task HUD; room assets and computer/calendar layouts stay intact. */
-.home-player-tasks-hud { position: absolute; top: 14px; left: 14px; right: 14px; display: flex; align-items: flex-start; gap: 12px; z-index: 3; pointer-events: none; }
+/* Compact Home task HUD; room assets and computer/calendar layouts stay intact.
+   The HUD ends 12px above the wall/floor line, using the room's own proportions: .room-wall is the
+   top 36% of the scene (incl. its 8px trim) and .room-floor the bottom 64%. Its children can then
+   size against it (today's tasks panel: max-height 100%), so the panel follows the wall on resize. */
+.home-player-tasks-hud { position: absolute; top: 14px; bottom: calc(64% + 8px + 12px); left: 14px; right: 14px; display: flex; align-items: flex-start; gap: 12px; z-index: 3; pointer-events: none; }
 .home-player-tasks-hud > .game-top-bar { position: static; flex: 0 0 258px; max-width: none; pointer-events: auto; }
-.today-tasks-panel { display: flex; flex-direction: column; width: 240px; min-width: 0; max-height: 246px; padding: 10px; overflow: hidden; pointer-events: auto; }
+.today-tasks-panel { display: flex; flex-direction: column; width: 240px; min-width: 0; max-height: 100%; padding: 10px; overflow: hidden; pointer-events: auto; }
 .today-tasks-panel h2 { flex-shrink: 0; margin: 0 0 8px; color: #536b42; font: bold 12px/1.5 monospace; }
 .today-tasks-empty p { margin: 0; font-size: 12px; line-height: 1.5; }
 .today-tasks-empty p + p { margin-top: 4px; color: #70634e; }
-.today-tasks-list { list-style: none; margin: 0; padding: 0 4px 0 0; min-height: 0; max-height: 192px; overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; scrollbar-color: #9caf84 #f1ecd9; scrollbar-gutter: stable; overscroll-behavior-y: contain; }
+.today-tasks-list { list-style: none; margin: 0; padding: 0 4px 0 0; min-height: 0; flex: 1 1 auto; overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; scrollbar-color: #9caf84 #f1ecd9; scrollbar-gutter: stable; overscroll-behavior-y: contain; }
 .today-tasks-list::-webkit-scrollbar { width: 6px; }
 .today-tasks-list::-webkit-scrollbar-track { background: #f1ecd9; }
 .today-tasks-list::-webkit-scrollbar-thumb { background: #9caf84; border: 1px solid #7f8c68; border-radius: 2px; }
@@ -367,10 +370,10 @@ h1 { font-family: monospace; font-size: clamp(25px, 5vw, 34px); letter-spacing: 
   .home-player-tasks-hud .profile-name span, .home-player-tasks-hud .coin-display { font-size: 11px; }
   .home-player-tasks-hud .xp-label, .home-player-tasks-hud .xp-label > span:first-child::after { font-size: 9px; }
   .home-player-tasks-hud .coin-display small { display: none; }
-  .today-tasks-panel { flex: 1; max-height: 202px; padding: 8px; }
+  .today-tasks-panel { flex: 1; max-height: 100%; padding: 8px; }
   .today-tasks-panel h2 { font-size: 10px; }
   .today-tasks-empty p, .today-tasks-list li { font-size: 11px; }
-  .today-tasks-list { max-height: 148px; }
+  .today-tasks-list { max-height: none; }
   .today-task-check { flex-basis: 44px; width: 44px; height: 44px; }
 }
 

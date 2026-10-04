@@ -13,7 +13,9 @@ export interface GeneratedQuestResult {
 
 const MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash";
 // One budget for the whole call, retry included, so the endpoint never waits longer than this.
-const TIMEOUT_MS = 12_000;
+// Kept well under the frontend's generate timeout: when Gemini is overloaded (503) the request
+// can hang until this budget runs out, and only then falls back to the mock generator.
+const TIMEOUT_MS = 8_000;
 const RETRY_DELAY_MS = 1_000;
 
 // 503 = model temporarily overloaded; worth one retry before falling back to mock.

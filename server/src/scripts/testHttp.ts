@@ -53,7 +53,7 @@ try {
   assert.deepEqual((await request("/api/quests")).data, []);
   const items = await request("/api/items");
   assert.equal(items.status, 200);
-  assert.equal(items.data.length, 73);
+  assert.equal(items.data.length, 57);
   assert.equal(Object.hasOwn(items.data[0], "owned"), false);
   assert.equal(await request("/api/quests", "POST", { title: "Invalid", difficulty: "unknown" }).then((r) => r.status), 400);
   assert.equal(await request("/api/shop/purchase", "POST", {}).then((r) => r.status), 400);
@@ -95,7 +95,10 @@ try {
   assert.equal(generatedCompletion.data.player.coins, 35);
 
   assert.equal(await request("/api/shop/purchase", "POST", { itemId: "unknown" }).then((r) => r.status), 404);
-  assert.equal(await request("/api/shop/purchase", "POST", { itemId: "fountain" }).then((r) => r.status), 409);
+  assert.equal(await request("/api/shop/purchase", "POST", { itemId: "sofa-beige" }).then((r) => r.status), 409);
+  // Retired catalog items (garden extras, clothing) are no longer sold.
+  assert.equal(await request("/api/shop/purchase", "POST", { itemId: "fountain" }).then((r) => r.status), 404);
+  assert.equal(await request("/api/shop/purchase", "POST", { itemId: "hat" }).then((r) => r.status), 404);
   const purchased = await request("/api/shop/purchase", "POST", { itemId: "plant-red-pot" });
   assert.equal(purchased.status, 200);
   assert.equal(purchased.data.player.coins, 15);

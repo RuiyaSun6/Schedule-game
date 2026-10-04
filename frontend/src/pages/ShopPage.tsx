@@ -20,7 +20,11 @@ export default function ShopPage({ embedded = false }: { embedded?: boolean }) {
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
   const categories = SHOP_CATEGORIES.filter((name) => catalog.items.some((item) => shopCategory(item) === name));
-  const shown = catalog.items.filter((item) => category === 'All' || shopCategory(item) === category);
+  // A tab can disappear (e.g. after a catalog update); fall back to All instead of an empty view.
+  const activeCategory = category === 'All' || (categories as readonly string[]).includes(category) ? category : 'All';
+  // Only items with a shop tab are sold; anything else (retired items) is skipped safely.
+  const sellable = catalog.items.filter((item) => shopCategory(item) !== null);
+  const shown = sellable.filter((item) => activeCategory === 'All' || shopCategory(item) === activeCategory);
 
   async function buy(item: Item) {
     if (!actions.beginMutation()) { setError('Another update is in progress. Please wait.'); return; }
@@ -44,7 +48,7 @@ export default function ShopPage({ embedded = false }: { embedded?: boolean }) {
   return <section className={embedded ? 'furniture-shop-content' : 'inventory-page accepted-quests-page'}>
     {!embedded && <GameTopBar />}<h1 id="furniture-shop-title">SHOP</h1>
     <div className="shop-categories" aria-label="Shop categories">
-      {['All', ...categories].map((name) => <PixelButton key={name} aria-pressed={name === category} onClick={() => setCategory(name)}>{name.toUpperCase()}</PixelButton>)}
+      {['All', ...categories].map((name) => <PixelButton key={name} aria-pressed={name === activeCategory} onClick={() => setCategory(name)}>{name.toUpperCase()}</PixelButton>)}
     </div>
     {catalog.loading && <p className="loading-feedback" role="status">Loading little treasures…</p>}
     {catalog.demo && <p className="planner-notice">Offline catalog preview · purchases need the backend.</p>}

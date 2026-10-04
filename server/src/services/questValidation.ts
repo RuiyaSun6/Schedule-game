@@ -62,9 +62,12 @@ export function validateQuestDraft(raw: unknown): QuestDraft | null {
 export function parseQuestDrafts(rawText: string): QuestDraft[] | null {
   let parsed: unknown;
   try {
-    // Tolerate accidental ```json fences.
+    // Tolerate accidental ```json fences and prose around the JSON: parse from the first { or [
+    // to the last } or ].
     const cleaned = rawText.trim().replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim();
-    parsed = JSON.parse(cleaned);
+    const start = cleaned.search(/[[{]/);
+    const end = Math.max(cleaned.lastIndexOf("}"), cleaned.lastIndexOf("]"));
+    parsed = JSON.parse(start >= 0 && end > start ? cleaned.slice(start, end + 1) : cleaned);
   } catch {
     return null;
   }

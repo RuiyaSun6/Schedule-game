@@ -1,10 +1,24 @@
 import { useRef, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import type { Quest } from '../types';
-import { generateQuests } from '../services/api';
+import { ApiError, generateQuests } from '../services/api';
 import { usePlayer } from '../services/PlayerContext';
 import PixelButton from './PixelButton';
 import QuestPreviewCard from './QuestPreviewCard';
+
+/** A message that says what actually went wrong instead of a generic failure. */
+function generateErrorMessage(error: unknown): string {
+  if (!(error instanceof ApiError)) return 'Something unexpected went wrong while creating quests. Please try again.';
+  switch (error.kind) {
+    case 'timeout': return 'The AI is taking too long to answer right now. Please try again in a moment.';
+    case 'network': return 'Network error: couldn’t reach the LifeQuest server. Check your connection and that the backend is running.';
+    case 'rate-limit': return 'Too many requests right now. Please wait a minute, then try again.';
+    case 'format': return 'The AI sent back quests in an unexpected format. Please try again.';
+    default:
+      // 4xx with a server explanation (e.g. text too long) is useful as-is.
+      return error.status !== undefined && error.status < 500 ? error.message : `The server had a problem creating quests (error ${error.status}). Please try again.`;
+  }
+}
 
 interface DailyPlannerProps {
   onAccept: (quest: Quest) => void;
@@ -34,8 +48,15 @@ export default function DailyPlanner({ onAccept, acceptedCount }: DailyPlannerPr
       if (!mounted.current) return;
       setPreviews(result.quests);
       setNotice('Your quests are ready. Make them your own.');
-    } catch {
-      if (mounted.current) setError('Something went wrong. Please try again.');
+    } catch (error) {
+      // Full details for debugging: the error, HTTP status, and the raw response body.
+      console.error('[DailyPlanner] Generate Quests failed', {
+        error,
+        status: error instanceof ApiError ? error.status : undefined,
+        kind: error instanceof ApiError ? error.kind : undefined,
+        responseBody: error instanceof ApiError ? error.details.body : undefined,
+      });
+      if (mounted.current) setError(generateErrorMessage(error));
     } finally {
       pending.current = false;
       if (mounted.current) setLoading(false);

@@ -58,10 +58,19 @@ export async function createQuest(
   return quest;
 }
 
+const SIMILAR_QUESTS_TIMEOUT_MS = 3_000;
+function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => { console.warn(`[quest-memory] skipped after ${ms}ms`); resolve(fallback); }, ms);
+    promise.then((value) => { clearTimeout(timer); resolve(value); }, () => { clearTimeout(timer); resolve(fallback); });
+  });
+}
+
 export async function generateQuests(text: string): Promise<{ source: "gemini" | "mock-fallback"; quests: Quest[] }> {
   const player = isTiDBEnabled() ? await getPlayerFromDb(DEFAULT_PLAYER_ID) : getPlayer();
   if (!player) throw new Error("Default player is missing");
-  const similar = await findSimilarCompletedQuests(player.id, text);
+  // Quest Memory is optional context: never let a slow embedding call delay generation.
+  const similar = await withTimeout(findSimilarCompletedQuests(player.id, text), SIMILAR_QUESTS_TIMEOUT_MS, []);
   const { source, quests: drafts } = await generateQuestsFromText(player, text, similar);
   const quests = drafts.map((draft) =>
     makeQuest(player.id, draft.title, draft.difficulty, draft.category, draft.estimatedMinutes, {

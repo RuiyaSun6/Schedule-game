@@ -150,17 +150,16 @@ Returns the fixed shop catalog as an array (`200`), in shop order:
 ```json
 [
   { "id": "plant-red-pot", "name": "Plant (Red Pot)", "type": "furniture", "price": 20, "asset": "plant-red-pot.png", "stackable": false },
-  { "id": "flowers-red-pot", "name": "Flowers (Red Pot)", "type": "garden", "price": 30, "asset": "flowers-red-pot.png", "stackable": false },
-  { "id": "hat", "name": "Hat", "type": "clothing", "price": 40, "asset": "player-hat.png", "stackable": false },
+  { "id": "tree-blue-pot", "name": "Tree (Blue Pot)", "type": "furniture", "price": 50, "asset": "tree-blue-pot.png", "stackable": false },
   { "id": "crop-carrot", "name": "Carrot", "type": "farm", "price": 5, "asset": "crop-carrot.png", "stackable": true }
 ]
 ```
 
-73 items in total: 49 colour variants named `<kind>-<colour>` (plant 20, lamp 50, chair 40, sofa 100, flowers 30, tree 50, bench 80 coins), the four pet corner items (`pet-bowl`, `pet-scratcher`, `pet-bed`, `pet-tree`), `fountain`, the clothing items `hat`, `hoodie`, `sneakers`, and 16 farm items (type `farm`, 5 to 20 coins: crops `crop-*` and decor such as `fence-wood` and `haystack`). Each variant is its own item: buying `lamp-gold` does not own `lamp-black`.
+57 items in total: 41 home furniture items named `<kind>-<colour>` (plant 20, potted tree 50, lamp 50, chair 40, sofa 100 coins) including the four pet corner items (`pet-bowl`, `pet-scratcher`, `pet-bed`, `pet-tree`), and 16 farm items (type `farm`, 5 to 20 coins: crops `crop-*` and decor such as `fence-wood` and `haystack`). Each variant is its own item: buying `lamp-gold` does not own `lamp-black`. Garden extras (flowers, benches, fountain) and clothing (`hat`, `hoodie`, `sneakers`) were retired: they are no longer listed or sold (`404` on purchase); potted trees kept their IDs and prices and are now `furniture`.
 
 `stackable` says whether the item can be bought repeatedly. Farm items are stackable (each purchase adds one, see `itemCounts`); every other item is not and can be owned once.
 
-The list and order match `CATALOG` in `src/services/shopService.ts` and the seed in `src/db/schema.sql` (TiDB keeps the order in `items.sort_order`). `npm run db:init` updates existing rows, adds new ones, and removes retired item IDs unless a player owns them; owned leftovers are kept and listed so they can be mapped to a current variant. It also adds `items.stackable` and `user_items.quantity` to databases created before them (existing rows get `quantity = 1`). Prices are in coins. Item types are `furniture`, `garden`, `clothing`, and `farm`. `asset` is the image file name; the frontend bundles furniture and garden PNGs under `frontend/src/assets/<type>/` and serves farm PNGs from `frontend/public/assets/farm/`.
+The list and order match `CATALOG` in `src/services/shopService.ts` and the seed in `src/db/schema.sql` (TiDB keeps the order in `items.sort_order`). `npm run db:init` updates existing rows, adds new ones, and removes retired item IDs unless a player owns them; owned leftovers are kept and listed so they can be mapped to a current variant. It also adds `items.stackable` and `user_items.quantity` to databases created before them (existing rows get `quantity = 1`). Prices are in coins. Current item types are `furniture` and `farm` (`garden` and `clothing` only appear on retired items a player may still own). `asset` is the image file name; the frontend bundles furniture and garden PNGs under `frontend/src/assets/<type>/` and serves farm PNGs from `frontend/public/assets/farm/`.
 
 ### `POST /api/shop/purchase` (also `POST /api/shop/buy`)
 

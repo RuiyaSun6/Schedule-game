@@ -34,15 +34,17 @@ export function ownedCount(player: { ownedItems?: string[]; itemCounts?: Record<
   return player.itemCounts?.[id] ?? (player.ownedItems?.includes(id) ? 1 : 0);
 }
 
-export const SHOP_CATEGORIES = ['Plants', 'Seating', 'Lighting', 'Pets', 'Garden', 'Farm', 'Clothing'] as const;
+// Garden and Clothing were retired: potted trees moved to Plants; garden extras and clothing are no longer sold.
+export const SHOP_CATEGORIES = ['Plants', 'Seating', 'Lighting', 'Pets', 'Farm'] as const;
 export type ShopCategory = typeof SHOP_CATEGORIES[number];
 const FAMILY_CATEGORY: Record<string, ShopCategory> = {
   plant: 'Plants', chair: 'Seating', sofa: 'Seating', lamp: 'Lighting', pet: 'Pets',
-  flowers: 'Garden', tree: 'Garden', bench: 'Garden', fountain: 'Garden',
+  tree: 'Plants',
   crop: 'Farm', 'farm-decor': 'Farm',
 };
-export function shopCategory(item: Item): ShopCategory {
-  return FAMILY_CATEGORY[itemFamily(item.id)] ?? (item.type === 'garden' ? 'Garden' : item.type === 'clothing' ? 'Clothing' : 'Seating');
+/** Shop tab for an item, or null for items the shop no longer sells (e.g. retired garden or clothing items). */
+export function shopCategory(item: Item): ShopCategory | null {
+  return FAMILY_CATEGORY[itemFamily(item.id)] ?? null;
 }
 
 // Fixed scene slots: one per family, showing the most recently bought variant.
