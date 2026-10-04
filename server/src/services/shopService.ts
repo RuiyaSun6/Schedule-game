@@ -1,5 +1,8 @@
 import type { Item, Player } from "../types/game.js";
 import { getPlayer, savePlayer } from "./storageService.js";
+import { isTiDBEnabled } from "../db/tidb.js";
+import { getItems, purchaseItem as purchaseItemInDb } from "../repositories/itemRepository.js";
+import { DEFAULT_PLAYER_ID } from "../types/defaultPlayer.js";
 
 // Keep in sync with the items seeded in db/schema.sql so in-memory and TiDB storage match.
 const CATALOG: readonly Item[] = [
@@ -16,17 +19,24 @@ const CATALOG: readonly Item[] = [
   { id: "sneakers", name: "Sneakers", type: "clothing", price: 80, asset: "player-sneakers.png" },
 ];
 
-export function getCatalog(): Item[] {
-  return CATALOG.map((item) => ({ ...item }));
+export async function getCatalog(): Promise<Item[]> {
+  return isTiDBEnabled() ? getItems() : CATALOG.map((item) => ({ ...item }));
 }
 
 type PurchaseResult =
   | { status: "not_found" }
   | { status: "already_owned" }
   | { status: "insufficient_coins" }
+  | { status: "player_not_found" }
   | { status: "purchased"; item: Item; player: Player };
 
-export function purchaseItem(itemId: string): PurchaseResult {
+export async function purchaseItem(itemId: string): Promise<PurchaseResult> {
+  if (isTiDBEnabled()) {
+    const result = await purchaseItemInDb(DEFAULT_PLAYER_ID, itemId);
+    return result.ok
+      ? { status: "purchased", item: result.item, player: result.player }
+      : { status: result.reason };
+  }
   const item = CATALOG.find((entry) => entry.id === itemId);
   if (!item) return { status: "not_found" };
 

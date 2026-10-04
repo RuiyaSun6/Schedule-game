@@ -1,5 +1,5 @@
 import type { Player, Quest } from "../types/game.js";
-import { getUnlockedAreas } from "./levelService.js";
+import { makeDefaultPlayer } from "../types/defaultPlayer.js";
 
 // Process-local storage for MVP game state. Data resets when the server restarts.
 export class InMemoryStorage<T> {
@@ -22,15 +22,7 @@ export class InMemoryStorage<T> {
   }
 }
 
-let player: Player = {
-  id: "player-1",
-  xp: 0,
-  level: 1,
-  coins: 0,
-  outfit: "default",
-  unlockedAreas: getUnlockedAreas(1),
-  ownedItems: [],
-};
+let player: Player = makeDefaultPlayer();
 
 const quests = new InMemoryStorage<Quest>();
 

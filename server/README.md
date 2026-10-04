@@ -20,7 +20,7 @@ npm start
 
 On Windows PowerShell, use `npm.cmd` in place of `npm` if script execution policy blocks `npm.ps1`. The base URL with the default port is `http://localhost:5001`.
 
-**Storage is currently in memory.** The default player, quests, purchases, and all earned progress reset whenever the server process restarts. There is one shared player (`player-1`) and no authentication or per-user state yet.
+**Storage selection:** With `TIDB_HOST` configured, run `npm run db:init` and the HTTP API uses TiDB for players, quests, and purchases. Without `TIDB_HOST`, it uses in-memory storage; progress then resets whenever the server restarts. There is one shared API player (`player-1`) and no authentication or per-user state yet. A configured TiDB connection must be available at startup.
 
 ## API conventions
 
@@ -89,7 +89,7 @@ Turns a natural-language plan into one or more saved quests (`201`). Request bod
 { "text": "Finish my algorithms assignment and go to the gym today." }
 ```
 
-`text` must be 1 to 2000 characters after trimming. An optional `userId` may be supplied, but it must be `player-1` while the API has one in-memory player. A different player ID returns `404`; invalid input returns `400`.
+`text` must be 1 to 2000 characters after trimming. An optional `userId` may be supplied, but it must be `player-1` while the API has one shared player. A different player ID returns `404`; invalid input returns `400`.
 
 Example response without a Gemini API key (IDs are generated):
 
@@ -201,4 +201,4 @@ Buying an item subtracts its catalog price from the player's coins and adds its 
 
 ## Integration notes
 
-The current API has one shared player and no authentication. Client code should use IDs returned by quest creation or the item catalog. The backend owns reward, level, unlock, and price calculations; the Gemini integration (see `PERSON3.md`) decides only title, category, difficulty, and estimated minutes. A future TiDB integration can replace the process-local storage, but it must preserve once-only quest rewards and purchases.
+The current API has one shared player and no authentication. Client code should use IDs returned by quest creation or the item catalog. The backend owns reward, level, unlock, and price calculations; the Gemini integration (see `PERSON3.md`) decides only title, category, difficulty, and estimated minutes. TiDB completion and purchase operations use transactions to preserve once-only rewards and charges. Quest Memory uses TiDB when configured and is best-effort.

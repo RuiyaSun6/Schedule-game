@@ -1,11 +1,11 @@
 import type { Request, Response } from "express";
 import { getCatalog, purchaseItem } from "../services/shopService.js";
 
-export function getItems(_request: Request, response: Response): void {
-  response.json(getCatalog());
+export async function getItems(_request: Request, response: Response): Promise<void> {
+  response.json(await getCatalog());
 }
 
-export function postPurchase(request: Request, response: Response): void {
+export async function postPurchase(request: Request, response: Response): Promise<void> {
   const body: unknown = request.body;
   if (typeof body !== "object" || body === null || Array.isArray(body)) {
     response.status(400).json({ error: "Body must be an object." });
@@ -18,7 +18,11 @@ export function postPurchase(request: Request, response: Response): void {
     return;
   }
 
-  const result = purchaseItem(itemId.trim());
+  const result = await purchaseItem(itemId.trim());
+  if (result.status === "player_not_found") {
+    response.status(404).json({ error: "Player not found." });
+    return;
+  }
   if (result.status === "not_found") {
     response.status(404).json({ error: "Item not found." });
     return;

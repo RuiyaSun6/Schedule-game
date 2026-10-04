@@ -54,9 +54,13 @@ export interface CompleteQuestResult {
 export async function completeQuest(
   questId: string,
   calculateLevel: (totalXp: number) => number,
+  userId?: string,
 ): Promise<CompleteQuestResult | null> {
   return withTransaction(async (conn) => {
-    const [qRows] = await conn.query<RowDataPacket[]>("SELECT * FROM quests WHERE id = ? FOR UPDATE", [questId]);
+    const [qRows] = await conn.query<RowDataPacket[]>(
+      userId ? "SELECT * FROM quests WHERE id = ? AND user_id = ? FOR UPDATE" : "SELECT * FROM quests WHERE id = ? FOR UPDATE",
+      userId ? [questId, userId] : [questId],
+    );
     if (qRows.length === 0) return null;
     const quest = toQuest(qRows[0]);
 

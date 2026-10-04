@@ -20,10 +20,17 @@ npm install
 cp .env.example .env              # add GEMINI_API_KEY (https://aistudio.google.com/apikey)
 npm run test:ai                   # source should read "gemini"
 # TiDB Cloud Serverless: create a free cluster -> Connect -> copy host/user/password into .env
-npm run db:init                   # create tables and seed items/demo-user
+npm run db:init                   # create tables and seed items/player-1
 ```
 
-## P3: hooking into Person 2's route (once their backend is merged)
+## HTTP integration
+
+The existing player, quest, and shop routes use the TiDB repositories when `TIDB_HOST` is set.
+Without it, they use the in-memory MVP state. Startup ensures the default `player-1` exists
+in TiDB. Quest generation searches Quest Memory for similar completed quests, and successful
+completion records a quest in Quest Memory on a best-effort basis.
+
+## Original integration sketch
 
 ```ts
 // questController.ts: POST /api/quests/generate
@@ -50,7 +57,7 @@ res.json({ source, quests });
 
 After a quest completes, call `rememberCompletedQuest(quest)` without awaiting it, so it can be found in Vector Search later.
 
-## Switching storage
+## Storage selection
 
-In Person 2's `storageService.ts`, check `await checkTiDBConnection()` at startup:
-use the repositories when it returns true, otherwise keep the in-memory Maps. Controllers and response shapes stay the same.
+Set `TIDB_HOST` to use TiDB; run `npm run db:init` before starting the HTTP server.
+If TiDB startup fails, the server exits instead of serving a different, empty in-memory state.

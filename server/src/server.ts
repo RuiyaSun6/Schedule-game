@@ -6,6 +6,9 @@ import playerRoutes from "./routes/playerRoutes.js";
 import questRoutes from "./routes/questRoutes.js";
 import itemRoutes from "./routes/itemRoutes.js";
 import shopRoutes from "./routes/shopRoutes.js";
+import { isTiDBEnabled } from "./db/tidb.js";
+import { createPlayer } from "./repositories/playerRepository.js";
+import { makeDefaultPlayer } from "./types/defaultPlayer.js";
 
 dotenv.config();
 
@@ -43,6 +46,10 @@ const handleError: ErrorRequestHandler = (error: unknown, _req, res, _next) => {
   res.status(500).json({ error: "Internal server error." });
 };
 app.use(handleError);
+
+if (isTiDBEnabled()) {
+  await createPlayer(makeDefaultPlayer());
+}
 
 app.listen(PORT, () => {
   console.log(`LifeQuest backend running on http://localhost:${PORT}`);

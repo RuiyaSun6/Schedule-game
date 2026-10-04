@@ -66,4 +66,4 @@ INSERT IGNORE INTO items (id, name, type, price, asset) VALUES
   ('hoodie', 'Hoodie', 'clothing', 60, 'player-hoodie.png'),
   ('sneakers', 'Sneakers', 'clothing', 80, 'player-sneakers.png');
 
-INSERT IGNORE INTO players (id, level, xp, coins, outfit) VALUES ('demo-user', 1, 0, 0, 'default');
+INSERT IGNORE INTO players (id, level, xp, coins, outfit) VALUES ('player-1', 1, 0, 0, 'default');

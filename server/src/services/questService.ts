@@ -4,20 +4,30 @@ import { calculateLevel, getUnlockedAreas } from "./levelService.js";
 import { getRewards } from "./rewardService.js";
 import { generateQuestsFromText } from "./geminiService.js";
 import { getPlayer, getQuest, getQuests, savePlayer, saveQuest } from "./storageService.js";
+import { isTiDBEnabled } from "../db/tidb.js";
+import { getPlayer as getPlayerFromDb } from "../repositories/playerRepository.js";
+import {
+  completeQuest as completeQuestInDb,
+  createQuests,
+  getQuestsByUser,
+} from "../repositories/questRepository.js";
+import { DEFAULT_PLAYER_ID } from "../types/defaultPlayer.js";
+import { findSimilarCompletedQuests, rememberCompletedQuest } from "./questMemoryService.js";
 
-export function listQuests(): Quest[] {
-  return getQuests();
+export async function listQuests(): Promise<Quest[]> {
+  return isTiDBEnabled() ? getQuestsByUser(DEFAULT_PLAYER_ID) : getQuests();
 }
 
-export function createQuest(
+function makeQuest(
+  userId: string,
   title: string,
   difficulty: QuestDifficulty,
   category: QuestCategory = "life",
   estimatedMinutes = 30,
 ): Quest {
-  const quest: Quest = {
+  return {
     id: randomUUID(),
-    userId: getPlayer().id,
+    userId,
     title,
     category,
     difficulty,
@@ -25,15 +35,33 @@ export function createQuest(
     ...getRewards(difficulty),
     completed: false,
   };
+}
+
+export async function createQuest(
+  title: string,
+  difficulty: QuestDifficulty,
+  category: QuestCategory = "life",
+  estimatedMinutes = 30,
+): Promise<Quest> {
+  const quest = makeQuest(DEFAULT_PLAYER_ID, title, difficulty, category, estimatedMinutes);
+  if (isTiDBEnabled()) {
+    await createQuests([quest]);
+    return quest;
+  }
   saveQuest(quest);
   return quest;
 }
 
 export async function generateQuests(text: string): Promise<{ source: "gemini" | "mock-fallback"; quests: Quest[] }> {
-  const { source, quests: drafts } = await generateQuestsFromText(getPlayer(), text);
+  const player = isTiDBEnabled() ? await getPlayerFromDb(DEFAULT_PLAYER_ID) : getPlayer();
+  if (!player) throw new Error("Default player is missing");
+  const similar = await findSimilarCompletedQuests(player.id, text);
+  const { source, quests: drafts } = await generateQuestsFromText(player, text, similar);
   const quests = drafts.map((draft) =>
-    createQuest(draft.title, draft.difficulty, draft.category, draft.estimatedMinutes),
+    makeQuest(player.id, draft.title, draft.difficulty, draft.category, draft.estimatedMinutes),
   );
+  if (isTiDBEnabled()) await createQuests(quests);
+  else quests.forEach(saveQuest);
   return { source, quests };
 }
 
@@ -42,7 +70,14 @@ type CompletionResult =
   | { status: "already_completed" }
   | { status: "completed"; quest: Quest; player: Player };
 
-export function completeQuest(id: string): CompletionResult {
+export async function completeQuest(id: string): Promise<CompletionResult> {
+  if (isTiDBEnabled()) {
+    const result = await completeQuestInDb(id, calculateLevel, DEFAULT_PLAYER_ID);
+    if (!result) return { status: "not_found" };
+    if (result.alreadyCompleted) return { status: "already_completed" };
+    void rememberCompletedQuest(result.quest);
+    return { status: "completed", quest: result.quest, player: result.player };
+  }
   const quest = getQuest(id);
   if (!quest) return { status: "not_found" };
   if (quest.completed) return { status: "already_completed" };
@@ -61,5 +96,6 @@ export function completeQuest(id: string): CompletionResult {
 
   saveQuest(completedQuest);
   savePlayer(updatedPlayer);
+  void rememberCompletedQuest(completedQuest);
   return { status: "completed", quest: completedQuest, player: updatedPlayer };
 }
