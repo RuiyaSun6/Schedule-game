@@ -2,6 +2,7 @@ import type { CompleteQuestResponse, GenerateQuestsResponse, Item, Player, Quest
 import { isItem, isPlayer, isQuest } from './apiValidators';
 
 export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001').replace(/\/+$/, '');
+export const MVP_PLAYER_ID = 'player-1';
 
 export class ApiError extends Error {
   constructor(message: string, public readonly status?: number, public readonly unavailable = false) {
@@ -47,8 +48,8 @@ function playerResponse(data: unknown, userId?: string): Player {
   return player;
 }
 
-export async function getPlayer(userId: string): Promise<Player> {
-  return playerResponse(await request(`/api/player/${encodeURIComponent(userId)}`), userId);
+export async function getPlayer(): Promise<Player> {
+  return playerResponse(await request('/api/player'), MVP_PLAYER_ID);
 }
 export async function generateQuests(userId: string, text: string): Promise<GenerateQuestsResponse> {
   if (!text.trim()) return invalid('Please enter at least one task for today.');
@@ -58,16 +59,15 @@ export async function generateQuests(userId: string, text: string): Promise<Gene
     || result.quests.some((quest) => quest.userId !== userId) || new Set(result.quests.map((quest) => quest.id)).size !== result.quests.length) return invalid('The backend returned invalid quest previews.');
   return result;
 }
-export async function getQuests(userId: string): Promise<Quest[]> {
-  const quests = unwrap(await request(`/api/quests/${encodeURIComponent(userId)}`), 'quests');
-  if (!Array.isArray(quests) || !quests.every(isQuest) || quests.some((quest) => quest.userId !== userId)) return invalid('The backend returned invalid quests.');
+export async function getQuests(): Promise<Quest[]> {
+  const quests = await request('/api/quests');
+  if (!Array.isArray(quests) || !quests.every(isQuest) || quests.some((quest) => quest.userId !== MVP_PLAYER_ID)) return invalid('The backend returned invalid quests.');
   return quests;
 }
 export async function completeQuest(questId: string): Promise<CompleteQuestResponse> {
   const result = await request(`/api/quests/${encodeURIComponent(questId)}/complete`, 'POST') as CompleteQuestResponse;
   if (!result || !isQuest(result.quest) || result.quest.id !== questId || !result.quest.completed || !isPlayer(result.player)
-    || result.quest.userId !== result.player.id || typeof result.levelUp !== 'boolean' || !Array.isArray(result.newlyUnlocked)
-    || !result.newlyUnlocked.every((area) => typeof area === 'string')) return invalid('The backend returned invalid completion data. Please retry to confirm your progress.');
+    || result.quest.userId !== MVP_PLAYER_ID || result.player.id !== MVP_PLAYER_ID) return invalid('The backend returned invalid completion data. Please retry to confirm your progress.');
   return result;
 }
 export async function getItems(): Promise<Item[]> {
@@ -75,12 +75,11 @@ export async function getItems(): Promise<Item[]> {
   if (!Array.isArray(items) || !items.every(isItem) || new Set(items.map((item) => item.id)).size !== items.length) return invalid('The backend returned invalid shop items.');
   return items;
 }
-export async function buyItem(userId: string, itemId: string): Promise<{ success: true; player: Player; item: Item }> {
-  const result = await request('/api/shop/buy', 'POST', { userId, itemId }) as { success: boolean; player: unknown; item: unknown };
-  if (result?.success !== true) return invalid('Purchase failed. Please try again.');
+export async function buyItem(userId: string, itemId: string): Promise<{ item: Item; player: Player }> {
+  const result = await request('/api/shop/purchase', 'POST', { itemId }) as { player: unknown; item: unknown };
   const player = playerResponse(result.player, userId);
   if (!player.ownedItems?.includes(itemId) || !isItem(result.item) || result.item.id !== itemId) return invalid('The purchase response is missing updated ownership.');
-  return { success: true, player, item: result.item };
+  return { item: result.item, player };
 }
 export async function equipOutfit(userId: string, outfit: string): Promise<Player> {
   const player = playerResponse(await request(`/api/player/${encodeURIComponent(userId)}/outfit`, 'PUT', { outfit }), userId);

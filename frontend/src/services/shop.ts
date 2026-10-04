@@ -1,6 +1,6 @@
 import type { Item, Player } from '../types';
 import * as api from './api';
-import { mockItems, mockBuyItem, mockEquipOutfit } from './mockApi';
+import { mockItems, mockEquipOutfit } from './mockApi';
 export { mockItems } from './mockApi';
 
 const catalogItems = new Map<string, Item>();
@@ -23,13 +23,7 @@ export async function loadItems(): Promise<{ items: Item[]; demo: boolean }> {
   }
 }
 export async function buyItem(player: Player, item: Item) {
-  if (player.ownedItems?.includes(item.id)) throw new Error('You already own this item.');
-  if (player.coins < item.price) throw new Error('Not enough coins for this item.');
-  try { return { ...await api.buyItem(player.id, item.id), demo: false }; }
-  catch (error) {
-    if (error instanceof api.ApiError && error.unavailable) return mockBuyItem(player, item);
-    throw error;
-  }
+  return api.buyItem(player.id, item.id);
 }
 export async function equipOutfit(player: Player, outfit: string) {
   if (!player.ownedItems?.includes(outfit)) throw new Error('You must own this outfit before equipping it.');
