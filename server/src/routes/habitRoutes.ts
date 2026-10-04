@@ -20,6 +20,7 @@ router.post("/", async (request, response) => {
 router.post("/:id/check-in", async (request, response) => {
   const result = await checkInHabit(request.params.id, playerDate(request));
   if (result.status === "not_found") { response.status(404).json({ error: "Habit not found." }); return; }
+  if (result.status === "not_started") { response.status(409).json({ error: "This habit has not started yet. Check in from its start date." }); return; }
   if (result.status === "duplicate") { response.status(409).json({ error: "Already checked in today." }); return; }
   response.json(result.board);
 });

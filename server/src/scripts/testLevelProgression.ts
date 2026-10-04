@@ -1,3 +1,5 @@
+// Must stay the first import: these tests create quests/habits and must never touch the real TiDB.
+import "./memoryOnly.js";
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { calculateLevel, getUnlockedAreas, xpRequiredForLevel } from "../services/levelService.js";

@@ -38,21 +38,24 @@ export async function createHabit(text: string, now = new Date()): Promise<Habit
   } else memoryHabits.set(habit.id, habit);
   return getHabitBoard(now);
 }
-export async function checkInHabit(id: string, now = new Date()): Promise<{ status: "completed" | "duplicate" | "not_found"; board: HabitBoard }> {
+export async function checkInHabit(id: string, now = new Date()): Promise<{ status: "completed" | "duplicate" | "not_found" | "not_started"; board: HabitBoard }> {
   const today = dateKey(now);
   if (isTiDBEnabled()) {
     const status = await withTransaction(async (conn) => {
       const [players] = await conn.query<RowDataPacket[]>("SELECT id FROM players WHERE id = ? FOR UPDATE", [DEFAULT_PLAYER_ID]);
       if (!players.length) return "not_found" as const;
       const [rows] = await conn.query<RowDataPacket[]>("SELECT id, created_date FROM habits WHERE id = ? AND user_id = ?", [id, DEFAULT_PLAYER_ID]);
-      if (!rows.length || today < rows[0].created_date) return "not_found" as const;
+      if (!rows.length) return "not_found" as const;
+      // A habit dated after the player's today exists but cannot be checked in yet (not "not found").
+      if (today < rows[0].created_date) return "not_started" as const;
       const [result] = await conn.query<import("mysql2/promise").ResultSetHeader>("INSERT IGNORE INTO habit_checkins (user_id, habit_id, completed_date) VALUES (?, ?, ?)", [DEFAULT_PLAYER_ID, id, today]);
       return result.affectedRows ? "completed" as const : "duplicate" as const;
     });
     return { status, board: await getHabitBoard(now) };
   }
   const habit = memoryHabits.get(id);
-  if (!habit || today < habit.createdAt) return { status: "not_found", board: await getHabitBoard(now) };
+  if (!habit) return { status: "not_found", board: await getHabitBoard(now) };
+  if (today < habit.createdAt) return { status: "not_started", board: await getHabitBoard(now) };
   if (habit.completionDates.includes(today)) return { status: "duplicate", board: await getHabitBoard(now) };
   memoryHabits.set(id, { ...habit, completionDates: [...habit.completionDates, today].sort() });
   return { status: "completed", board: await getHabitBoard(now) };

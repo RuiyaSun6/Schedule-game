@@ -1,3 +1,5 @@
+// Must stay the first import: these tests create quests/habits and must never touch the real TiDB.
+import "./memoryOnly.js";
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { buildBoard, countInWeek, parseHabit, weekStart, type Habit } from "../services/habitRules.js";
@@ -24,6 +26,9 @@ test("check-ins persist in memory, reject duplicate days, reset weekly progress 
   const created = await createHabit("Go to the gym 3 times a week", at("2026-10-05"));
   const id = created.habits[0].id;
   assert.equal(created.habits[0].period, "weekly");
+  // Before its start date the habit exists but cannot be checked in yet (not "not found").
+  assert.equal((await checkInHabit(id, at("2026-10-04"))).status, "not_started");
+  assert.equal((await checkInHabit("no-such-habit", at("2026-10-05"))).status, "not_found");
   assert.equal((await checkInHabit(id, at("2026-10-05"))).status, "completed");
   assert.equal((await checkInHabit(id, at("2026-10-05"))).status, "duplicate");
   await checkInHabit(id, at("2026-10-07"));
