@@ -81,6 +81,30 @@ Creates an active quest (`201`). Request body:
 
 Invalid title, difficulty, category, estimatedMinutes, or body: `400`.
 
+### `POST /api/quests/generate`
+
+Turns a natural-language plan into one or more saved quests (`201`). Request body:
+
+```json
+{ "text": "Finish my algorithms assignment and go to the gym today." }
+```
+
+`text` must be 1 to 2000 characters after trimming. An optional `userId` may be supplied, but it must be `player-1` while the API has one in-memory player. A different player ID returns `404`; invalid input returns `400`.
+
+Example response without a Gemini API key (IDs are generated):
+
+```json
+{
+  "source": "mock-fallback",
+  "quests": [
+    { "id": "generated-id-1", "userId": "player-1", "title": "Algorithms Assignment", "category": "study", "difficulty": "hard", "estimatedMinutes": 120, "xpReward": 100, "coinReward": 50, "completed": false },
+    { "id": "generated-id-2", "userId": "player-1", "title": "Workout Session", "category": "health", "difficulty": "medium", "estimatedMinutes": 60, "xpReward": 50, "coinReward": 25, "completed": false }
+  ]
+}
+```
+
+`source` is `gemini` when generation succeeds and `mock-fallback` when credentials are unavailable or generation fails. The backend assigns XP and coin rewards from difficulty in both cases. Generated quests also appear in `GET /api/quests` and use the normal completion endpoint.
+
 ### `POST /api/quests/:id/complete`
 
 Completes the named quest once. No request body is needed. Example `200` response for the easy quest above:

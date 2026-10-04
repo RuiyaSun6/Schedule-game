@@ -1,7 +1,8 @@
 import type { Request, Response } from "express";
 import { QUEST_CATEGORIES, QUEST_DIFFICULTIES as DIFFICULTIES } from "../types/game.js";
 import type { QuestCategory, QuestDifficulty } from "../types/game.js";
-import { completeQuest, createQuest, listQuests } from "../services/questService.js";
+import { completeQuest, createQuest, generateQuests, listQuests } from "../services/questService.js";
+import { getPlayer } from "../services/storageService.js";
 
 export function getAllQuests(_request: Request, response: Response): void {
   response.json(listQuests());
@@ -45,6 +46,30 @@ export function postQuest(request: Request, response: Response): void {
         estimatedMinutes as number | undefined,
       ),
     );
+}
+
+export async function postGenerateQuests(request: Request, response: Response): Promise<void> {
+  const body: unknown = request.body;
+  if (typeof body !== "object" || body === null || Array.isArray(body)) {
+    response.status(400).json({ error: "Body must be an object." });
+    return;
+  }
+
+  const { text, userId } = body as Record<string, unknown>;
+  if (typeof text !== "string" || !text.trim() || text.trim().length > 2000) {
+    response.status(400).json({ error: "text must be 1 to 2000 characters." });
+    return;
+  }
+  if (userId !== undefined && (typeof userId !== "string" || !userId.trim())) {
+    response.status(400).json({ error: "userId must be a nonempty string." });
+    return;
+  }
+  if (userId !== undefined && userId !== getPlayer().id) {
+    response.status(404).json({ error: "Player not found." });
+    return;
+  }
+
+  response.status(201).json(await generateQuests(text.trim()));
 }
 
 export function postQuestCompletion(request: Request<{ id: string }>, response: Response): void {

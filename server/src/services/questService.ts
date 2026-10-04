@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { Player, Quest, QuestCategory, QuestDifficulty } from "../types/game.js";
 import { calculateLevel, getUnlockedAreas } from "./levelService.js";
 import { getRewards } from "./rewardService.js";
+import { generateQuestsFromText } from "./geminiService.js";
 import { getPlayer, getQuest, getQuests, savePlayer, saveQuest } from "./storageService.js";
 
 export function listQuests(): Quest[] {
@@ -26,6 +27,14 @@ export function createQuest(
   };
   saveQuest(quest);
   return quest;
+}
+
+export async function generateQuests(text: string): Promise<{ source: "gemini" | "mock-fallback"; quests: Quest[] }> {
+  const { source, quests: drafts } = await generateQuestsFromText(getPlayer(), text);
+  const quests = drafts.map((draft) =>
+    createQuest(draft.title, draft.difficulty, draft.category, draft.estimatedMinutes),
+  );
+  return { source, quests };
 }
 
 type CompletionResult =
