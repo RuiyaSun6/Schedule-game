@@ -10,7 +10,7 @@ export interface GeneratedQuestResult {
   quests: QuestDraft[];
 }
 
-const MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+const MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash";
 const TIMEOUT_MS = 12_000;
 
 let client: GoogleGenAI | null = null;

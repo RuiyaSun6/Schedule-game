@@ -6,7 +6,8 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "db:init": "tsx src/scripts/initDb.ts",
-    "test:ai": "tsx src/scripts/testGemini.ts"
+    "test:ai": "tsx src/scripts/testGemini.ts",
+    "test:db": "tsx src/scripts/testRepositories.ts"
   },
   "dependencies": {
     "@google/genai": "^2.27.0",

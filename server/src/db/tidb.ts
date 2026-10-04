@@ -8,18 +8,23 @@ export function isTiDBEnabled(): boolean {
   return Boolean(process.env.TIDB_HOST);
 }
 
-export function getPool(): mysql.Pool {
-  if (!isTiDBEnabled()) throw new Error("TiDB is not configured (TIDB_HOST missing)");
-  pool ??= mysql.createPool({
+export const databaseName = () => process.env.TIDB_DATABASE || "lifequest";
+
+/** Connection settings without a database selected (used by db:init to create the database). */
+export function serverConfig(): mysql.ConnectionOptions {
+  return {
     host: process.env.TIDB_HOST,
     port: Number(process.env.TIDB_PORT || 4000),
     user: process.env.TIDB_USER,
     password: process.env.TIDB_PASSWORD,
-    database: process.env.TIDB_DATABASE || "lifequest",
     ssl: { minVersion: "TLSv1.2", rejectUnauthorized: true },
-    connectionLimit: 5,
     multipleStatements: true,
-  });
+  };
+}
+
+export function getPool(): mysql.Pool {
+  if (!isTiDBEnabled()) throw new Error("TiDB is not configured (TIDB_HOST missing)");
+  pool ??= mysql.createPool({ ...serverConfig(), database: databaseName(), connectionLimit: 5 });
   return pool;
 }
 
