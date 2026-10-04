@@ -13,7 +13,8 @@
     "db:init": "tsx src/scripts/initDb.ts",
     "test:ai": "tsc && node dist/scripts/testGemini.js",
     "test:http": "tsc && node dist/scripts/testHttp.js",
-    "test:db": "tsc && node dist/scripts/testRepositories.js"
+    "test:db": "tsc && node dist/scripts/testRepositories.js",
+    "test:mock": "tsc && node --test dist/scripts/testMockQuests.js"
   },
   "dependencies": {
     "@google/genai": "^2.27.0",

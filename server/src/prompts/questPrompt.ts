@@ -14,10 +14,23 @@ Output strict JSON only, in exactly this shape:
   ]
 }
 
-Rules:
-- Split clearly separate real-life tasks into separate quests.
-- Keep titles short (max ~40 characters), game-like but understandable.
-- Do not invent obligations that the user did not mention.
+Splitting rules:
+- Every distinct subject, object, or activity becomes its own quest, even when they share one verb.
+  "prepare for X and Y" means two quests: one for X and one for Y.
+- Items joined by "and", commas, "then", or "also" are separate quests when they name different things.
+- Do not invent obligations that the user did not mention. Never add extra quests.
+
+Title rules:
+- Format: <specific content> + optional fun suffix, e.g. "Math Exam Prep: Equation Duel".
+- The title MUST contain the key nouns the user mentioned (subject, object, place, person, duration).
+- Fun words are decoration only; they never replace the specific content.
+- Never use vague titles that hide what the task is, such as "Big Project", "Boss Battle", "Study Quest", "Daily Challenge".
+- Keep titles within about 40 characters.
+
+Good titles: "Math Exam Prep: Equation Duel", "Physics Exam Prep: Force of Focus", "Laundry Quest: Sock Rescue", "Gym Raid: 60-Minute Power Run"
+Bad titles: "Boss Battle: Big Project", "Study Quest", "Daily Challenge"
+
+Other rules:
 - Use "boss" only for genuinely large deadlines, exams, major projects, or multi-step tasks.
 - Use "easy" for short/simple tasks, "medium" for moderate tasks, "hard" for demanding tasks.
 - estimatedMinutes must be a reasonable positive integer.
@@ -25,9 +38,10 @@ Rules:
 - Do not output markdown. Do not output commentary outside JSON.
 
 Examples:
-"Do laundry" -> {"title":"Laundry Run","category":"life","difficulty":"easy","estimatedMinutes":30}
-"Gym for one hour" -> {"title":"Gym Session","category":"health","difficulty":"medium","estimatedMinutes":60}
-"Finish algorithms assignment tonight" -> {"title":"Algorithms Assignment","category":"study","difficulty":"hard","estimatedMinutes":120}`;
+"Do laundry" -> {"quests":[{"title":"Laundry Quest: Sock Rescue","category":"life","difficulty":"easy","estimatedMinutes":30}]}
+"Gym for one hour" -> {"quests":[{"title":"Gym Raid: 60-Minute Power Run","category":"health","difficulty":"medium","estimatedMinutes":60}]}
+"Finish algorithms assignment tonight" -> {"quests":[{"title":"Algorithms Assignment: Code Crusade","category":"study","difficulty":"hard","estimatedMinutes":120}]}
+"prepare for math exam and physics exam" -> {"quests":[{"title":"Math Exam Prep: Equation Duel","category":"study","difficulty":"boss","estimatedMinutes":180},{"title":"Physics Exam Prep: Force of Focus","category":"study","difficulty":"boss","estimatedMinutes":180}]}`;
 
 export function buildQuestUserPrompt(text: string, similar: SimilarQuest[] = []): string {
   let prompt = `User's plan for today:\n"""${text.slice(0, 2000)}"""`;
