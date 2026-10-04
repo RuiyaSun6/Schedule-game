@@ -5,17 +5,23 @@ interface PixelModalProps {
   onClose: () => void;
   children: ReactNode;
   titleId: string;
+  inline?: boolean;
 }
 
-export default function PixelModal({ open, onClose, children, titleId }: PixelModalProps) {
+export default function PixelModal({ open, onClose, children, titleId, inline = false }: PixelModalProps) {
   const ref = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
     const dialog = ref.current;
-    if (!dialog) return;
+    if (!dialog || inline) return;
     if (open && !dialog.open) dialog.showModal();
     if (!open && dialog.open) dialog.close();
-  }, [open]);
+  }, [open, inline]);
+
+  if (inline) return open ? <div className="pixel-modal tutorial-computer-shell" role="group" aria-label="Bedroom computer">
+    <div className="computer-titlebar">LIFEQUEST · PERSONAL COMPUTER</div>
+    <div className="computer-content">{children}</div>
+  </div> : null;
 
   return (
     <dialog ref={ref} className="pixel-modal" aria-labelledby={titleId}

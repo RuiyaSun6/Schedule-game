@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Quest } from '../types';
 import QuestList, { type QuestCompletionProps } from './QuestList';
+import { questsByDate } from '../services/calendarSchedule';
 
 interface MonthlyCalendarProps extends QuestCompletionProps { quests: Quest[]; }
 function localDateKey(date = new Date()): string {
@@ -17,15 +18,7 @@ export default function MonthlyCalendar({ quests, ...completion }: MonthlyCalend
   const days = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
   const offset = month.getDay();
   const cellCount = Math.ceil((offset + days) / 7) * 7;
-  const byDate = new Map<string, Quest[]>();
-  for (const quest of quests) {
-    // The current backend owns scheduling; only undated quests default to today.
-    const date = quest.scheduledDate ?? today;
-    if (date) byDate.set(date, [...(byDate.get(date) ?? []), quest]);
-  }
-  for (const items of byDate.values()) {
-    items.sort((a, b) => (a.startTime ?? '99:99').localeCompare(b.startTime ?? '99:99'));
-  }
+  const byDate = questsByDate(quests, today);
   function navigate(delta: number) {
     const next = new Date(month.getFullYear(), month.getMonth() + delta, 1);
     setMonth(next);

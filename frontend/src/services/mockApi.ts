@@ -1,6 +1,7 @@
 import type { CompleteQuestResponse, Item, Player, Quest } from '../types';
 import { worldAreas } from './worldAreas';
 import { SHOP_SPRITES } from '../data/shopSprites';
+import { calculateLevel } from './levelProgression';
 
 export function createMockQuests(userId: string): Quest[] {
   const templates = [
@@ -18,7 +19,7 @@ export function mockCompleteQuest(quest: Quest, player: Player): CompleteQuestRe
   if (quest.completed || mockCompletions.has(key)) return { quest: { ...quest, completed: true }, player, levelUp: false, newlyUnlocked: [], source: 'mock-fallback' };
   mockCompletions.add(key);
   const xp = player.xp + quest.xpReward;
-  const level = Math.max(player.level, [0, 100, 250, 500, 800].filter((threshold) => xp >= threshold).length);
+  const level = calculateLevel(xp);
   const newlyUnlocked = worldAreas.filter((area) => area.requiredLevel <= level && !player.unlockedAreas.includes(area.id)).map((area) => area.id);
   return {
     quest: { ...quest, completed: true },

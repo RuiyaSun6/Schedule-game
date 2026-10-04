@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
-import type { PointerEvent, ReactNode } from 'react';
+import type { PointerEvent, ReactNode, RefObject } from 'react';
 
 // Scene-relative pixels. Each entry can later be sent as { objectId, x, y }.
 export interface WorldObjectPosition {
@@ -31,15 +31,15 @@ interface SceneState {
 
 const SceneContext = createContext<SceneState | null>(null);
 
-export function MoveModeScene({ className, label, children, editing, onEditingChange, floorOnly = false, toggleLabel = 'MOVE OBJECTS' }: { className: string; label: string; children: ReactNode; editing?: boolean; onEditingChange?: (value: boolean) => void; floorOnly?: boolean; toggleLabel?: string }) {
+export function MoveModeScene({ className, label, children, editing, onEditingChange, floorOnly = false, toggleLabel = 'MOVE OBJECTS', objectContainerRef, tutorialTarget, toggleTutorialTarget }: { className: string; label: string; children: ReactNode; editing?: boolean; onEditingChange?: (value: boolean) => void; floorOnly?: boolean; toggleLabel?: string; objectContainerRef?: RefObject<HTMLDivElement | null>; tutorialTarget?: string; toggleTutorialTarget?: string }) {
   const container = useRef<HTMLDivElement>(null);
   const [localMoveMode, setLocalMoveMode] = useState(false);
   const moveMode = editing ?? localMoveMode;
   const setMoveMode = onEditingChange ?? setLocalMoveMode;
-  return <SceneContext.Provider value={{ container, moveMode, floorOnly }}>
-    <div ref={container} className={`${className} move-mode-scene${moveMode ? ' is-editing' : ''}`} aria-label={label}>
+  return <SceneContext.Provider value={{ container: objectContainerRef ?? container, moveMode, floorOnly }}>
+    <div ref={container} className={`${className} move-mode-scene${moveMode ? ' is-editing' : ''}`} aria-label={label} data-tutorial={tutorialTarget}>
       {children}
-      <button className="move-mode-toggle" type="button" aria-pressed={moveMode}
+      <button className="move-mode-toggle" type="button" aria-pressed={moveMode} data-tutorial={toggleTutorialTarget}
         onClick={() => setMoveMode(!moveMode)}>
         {moveMode ? (editing === undefined ? 'DONE MOVING' : 'DONE') : toggleLabel}
       </button>

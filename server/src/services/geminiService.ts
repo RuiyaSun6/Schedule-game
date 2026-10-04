@@ -3,7 +3,8 @@ import { ApiError, GoogleGenAI } from "@google/genai";
 import type { Player, QuestDraft, SimilarQuest } from "../types/game.js";
 import { QUEST_SYSTEM_PROMPT, buildQuestUserPrompt } from "../prompts/questPrompt.js";
 import { parseQuestDrafts } from "./questValidation.js";
-import { generateMockQuestDrafts } from "./mockQuestGenerator.js";
+import { generateMockQuestDrafts, resolveQuestSchedules, splitTasks } from "./mockQuestGenerator.js";
+import { MAX_GENERATED_QUESTS } from "./questGenerationLimits.js";
 
 export interface GeneratedQuestResult {
   source: "gemini" | "mock-fallback";
@@ -67,7 +68,9 @@ export async function generateQuestsFromText(
     }
     const quests = parseQuestDrafts(response.text ?? "");
     if (!quests) return fallback("invalid JSON from Gemini");
-    return { source: "gemini", quests };
+    const taskCount = Math.min(splitTasks(text).length, MAX_GENERATED_QUESTS);
+    if (taskCount > quests.length) return fallback(`Gemini returned ${quests.length} of ${taskCount} tasks`);
+    return { source: "gemini", quests: resolveQuestSchedules(text, quests) };
   } catch (err) {
     return fallback(controller.signal.aborted ? "timeout" : (err as Error).message);
   } finally {

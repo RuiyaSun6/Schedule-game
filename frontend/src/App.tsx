@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router-dom';
+import { Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Player, Quest } from './types';
 import { RoomPlacementProvider } from './services/RoomPlacementContext';
@@ -18,9 +18,14 @@ import GardenPage from './pages/GardenPage';
 import CafePage from './pages/CafePage';
 import BuildingInteriorPage from './pages/buildings/BuildingInteriorPage';
 import { WorldBuildingsProvider } from './hooks/useWorldBuildings';
+import TutorialOverlay from './components/TutorialOverlay';
+import { hasCompletedTutorial, markTutorialComplete, tutorialSteps } from './services/tutorial';
 
 export default function App() {
-  const [hasSeenTutorial, setHasSeenTutorial] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [tutorialIndex, setTutorialIndex] = useState<number | null>(null);
+  const initializedTutorialFor = useRef<string | null>(null);
   const [acceptedQuests, setAcceptedQuests] = useState<Quest[]>([]);
   const [questsLoaded, setQuestsLoaded] = useState(false);
   const [questsError, setQuestsError] = useState('');
@@ -35,6 +40,30 @@ export default function App() {
   const [completionLine, setCompletionLine] = useState<string | null>(null);
   const queuedLevelUp = useRef<LevelUpDetails | null>(null);
   const [reward, setReward] = useState<{ xp: number; coins: number } | null>(null);
+  useEffect(() => {
+    if (!player || initializedTutorialFor.current === player.id) return;
+    initializedTutorialFor.current = player.id;
+    try {
+      if (!hasCompletedTutorial(localStorage, player.id)) setTutorialIndex(0);
+    } catch { setTutorialIndex(0); }
+  }, [player]);
+  useEffect(() => {
+    if (tutorialIndex === null) return;
+    const route = tutorialSteps[tutorialIndex].route;
+    if (location.pathname !== route) navigate(route);
+  }, [tutorialIndex, location.pathname, navigate]);
+
+  function finishTutorial() {
+    if (player) {
+      try { markTutorialComplete(localStorage, player.id); } catch { /* Replay remains available this session. */ }
+    }
+    setTutorialIndex(null);
+    navigate('/home');
+  }
+  function replayTutorial() {
+    setTutorialIndex(0);
+    navigate('/home');
+  }
   useEffect(() => {
     let active = true;
     getPlayer()
@@ -114,7 +143,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<WelcomePage />} />
           <Route path="/world" element={<WorldPage />} />
-          <Route path="/home" element={<HomePage onComplete={finishQuest} completingId={completingId} errors={completionErrors} notice={completionNotice} onAcceptQuest={acceptQuest} acceptedCount={acceptedQuests.length} quests={acceptedQuests} hasSeenTutorial={hasSeenTutorial} onCompleteTutorial={() => setHasSeenTutorial(true)} />} />
+          <Route path="/home" element={<HomePage onComplete={finishQuest} completingId={completingId} errors={completionErrors} notice={completionNotice} onAcceptQuest={acceptQuest} acceptedCount={acceptedQuests.length} quests={acceptedQuests} tutorialTab={tutorialIndex === null ? undefined : tutorialSteps[tutorialIndex].computerTab} />} />
           <Route path="/planner" element={<PlannerPage />} />
           <Route path="/quests" element={<QuestsPage quests={acceptedQuests} onComplete={finishQuest} completingId={completingId} errors={completionErrors} notice={completionNotice} />} />
           <Route path="/shop" element={<ShopPage />} />
@@ -124,6 +153,9 @@ export default function App() {
           <Route path="/building/:buildingId" element={<BuildingInteriorPage />} />
           <Route path="*" element={<h1>Page not found</h1>} />
         </Routes>
+      {tutorialIndex === null ? <button type="button" className="tutorial-replay" onClick={replayTutorial} title="Replay Tutorial">? <span>HELP</span></button>
+        : <TutorialOverlay index={tutorialIndex} onBack={() => setTutorialIndex((current) => current === null ? null : Math.max(0, current - 1))}
+          onNext={() => tutorialIndex === tutorialSteps.length - 1 ? finishTutorial() : setTutorialIndex(tutorialIndex + 1)} onSkip={finishTutorial} />}
       {reward && (reward.xp > 0 || reward.coins > 0) && <div className="reward-feedback" role="status">+{reward.xp} XP · +{reward.coins} coins</div>}
       <CompletionPopup line={completionLine} onClose={closeCompletionPopup} />
       <LevelUpModal details={levelUp} onClose={() => setLevelUp(null)} />

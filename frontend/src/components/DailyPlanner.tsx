@@ -48,7 +48,7 @@ export default function DailyPlanner({ onAccept, acceptedCount }: DailyPlannerPr
     <form aria-busy={loading} onSubmit={(event) => { event.preventDefault(); void generate(); }}>
       <label htmlFor="daily-tasks">What do you need to do today?</label>
       <textarea id="daily-tasks" value={text} disabled={loading} onChange={(event) => setText(event.target.value)} placeholder="Finish my algorithms assignment tonight, work out for one hour, and clean my room." aria-describedby={error ? 'planner-error' : undefined} aria-invalid={!!error} />
-      <PixelButton type="submit" aria-busy={loading} disabled={loading}>{loading ? 'CREATING QUESTS…' : 'GENERATE QUESTS'}</PixelButton>
+      <PixelButton type="submit" data-tutorial="ai-plan" aria-busy={loading} disabled={loading}>{loading ? 'CREATING QUESTS…' : 'GENERATE QUESTS'}</PixelButton>
     </form>
     {error && <p id="planner-error" className="planner-error" role="alert">{error}</p>}
     <p className="planner-notice" role="status">{loading ? 'Turning your day into little adventures…' : notice}</p>

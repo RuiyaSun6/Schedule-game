@@ -1,4 +1,5 @@
 import type { SimilarQuest } from "../types/game.js";
+import { MAX_GENERATED_QUESTS } from "../services/questGenerationLimits.js";
 
 export const QUEST_SYSTEM_PROMPT = `You convert a person's real-life plans into quests for LifeQuest, a cozy productivity game.
 
@@ -22,6 +23,7 @@ Splitting rules:
   "prepare for X and Y" means two quests: one for X and one for Y.
 - Items joined by "and", commas, "then", or "also" are separate quests when they name different things.
 - Do not invent obligations that the user did not mention. Never add extra quests.
+- Include every distinct task in the input, even when there are more than ten (up to ${MAX_GENERATED_QUESTS} quests).
 
 Title rules:
 - Format: <specific content> + optional fun suffix, e.g. "Math Exam Prep: Equation Duel".
@@ -51,6 +53,7 @@ Other rules:
 - Include optional scheduledDate only when the user specifies a day or date. Use YYYY-MM-DD and the current year when the year is omitted.
 - Include optional startTime and endTime only when the user specifies them. Use 24-hour HH:mm. A single time is startTime.
 - Resolve "today" and "tonight" to the current date, "tomorrow" to the next date, and named weekdays such as "Monday" or "this Friday" to their next occurrence, including today.
+- Resolve each task's own date separately. For example, "physics on Monday, math exam on Tuesday" must give the physics quest Monday's scheduledDate and the math quest Tuesday's scheduledDate, with neither weekday left only in a title.
 - A repeated schedule such as "every weekday" is one quest at most; do not create recurring dates.
 - Do not invent a date or time when the user has not given one.
 - Do not output XP, coins, or any reward values.

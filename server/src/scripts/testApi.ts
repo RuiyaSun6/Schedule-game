@@ -15,6 +15,7 @@ import { getRewards } from "../services/rewardService.js";
 import { CATALOG } from "../services/shopService.js";
 import { DEFAULT_PLAYER_ID } from "../types/defaultPlayer.js";
 import type { Item, Player, Quest } from "../types/game.js";
+import { twelveTaskDates, twelveTaskPlan } from "./twelveTaskPlan.js";
 
 const mode = process.argv[2] === "tidb" ? "tidb" : "memory";
 if (mode === "tidb" && !process.env.TIDB_HOST) throw new Error("tidb mode needs TIDB_HOST in .env");
@@ -97,6 +98,37 @@ try {
     assert.equal(listed.body.find((q) => q.id === quest.id)?.completionLine, quest.completionLine);
   }
   ok("GET /quests -> completionLine persisted");
+
+  const scheduled = await call<{ quests: Quest[] }>("POST", "/quests/generate", {
+    text: "Do math homework on October 8 from 5 PM to 7 PM",
+  });
+  assert.equal(scheduled.status, 201);
+  assert.deepEqual(scheduled.body.quests.map((quest) => [quest.scheduledDate, quest.startTime, quest.endTime]), [
+    ["2026-10-08", "17:00", "19:00"],
+  ]);
+  scheduled.body.quests.forEach((quest) => createdIds.push(quest.id));
+  const scheduledList = await call<Quest[]>("GET", "/quests");
+  for (const quest of scheduled.body.quests) {
+    const stored = scheduledList.body.find((entry) => entry.id === quest.id);
+    assert.deepEqual([stored?.scheduledDate, stored?.startTime, stored?.endTime],
+      [quest.scheduledDate, quest.startTime, quest.endTime]);
+  }
+  ok("scheduled dates and times persist for Calendar");
+
+  const twelve = await call<{ source: string; quests: Quest[] }>("POST", "/quests/generate", { text: twelveTaskPlan });
+  assert.equal(twelve.status, 201);
+  assert.equal(twelve.body.quests.length, 12);
+  assert.deepEqual(twelve.body.quests.map((quest) => quest.scheduledDate), twelveTaskDates);
+  assert.deepEqual([twelve.body.quests[10].startTime, twelve.body.quests[10].endTime], ["18:00", "19:00"]);
+  assert.deepEqual([twelve.body.quests[11].startTime, twelve.body.quests[11].endTime], ["14:00", "17:00"]);
+  twelve.body.quests.forEach((quest) => createdIds.push(quest.id));
+  const twelveStored = await call<Quest[]>("GET", "/quests");
+  for (const quest of twelve.body.quests) {
+    const stored = twelveStored.body.find((entry) => entry.id === quest.id);
+    assert.deepEqual([stored?.scheduledDate, stored?.startTime, stored?.endTime],
+      [quest.scheduledDate, quest.startTime, quest.endTime]);
+  }
+  ok("all twelve scheduled quests returned and persisted");
 
   // Manual quests skip Gemini and get the template line.
   const manual = await call<Quest>("POST", "/quests", { title: "Water the plants", difficulty: "easy" });

@@ -46,7 +46,7 @@ export default function HomeScene({ onOpenComputer, items, editing, onEditingCha
     <MoveModeScene className="bedroom" label="A simple bedroom with a bed, desk, and computer" editing={editing} onEditingChange={onEditingChange} floorOnly>
       <div className="room-wall" aria-hidden="true" />
       <div className="room-floor" aria-hidden="true" />
-      <WorldDoor className="bedroom-door" to="/world" prompt="GO OUTSIDE" />
+      <WorldDoor className="bedroom-door" to="/world" prompt="GO OUTSIDE" tutorialTarget="world" />
       <MovableObject objectId="home-bed" className="room-bed" name="Bed" {...placement('home-bed')}>
         <Sprite src={beds} sheetWidth={1920} sheetHeight={784} crop={[0, 112, 32, 32]} />
         <Sprite className="bed-bedding" src={beds} sheetWidth={1920} sheetHeight={784} crop={[384, 240, 32, 32]} />

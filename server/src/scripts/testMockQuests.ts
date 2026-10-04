@@ -1,7 +1,9 @@
 // Unit tests for the mock quest fallback: npm run test:mock
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { generateMockQuestDrafts } from "../services/mockQuestGenerator.js";
+import { generateMockQuestDrafts, resolveQuestSchedules } from "../services/mockQuestGenerator.js";
+import { parseQuestDrafts } from "../services/questValidation.js";
+import { twelveTaskDates, twelveTaskPlan } from "./twelveTaskPlan.js";
 
 const VAGUE = /big project|boss battle|study quest|daily challenge/i;
 
@@ -62,4 +64,50 @@ test("verb is not inherited across unrelated tasks", () => {
   assert.match(quests[0].title, /^Chem Quiz Prep/);
   assert.match(quests[1].title, /^Laundry/);
   assert.equal(quests[1].category, "life");
+});
+
+test("different weekdays stay attached to their own quests", () => {
+  const sunday = new Date(2026, 9, 4);
+  const quests = generateMockQuestDrafts("doing physics on Monday, math exam on Tuesday", sunday);
+  assert.deepEqual(quests.map((q) => q.scheduledDate), ["2026-10-05", "2026-10-06"]);
+  assert.ok(quests.every((q) => !/Monday|Tuesday/i.test(q.title)));
+});
+
+test("date and times are parsed per task, while undated tasks remain undated", () => {
+  const quests = generateMockQuestDrafts("study physics on 2026-10-05 from 5 PM to 7 PM, call mom tomorrow at 8am, do laundry", new Date(2026, 9, 4));
+  assert.deepEqual(quests.map((q) => [q.scheduledDate, q.startTime, q.endTime]), [
+    ["2026-10-05", "17:00", "19:00"],
+    ["2026-10-05", "08:00", undefined],
+    [undefined, undefined, undefined],
+  ]);
+});
+
+test("AI drafts receive dates from matching input tasks", () => {
+  const input = "doing physics on Monday, math exam on Tuesday";
+  const drafts = generateMockQuestDrafts("doing physics, math exam");
+  const resolved = resolveQuestSchedules(input, drafts, new Date(2026, 9, 4));
+  assert.deepEqual(resolved.map((q) => q.scheduledDate), ["2026-10-05", "2026-10-06"]);
+});
+
+test("October 8 input keeps its local date and 5 PM to 7 PM times", () => {
+  const input = "Do math homework on October 8 from 5 PM to 7 PM";
+  const today = new Date(2026, 9, 4);
+  const [fallback] = generateMockQuestDrafts(input, today);
+  assert.deepEqual([fallback.scheduledDate, fallback.startTime, fallback.endTime], ["2026-10-08", "17:00", "19:00"]);
+  assert.doesNotMatch(fallback.title, /October 8/i);
+
+  const [aiDraft] = resolveQuestSchedules(input, [{ ...fallback, scheduledDate: undefined }], today);
+  assert.deepEqual([aiDraft.scheduledDate, aiDraft.startTime, aiDraft.endTime], ["2026-10-08", "17:00", "19:00"]);
+});
+
+test("all twelve scheduled tasks survive fallback and AI response validation", () => {
+  const fallback = generateMockQuestDrafts(twelveTaskPlan, new Date(2026, 9, 4));
+  assert.equal(fallback.length, 12);
+  assert.deepEqual(fallback.map((quest) => quest.scheduledDate), twelveTaskDates);
+  assert.deepEqual([fallback[10].startTime, fallback[10].endTime], ["18:00", "19:00"]);
+  assert.deepEqual([fallback[11].startTime, fallback[11].endTime], ["14:00", "17:00"]);
+
+  const validated = parseQuestDrafts(JSON.stringify({ quests: fallback }));
+  assert.equal(validated?.length, 12);
+  assert.deepEqual(validated?.map((quest) => quest.scheduledDate), twelveTaskDates);
 });

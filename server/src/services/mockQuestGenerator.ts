@@ -1,10 +1,10 @@
 import type { QuestCategory, QuestDifficulty, QuestDraft } from "../types/game.js";
 import { randomCompletionLine } from "./completionLine.js";
+import { MAX_GENERATED_QUESTS } from "./questGenerationLimits.js";
 
 // Rule-based fallback used when Gemini is unavailable, so the demo never breaks.
 // Splits the user's text into tasks and builds titles from the user's own words.
 
-const MAX_QUESTS = 10;
 const MAX_TITLE = 40;
 
 // Task separators: commas, semicolons, newlines, sentence ends, "&", and/then/also/plus.
@@ -12,11 +12,13 @@ const SEPARATOR = /(?:\s*(?:[,;\n]|\.(?:\s|$)|&|\b(?:and|then|also|plus)\b)\s*)+
 const FILLER = /^(?:(?:i|we)\s+(?:need|have|want|plan|gotta)\s+to\s+|(?:i\s+)?(?:should|must|will|need\s+to|have\s+to)\s+|to\s+|please\s+)+/i;
 const TIME_WORDS = /\s*\b(?:later|asap|now)\b\s*$/i;
 
-// Dates and clock times belong in schedule fields, not titles. Removed before splitting,
-// which also keeps the dot in "a.m." from being read as a sentence end.
+// Dates and clock times belong in schedule fields, not titles.
 const CLOCK = String.raw`\d{1,2}(?::\d{2})?\s*(?:[ap]\.?m\b\.?)?`;
+const MONTH_NAMES = "jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?";
+const MONTH_DATE = new RegExp(String.raw`\b(?:on\s+)?(${MONTH_NAMES})\s+(\d{1,2})(?:st|nd|rd|th)?(?:,?\s+(\d{4}))?\b`, "i");
 const SCHEDULE_PHRASES: RegExp[] = [
   /\b(?:on\s+)?\d{4}-\d{2}-\d{2}\b/gi,
+  new RegExp(MONTH_DATE.source, "gi"),
   new RegExp(String.raw`\b(?:from\s+)?${CLOCK}\s*(?:-|to|until)\s*\d{1,2}(?::\d{2}\s*(?:[ap]\.?m\b\.?)?|\s*[ap]\.?m\b\.?)`, "gi"),
   /\b(?:at|by|around|before|after)?\s*\d{1,2}(?::\d{2})?\s*[ap]\.?m\b\.?/gi,
   /\b(?:at|by|around|before|after)\s+(?:\d{1,2}:\d{2}|noon|midnight)\b/gi,
@@ -85,22 +87,97 @@ function truncate(text: string, max: number): string {
   return cut.slice(0, cut.lastIndexOf(" ") > 0 ? cut.lastIndexOf(" ") : max);
 }
 
+function taskFragments(text: string): { content: string; schedule: string }[] {
+  // Keep schedule words beside their task until after splitting. Otherwise two
+  // weekdays in one plan cannot be assigned to the right quests.
+  return text.replace(/\b([ap])\.m\./gi, "$1m").split(SEPARATOR)
+    .map((schedule) => ({
+      schedule,
+      content: SCHEDULE_PHRASES.reduce((part, pattern) => part.replace(pattern, " "), schedule)
+        .replace(/\s+/g, " ").trim().replace(FILLER, "").replace(TIME_WORDS, "").trim(),
+    }))
+    .filter(({ content }) => content.length > 0);
+}
+
 export function splitTasks(text: string): string[] {
-  const withoutSchedule = SCHEDULE_PHRASES.reduce((acc, pattern) => acc.replace(pattern, " "), text);
-  return withoutSchedule
-    .split(SEPARATOR)
-    .map((part) => part.replace(/\s+/g, " ").trim().replace(FILLER, "").replace(TIME_WORDS, "").trim())
-    .filter((part) => part.length > 0);
+  return taskFragments(text).map(({ content }) => content);
+}
+
+function localDateKey(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function scheduleFor(fragment: string, today: Date): Pick<QuestDraft, "scheduledDate" | "startTime" | "endTime"> {
+  const date = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const explicit = fragment.match(/\b\d{4}-\d{2}-\d{2}\b/);
+  const monthDate = fragment.match(MONTH_DATE);
+  let scheduledDate: string | undefined;
+  if (explicit) {
+    const parsed = new Date(`${explicit[0]}T00:00:00Z`);
+    if (!Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === explicit[0]) scheduledDate = explicit[0];
+  } else if (monthDate) {
+    const month = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]
+      .findIndex((name) => monthDate[1].toLowerCase().startsWith(name));
+    const year = monthDate[3] ? Number(monthDate[3]) : date.getFullYear();
+    const day = Number(monthDate[2]);
+    const parsed = new Date(year, month, day);
+    if (parsed.getFullYear() === year && parsed.getMonth() === month && parsed.getDate() === day) scheduledDate = localDateKey(parsed);
+  } else if (/\b(?:today|tonight)\b/i.test(fragment)) {
+    scheduledDate = localDateKey(date);
+  } else if (/\btomorrow\b/i.test(fragment)) {
+    date.setDate(date.getDate() + 1);
+    scheduledDate = localDateKey(date);
+  } else {
+    const weekday = fragment.match(/\b(?:this\s+|next\s+|on\s+)?(sunday|monday|tuesday|wednesday|thursday|friday|saturday)\b/i);
+    if (weekday) {
+      const target = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"].indexOf(weekday[1].toLowerCase());
+      date.setDate(date.getDate() + (target - date.getDay() + 7) % 7);
+      scheduledDate = localDateKey(date);
+    }
+  }
+
+  const parseTime = (value: string, marker?: string): string | undefined => {
+    const match = value.trim().match(/^(\d{1,2})(?::(\d{2}))?\s*([ap]m)?$/i);
+    if (!match) return undefined;
+    let hours = Number(match[1]);
+    const minutes = Number(match[2] ?? 0);
+    const period = (match[3] ?? marker)?.toLowerCase();
+    if (minutes > 59 || hours > (period ? 12 : 23) || (period && hours === 0)) return undefined;
+    if (period) hours = hours % 12 + (period === "pm" ? 12 : 0);
+    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+  };
+  const range = fragment.match(/\bfrom\s+(\d{1,2}(?::\d{2})?\s*(?:[ap]m)?)\s*(?:-|to|until)\s*(\d{1,2}(?::\d{2})?\s*(?:[ap]m)?)/i);
+  if (range) {
+    const endMarker = range[2].match(/[ap]m/i)?.[0];
+    return { scheduledDate, startTime: parseTime(range[1], endMarker), endTime: parseTime(range[2]) };
+  }
+  const single = fragment.match(/\b(?:at|by|around)\s+(\d{1,2}(?::\d{2})?\s*[ap]m|\d{1,2}:\d{2})\b/i);
+  return { scheduledDate, ...(single && { startTime: parseTime(single[1]) }) };
+}
+
+/** Attach explicit per-task schedule phrases to AI drafts when task counts align. */
+export function resolveQuestSchedules(text: string, drafts: QuestDraft[], today = new Date()): QuestDraft[] {
+  const fragments = taskFragments(text);
+  if (fragments.length !== drafts.length) return drafts;
+  return drafts.map((draft, index) => {
+    const { scheduledDate, startTime, endTime } = scheduleFor(fragments[index].schedule, today);
+    return {
+      ...draft,
+      ...(scheduledDate && { scheduledDate }),
+      ...(startTime && { startTime }),
+      ...(endTime && { endTime }),
+    };
+  });
 }
 
 const classify = (text: string) => CLASSIFIERS.find((c) => c.pattern.test(text));
 
-export function generateMockQuestDrafts(text: string): QuestDraft[] {
+export function generateMockQuestDrafts(text: string, today = new Date()): QuestDraft[] {
   const drafts: QuestDraft[] = [];
   let previousVerb = "";
   let previousCategory: QuestCategory | undefined;
 
-  for (const fragment of splitTasks(text).slice(0, MAX_QUESTS)) {
+  for (const { content: fragment, schedule } of taskFragments(text).slice(0, MAX_GENERATED_QUESTS)) {
     const verbMatch = fragment.match(VERB);
     let object = (verbMatch ? fragment.slice(verbMatch[0].length) : fragment).trim();
     // Inherit only for the same kind of thing ("math exam and physics exam", "buy milk and eggs"),
@@ -132,6 +209,7 @@ export function generateMockQuestDrafts(text: string): QuestDraft[] {
       category: match.category,
       difficulty: match.difficulty,
       estimatedMinutes: Math.min(480, Math.max(5, minutes)),
+      ...scheduleFor(schedule, today),
       completionLine: randomCompletionLine(title),
     });
   }

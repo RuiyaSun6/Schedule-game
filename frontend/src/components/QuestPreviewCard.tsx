@@ -9,6 +9,17 @@ interface QuestPreviewCardProps {
   onAccept: () => void;
 }
 
+function formatDate(value: string): string {
+  const date = new Date(`${value}T12:00:00`);
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+}
+
+function formatTime(value: string): string {
+  const [hours, minutes] = value.split(':').map(Number);
+  if (!Number.isInteger(hours) || !Number.isInteger(minutes)) return value;
+  return `${hours % 12 || 12}:${String(minutes).padStart(2, '0')} ${hours < 12 ? 'AM' : 'PM'}`;
+}
+
 export default function QuestPreviewCard({ quest, onEdit, onDelete, onAccept }: QuestPreviewCardProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(quest);
@@ -21,6 +32,12 @@ export default function QuestPreviewCard({ quest, onEdit, onDelete, onAccept }: 
       <div className="quest-actions"><PixelButton type="submit" disabled={!draft.title.trim() || !draft.category.trim() || !draft.difficulty.trim()}>Save</PixelButton><PixelButton onClick={() => setEditing(false)}>Cancel</PixelButton></div>
     </form> : <>
       <h3>{quest.title}</h3>
+      {(quest.scheduledDate || quest.startTime || quest.endTime) && <p className="quest-schedule">
+        {quest.scheduledDate && <span>{formatDate(quest.scheduledDate)}</span>}
+        {(quest.startTime || quest.endTime) && <span>{quest.startTime && quest.endTime
+          ? `${formatTime(quest.startTime)} - ${formatTime(quest.endTime)}`
+          : formatTime(quest.startTime ?? quest.endTime!)}</span>}
+      </p>}
       <p className="quest-meta">{quest.category} · {quest.difficulty} · {quest.estimatedMinutes} min</p>
       <p className="quest-rewards">✦ {quest.xpReward} XP <span>🪙 {quest.coinReward} coins</span></p>
       <div className="quest-actions">

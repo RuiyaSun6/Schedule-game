@@ -86,7 +86,6 @@ body:has(.welcome-screen) { background: radial-gradient(ellipse at 50% 45%, #fff
 .door-prompt { position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); white-space: nowrap; padding: 6px 8px; background: #fff7dc; border: 2px solid #807c59; color: #5f714b; font-family: monospace; font-size: 10px; opacity: 0; transition: opacity 120ms; }
 .world-door:hover .door-prompt, .world-door:focus-visible .door-prompt { opacity: 1; }
 .home-game.outdoor-game { background: #bcc994; border-color: #7c8b65; height: 880px; min-height: 880px; aspect-ratio: auto; }
-.outdoor-path { position: absolute; left: 54%; top: 42%; width: 8%; height: 43%; pointer-events: none; background: #dfd0a9; border-inline: 2px solid #b4ba87; }
 .outdoor-home { position: absolute; top: 148px; left: 50%; transform: translateX(-50%); width: min(84%, 440px); display: block; cursor: pointer; z-index: 2; }
 .outdoor-home-image { display: block; width: 100%; height: auto; image-rendering: pixelated; }
 .home-entry { position: absolute; left: 57%; bottom: 13%; width: 13%; height: 28%; min-height: 44px; min-width: 44px; border-radius: 2px; pointer-events: none; }
@@ -113,6 +112,7 @@ body:has(.welcome-screen) { background: radial-gradient(ellipse at 50% 45%, #fff
 .quest-preview { padding: 16px; min-width: 0; }
 .quest-preview h3, .quest-preview h2 { font-size: 16px; line-height: 1.5; margin: 0 0 8px; overflow-wrap: anywhere; }
 .quest-meta { font-size: 12px; line-height: 1.6; color: #786d55; overflow-wrap: anywhere; }
+.quest-schedule { display: grid; gap: 2px; margin: 0 0 8px; color: #637e4b; font-family: monospace; font-size: 12px; line-height: 1.5; }
 .quest-rewards { font-family: monospace; font-size: 12px; color: #667a4c; display: flex; flex-wrap: wrap; gap: 16px; }
 .quest-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
 .computer-view .quest-actions .pixel-button { width: auto; flex: 1; padding: 9px 10px; font-size: 11px; letter-spacing: 0; }

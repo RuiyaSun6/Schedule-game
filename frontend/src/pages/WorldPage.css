@@ -1,6 +1,48 @@
-/* World: one clean, muted green field. Buildings are the only scenery. */
-.home-game.outdoor-game.world-field { background: #a9c38b; border-color: #7c8b65; }
+/* Outdoor scenery is a painted layer: it never catches a tap or a building drag. */
+.home-game.outdoor-game.world-field { background: #76b568; border-color: #386c3d; }
 .world-scene { position: absolute; inset: 0; overflow: hidden; }
+.world-canvas { position: absolute; top: 0; left: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(3, minmax(0, 1fr)); transform: translate(-33.333333%, -33.333333%); cursor: grab; touch-action: none; user-select: none; }
+.world-canvas.is-dragging { cursor: grabbing; }
+.world-region { position: relative; overflow: hidden; background: #76b568; }
+.world-region-outer > * { position: absolute; pointer-events: none; }
+.world-region-outer .world-tree, .world-region-outer .world-bush, .world-region-outer .world-flower, .world-region-outer .world-rock, .world-region-outer .world-tuft { z-index: 1; }
+.world-outer-river-bank, .world-outer-river { top: 0; bottom: 0; }
+.world-region-upper-river .world-outer-river-bank, .world-region-lower-river .world-outer-river-bank { right: -2%; width: 29%; background: #4b9b55; }
+.world-region-upper-river .world-outer-river, .world-region-lower-river .world-outer-river { right: -2%; width: 27%; background: #298fc9; }
+.world-region-upper-river .world-outer-river-bank { clip-path: polygon(23% 0,100% 0,100% 100%,36% 100%,36% 88%,27% 88%,27% 70%,34% 70%,34% 49%,20% 49%,20% 27%,28% 27%); }
+.world-region-upper-river .world-outer-river { clip-path: polygon(30% 0,100% 0,100% 100%,42% 100%,42% 88%,34% 88%,34% 70%,41% 70%,41% 49%,27% 49%,27% 27%,35% 27%); }
+.world-region-lower-river .world-outer-river-bank { clip-path: polygon(15% 0,100% 0,100% 100%,28% 100%,28% 85%,19% 85%,19% 66%,30% 66%,30% 45%,21% 45%,21% 23%,15% 23%); }
+.world-region-lower-river .world-outer-river { clip-path: polygon(22% 0,100% 0,100% 100%,35% 100%,35% 85%,26% 85%,26% 66%,37% 66%,37% 45%,28% 45%,28% 23%,22% 23%); }
+.world-region-east-river .world-outer-river-bank { left: 0; width: 33%; background: #4b9b55; clip-path: polygon(0 0,89% 0,89% 17%,100% 17%,100% 39%,83% 39%,83% 61%,96% 61%,96% 82%,86% 82%,86% 100%,0 100%); }
+.world-region-east-river .world-outer-river { left: 0; width: 30%; background: #298fc9; clip-path: polygon(0 0,87% 0,87% 17%,98% 17%,98% 39%,81% 39%,81% 61%,94% 61%,94% 82%,84% 82%,84% 100%,0 100%); }
+.world-environment { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.world-environment > * { position: absolute; }
+
+/* The shore steps in and out while the river changes width along the map. */
+.world-river-bank, .world-river { top: 0; bottom: 0; right: -2%; }
+.world-river-bank { width: 29%; background: #4b9b55; clip-path: polygon(36% 0,100% 0,100% 100%,15% 100%,15% 91%,26% 91%,26% 83%,17% 83%,17% 72%,31% 72%,31% 64%,18% 64%,18% 54%,30% 54%,30% 44%,40% 44%,40% 35%,28% 35%,28% 27%,41% 27%,41% 18%,29% 18%,29% 10%,36% 10%); }
+.world-river { width: 27%; background: #298fc9; clip-path: polygon(42% 0,100% 0,100% 100%,22% 100%,22% 91%,33% 91%,33% 83%,24% 83%,24% 72%,38% 72%,38% 64%,25% 64%,25% 54%,37% 54%,37% 44%,47% 44%,47% 35%,35% 35%,35% 27%,48% 27%,48% 18%,36% 18%,36% 10%,42% 10%); }
+.river-ripple { width: 16px; height: 4px; background: #b9eff8; box-shadow: 8px 5px #84d5f2, -5px 11px #64c2eb; }
+.river-ripple.ripple-1 { transform: scale(.7); }
+.river-ripple.ripple-2 { transform: scale(1.25); }
+
+/* Pixel foliage and flowers use hard blocks and varied shades. */
+.world-tuft { width: 4px; height: 11px; background: #2e8f41; box-shadow: 5px 4px #258944, 11px 0 #489f40, 3px 8px #236e38, 14px 8px #66a943; }
+.world-tuft.tuft-1 { transform: scale(.75); }.world-tuft.tuft-2 { transform: scale(1.3); }
+.world-flower { width: 5px; height: 5px; background: #fff6df; box-shadow: -5px 4px #fff6df, 5px 4px #fff6df, 0 9px #fff6df, 0 5px #ed973b, 0 14px #297e43, 5px 18px #297e43, 15px 5px #fff6df, 20px 9px #fff6df, 15px 14px #fff6df; }
+.world-flower.flower-1 { background: #f15e91; box-shadow: -5px 4px #f15e91, 5px 4px #f15e91, 0 9px #f15e91, 0 5px #ffd054, 0 14px #297e43, 5px 18px #297e43, 15px 5px #f15e91, 20px 9px #f15e91, 15px 14px #f15e91; }
+.world-flower.flower-2 { background: #ffc74c; box-shadow: -5px 4px #ffc74c, 5px 4px #ffc74c, 0 9px #ffc74c, 0 5px #f17639, 0 14px #297e43, 5px 18px #297e43, 15px 5px #ffc74c, 20px 9px #ffc74c, 15px 14px #ffc74c; }
+.world-flower.flower-3 { background: #aa7cec; box-shadow: -5px 4px #aa7cec, 5px 4px #aa7cec, 0 9px #aa7cec, 0 5px #ffe879, 0 14px #297e43, 5px 18px #297e43, 15px 5px #aa7cec, 20px 9px #aa7cec, 15px 14px #aa7cec; }
+.world-bush { width: 31px; height: 18px; background: #277a40; border: 4px solid #1d6838; box-shadow: 6px 5px #409a49, -5px 7px #4cac4a; }
+.world-bush::before { content: ''; position: absolute; left: 4px; top: -8px; width: 16px; height: 7px; background: #61b955; }
+.world-bush.bush-1 { transform: scale(.8); filter: hue-rotate(17deg); }
+.world-rock { width: 20px; height: 12px; background: #9baaa3; border-left: 4px solid #d9ded2; border-bottom: 4px solid #667f77; clip-path: polygon(20% 0,80% 0,80% 25%,100% 25%,100% 100%,0 100%,0 35%,20% 35%); }
+.world-tree { width: 16px; height: 24px; background: #75492e; box-shadow: 4px 5px #367d3e; }
+.world-tree::before { content: ''; position: absolute; left: -15px; bottom: 15px; width: 46px; height: 37px; background: #237d42; border: 5px solid #195f38; clip-path: polygon(25% 0,75% 0,75% 18%,90% 18%,90% 42%,100% 42%,100% 88%,80% 88%,80% 100%,15% 100%,15% 88%,0 88%,0 42%,12% 42%,12% 18%,25% 18%); }
+.world-tree::after { content: ''; position: absolute; left: -7px; bottom: 39px; width: 23px; height: 7px; background: #59b34e; box-shadow: 13px 12px #3d9e48; }
+.world-tree.tree-1 { transform: scale(.8); filter: hue-rotate(12deg) brightness(1.13); }
+.world-tree.tree-2 { transform: scale(1.15); filter: hue-rotate(-8deg); }
+.world-tree.tree-3 { transform: scale(.9); filter: brightness(.86); }
 
 /* Home: existing exterior, at the same 2x scale as the other buildings. */
 .world-field .outdoor-home { top: 150px; width: 192px; }
@@ -28,9 +70,15 @@
 .building-shop-button { position: absolute; left: 14px; bottom: 28px; z-index: 5; display: grid; place-items: center; width: 48px; height: 48px; padding: 0; cursor: pointer; touch-action: manipulation; }
 .building-shop-button:hover { background: #edf0dc; }
 .building-shop-button:active { transform: translateY(2px); }
+.world-home-button { position: absolute; left: 14px; bottom: 88px; z-index: 5; display: grid; place-items: center; width: 48px; height: 48px; padding: 0; cursor: pointer; touch-action: manipulation; }
+.world-home-button:hover { background: #edf0dc; }
+.world-home-button:active { transform: translateY(2px); }
+.world-home-button:focus-visible { outline: 3px solid #fff7dc; outline-offset: 3px; }
 @media (min-width: 700px) { .building-shop-button { left: 24px; } }
+@media (min-width: 700px) { .world-home-button { left: 24px; } }
 @media (max-width: 480px) {
   .building-shop-button { left: 12px; bottom: 18px; }
+  .world-home-button { left: 12px; bottom: 78px; }
   .placement-banner { bottom: 18px; width: calc(100% - 92px); left: calc(50% + 32px); }
 }
 

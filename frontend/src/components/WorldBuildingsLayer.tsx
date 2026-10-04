@@ -16,9 +16,10 @@ function BuildingArt({ id }: { id: BuildingId }) {
 
 // Placed buildings in the world (enter on click; drag/store in MOVE BUILDINGS mode), plus the
 // draft building during placement mode. Must render inside the World's MoveModeScene.
-export default function WorldBuildingsLayer({ placing, onDraftMove }: {
+export default function WorldBuildingsLayer({ placing, onDraftMove, tileOrigin }: {
   placing: { id: BuildingId; x: number; y: number } | null;
   onDraftMove: (x: number, y: number) => void;
+  tileOrigin: { x: number; y: number };
 }) {
   const buildings = useWorldBuildings();
   const navigate = useNavigate();
@@ -26,7 +27,8 @@ export default function WorldBuildingsLayer({ placing, onDraftMove }: {
     {buildings.placed.filter((p) => p.buildingId !== placing?.id).map((p) => {
       const building = getBuilding(p.buildingId)!;
       return <MovableObject key={p.instanceId} objectId={p.instanceId} className={`world-building world-building-${p.buildingId}`} name={building.name}
-        position={{ objectId: p.instanceId, x: p.x, y: p.y }} onPositionChange={(pos) => buildings.move(p.instanceId, pos.x, pos.y)}
+        position={{ objectId: p.instanceId, x: p.x + tileOrigin.x, y: p.y + tileOrigin.y }}
+        onPositionChange={(pos) => buildings.move(p.instanceId, pos.x - tileOrigin.x, pos.y - tileOrigin.y)}
         onStore={() => buildings.store(p.instanceId)}>
         {(moveMode) => <button type="button" className="world-building-button" aria-label={moveMode ? `Drag ${building.name}` : `Enter ${building.name}`}
           onClick={() => { if (!moveMode) navigate(buildingRoute(p.buildingId)); }}>

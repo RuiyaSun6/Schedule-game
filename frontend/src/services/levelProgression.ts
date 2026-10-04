@@ -1,16 +1,16 @@
+// Match the server's levelService: XP is cumulative and each threshold is per level.
 const XP_TO_NEXT_LEVEL = [300, 500, 800, 1200] as const;
 
 export function xpRequiredForLevel(level: number): number {
-  if (level < 1 || !Number.isInteger(level)) throw new RangeError("Level must be a positive integer");
+  if (level < 1 || !Number.isInteger(level)) throw new RangeError('Level must be a positive integer');
   return XP_TO_NEXT_LEVEL[level - 1] ?? 1200 + (level - 4) * 400;
 }
 
-const AREA_UNLOCKS = [
-  { level: 1, area: "village" },
-  { level: 2, area: "forest" },
-  { level: 3, area: "mountains" },
-  { level: 5, area: "castle" },
-] as const;
+export function xpAtLevel(level: number): number {
+  let xp = 0;
+  for (let currentLevel = 1; currentLevel < level; currentLevel++) xp += xpRequiredForLevel(currentLevel);
+  return xp;
+}
 
 export function calculateLevel(xp: number): number {
   let level = 1;
@@ -22,10 +22,4 @@ export function calculateLevel(xp: number): number {
     needed = xpRequiredForLevel(level);
   }
   return level;
-}
-
-export function getUnlockedAreas(level: number): string[] {
-  return AREA_UNLOCKS.filter((unlock) => level >= unlock.level).map(
-    (unlock) => unlock.area,
-  );
 }

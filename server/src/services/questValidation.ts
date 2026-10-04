@@ -6,10 +6,10 @@ import {
   type QuestDraft,
 } from "../types/game.js";
 import { normalizeCompletionLine } from "./completionLine.js";
+import { MAX_GENERATED_QUESTS } from "./questGenerationLimits.js";
 
 const MIN_MINUTES = 5;
 const MAX_MINUTES = 480;
-const MAX_QUESTS = 10;
 const MAX_TITLE = 60;
 
 const DEFAULT_MINUTES: Record<QuestDifficulty, number> = { easy: 30, medium: 60, hard: 120, boss: 240 };
@@ -75,6 +75,6 @@ export function parseQuestDrafts(rawText: string): QuestDraft[] | null {
   const drafts = list
     .map(validateQuestDraft)
     .filter((q): q is QuestDraft => q !== null)
-    .slice(0, MAX_QUESTS);
+    .slice(0, MAX_GENERATED_QUESTS);
   return drafts.length > 0 ? drafts : null;
 }

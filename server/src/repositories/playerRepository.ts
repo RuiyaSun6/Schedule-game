@@ -2,7 +2,7 @@ import type { RowDataPacket } from "mysql2/promise";
 import type mysql from "mysql2/promise";
 import type { Player } from "../types/game.js";
 import { getPool } from "../db/tidb.js";
-import { getUnlockedAreas } from "../services/levelService.js";
+import { calculateLevel, getUnlockedAreas } from "../services/levelService.js";
 
 type Queryable = mysql.Pool | mysql.PoolConnection;
 
@@ -14,13 +14,14 @@ export async function getPlayer(userId: string, db: Queryable = getPool()): Prom
     [userId],
   );
   const p = rows[0];
+  const level = calculateLevel(p.xp);
   return {
     id: p.id,
-    level: p.level,
+    level,
     xp: p.xp,
     coins: p.coins,
     outfit: p.outfit,
-    unlockedAreas: getUnlockedAreas(p.level),
+    unlockedAreas: getUnlockedAreas(level),
     ownedItems: items.map((r) => r.item_id),
     itemCounts: Object.fromEntries(items.map((r) => [r.item_id, Number(r.quantity) || 1])),
   };
