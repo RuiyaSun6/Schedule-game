@@ -2,10 +2,7 @@ import type { RowDataPacket } from "mysql2/promise";
 import type mysql from "mysql2/promise";
 import type { Player } from "../types/game.js";
 import { getPool } from "../db/tidb.js";
-
-// Mirrors levelService.getUnlockedAreas(); swap for that import once Person 2's service is merged.
-const AREAS_BY_LEVEL = ["home", "garden", "cafe", "studio", "town-square"];
-const unlockedAreasFor = (level: number) => AREAS_BY_LEVEL.slice(0, Math.max(1, Math.min(level, 5)));
+import { getUnlockedAreas } from "../services/levelService.js";
 
 type Queryable = mysql.Pool | mysql.PoolConnection;
 
@@ -23,7 +20,7 @@ export async function getPlayer(userId: string, db: Queryable = getPool()): Prom
     xp: p.xp,
     coins: p.coins,
     outfit: p.outfit,
-    unlockedAreas: unlockedAreasFor(p.level),
+    unlockedAreas: getUnlockedAreas(p.level),
     ownedItems: items.map((r) => r.item_id),
   };
 }

@@ -30,7 +30,7 @@ npm run db:init                   # create tables and seed items/demo-user
 import { randomUUID } from "node:crypto";
 import { generateQuestsFromText } from "../services/geminiService.js";
 import { findSimilarCompletedQuests } from "../services/questMemoryService.js";
-import { getRewardForDifficulty } from "../services/rewardService.js"; // Person 2
+import { getRewards } from "../services/rewardService.js"; // Person 2
 
 const { userId, text } = req.body ?? {};
 if (!userId || typeof text !== "string" || !text.trim())
@@ -41,8 +41,8 @@ if (!player) return res.status(404).json({ error: "Player not found" });
 const similar = await findSimilarCompletedQuests(userId, text);   // optional
 const { source, quests: drafts } = await generateQuestsFromText(player, text, similar);
 const quests = drafts.map((d) => {
-  const r = getRewardForDifficulty(d.difficulty);                  // rewards come from backend rules, not Gemini
-  return { ...d, id: randomUUID(), userId, xpReward: r.xp, coinReward: r.coins, completed: false };
+  // rewards come from backend rules, not Gemini
+  return { ...d, id: randomUUID(), userId, ...getRewards(d.difficulty), completed: false };
 });
 await storage.addQuests(quests);
 res.json({ source, quests });

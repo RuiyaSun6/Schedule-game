@@ -2,6 +2,7 @@
 
 export type QuestCategory = "study" | "health" | "life" | "social" | "creative";
 export type QuestDifficulty = "easy" | "medium" | "hard" | "boss";
+export type ItemType = "furniture" | "garden" | "clothing";
 
 export const QUEST_CATEGORIES: QuestCategory[] = ["study", "health", "life", "social", "creative"];
 export const QUEST_DIFFICULTIES: QuestDifficulty[] = ["easy", "medium", "hard", "boss"];
@@ -31,10 +32,12 @@ export interface Quest {
 export interface Item {
   id: string;
   name: string;
-  type: "furniture" | "garden" | "clothing";
+  description?: string;
+  type: ItemType;
   price: number;
   asset: string;
-  owned: boolean;
+  // Only set on per-player catalog responses.
+  owned?: boolean;
 }
 
 // What Gemini is allowed to decide. Rewards are NOT part of this.

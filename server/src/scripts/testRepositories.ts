@@ -7,10 +7,8 @@ import assert from "node:assert/strict";
 import { getPool } from "../db/tidb.js";
 import { createPlayer, getPlayer } from "../repositories/playerRepository.js";
 import { completeQuest, createQuests } from "../repositories/questRepository.js";
+import { calculateLevel } from "../services/levelService.js";
 import type { Quest } from "../types/game.js";
-
-// Stand-in for Person 2's levelService.calculateLevel.
-const calculateLevel = (totalXp: number) => Math.floor(totalXp / 100) + 1;
 
 const testUserId = `test-${randomUUID().slice(0, 8)}`;
 const makeQuest = (title: string): Quest => ({
