@@ -10,6 +10,7 @@ import BuildingShopModal from '../components/BuildingShopModal';
 import WorldBuildingsLayer, { buildingDisplaySize } from '../components/WorldBuildingsLayer';
 import WorldEnvironment from '../components/WorldEnvironment';
 import WorldOuterRegions from '../components/WorldOuterRegions';
+import { usePlayer } from '../services/PlayerContext';
 import { MoveModeScene } from '../components/MoveModeScene';
 import { useWorldBuildings } from '../hooks/useWorldBuildings';
 import { getBuilding, buildingExterior } from '../data/buildingCatalog';
@@ -20,14 +21,16 @@ import './WorldPage.css';
 interface PanStart { pointerId: number; x: number; y: number; camera: WorldPoint }
 
 // The viewport shows one region of a three-by-three world; the village is the center region.
-export default function WorldPage({ quests, onComplete, completingId, errors, notice }: QuestCompletionProps & { quests: Quest[] }) {
+export default function WorldPage({ quests, onComplete, completingId, errors, notice, tutorialTarget }: QuestCompletionProps & { quests: Quest[]; tutorialTarget?: string }) {
   const buildings = useWorldBuildings();
+  const player = usePlayer();
   const sceneRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const hudRef = useRef<HTMLDivElement>(null);
   const [viewport, setViewport] = useState({ width: 0, height: 0 });
   const [camera, setCameraState] = useState<WorldPoint>(HOME_CAMERA);
   const cameraRef = useRef(camera);
+  const recenterFrame = useRef<number | null>(null);
   const pan = useRef<PanStart | null>(null);
   const [dragging, setDragging] = useState(false);
   const [shopOpen, setShopOpen] = useState(false);
@@ -40,19 +43,59 @@ export default function WorldPage({ quests, onComplete, completingId, errors, no
     setCameraState(next);
   }
 
+  function stopRecentering() {
+    if (recenterFrame.current !== null) cancelAnimationFrame(recenterFrame.current);
+    recenterFrame.current = null;
+  }
+
+  function returnHome() {
+    stopRecentering();
+    const from = cameraRef.current;
+    if (from.x === HOME_CAMERA.x && from.y === HOME_CAMERA.y) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      updateCamera(HOME_CAMERA);
+      return;
+    }
+    const start = performance.now();
+    const duration = 220;
+    const animate = (now: number) => {
+      const progress = Math.min(1, (now - start) / duration);
+      const eased = 1 - (1 - progress) ** 3;
+      if (progress < 1) {
+        updateCamera({
+          x: from.x + (HOME_CAMERA.x - from.x) * eased,
+          y: from.y + (HOME_CAMERA.y - from.y) * eased,
+        });
+        recenterFrame.current = requestAnimationFrame(animate);
+      } else {
+        updateCamera(HOME_CAMERA);
+        recenterFrame.current = null;
+      }
+    };
+    recenterFrame.current = requestAnimationFrame(animate);
+  }
+
   useEffect(() => {
     const scene = sceneRef.current;
     if (!scene) return;
     const measure = () => {
       const size = { width: scene.clientWidth, height: scene.clientHeight };
       setViewport(size);
+      stopRecentering();
       updateCamera(clampCamera(cameraRef.current, size));
     };
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(scene);
-    return () => observer.disconnect();
+    return () => { observer.disconnect(); stopRecentering(); };
   }, []);
+
+  useEffect(() => {
+    if (tutorialTarget === 'home') {
+      stopRecentering();
+      updateCamera(HOME_CAMERA);
+    }
+  }, [tutorialTarget]);
 
   // Match the Player panel's actual height, including responsive text and padding.
   useLayoutEffect(() => {
@@ -70,6 +113,7 @@ export default function WorldPage({ quests, onComplete, completingId, errors, no
     if (placing || (event.pointerType === 'mouse' && event.button !== 0)) return;
     const target = event.target;
     if (target instanceof Element && target.closest('a, button, input, select, textarea, [role="button"], .world-building, .placement-catcher')) return;
+    stopRecentering();
     pan.current = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, camera: cameraRef.current };
     event.currentTarget.setPointerCapture(event.pointerId);
     setDragging(true);
@@ -128,9 +172,10 @@ export default function WorldPage({ quests, onComplete, completingId, errors, no
           <WorldOuterRegions />
           <div className="world-region world-region-center" style={{ gridColumn: 2, gridRow: 2 }}>
             <WorldEnvironment sceneRef={sceneRef} placed={buildings.placed} />
-            <BuildingEntryButton id="home" className="outdoor-home" editing={editing || placing !== null}>
+            {player.ownedItems?.includes('reward-world-crown') && <div className="world-achievement-monument" title="LifeQuest Master monument" aria-label="LifeQuest Master monument"><img src="/assets/rewards/world-crown.svg" alt="" /></div>}
+            <BuildingEntryButton id="home" className="outdoor-home" editing={editing || placing !== null} tutorialTarget="home">
               <img className="outdoor-home-image" src={buildingExterior('home', buildings.level('home'))} alt="" width={96} height={128} />
-              <span className="home-entry" aria-hidden="true" data-tutorial="home">
+              <span className="home-entry" aria-hidden="true">
                 <span className="door-prompt">ENTER HOME</span>
               </span>
               {buildings.level('home') > 1 && <span className="building-level-badge">Lv.{buildings.level('home')}</span>}
@@ -144,7 +189,7 @@ export default function WorldPage({ quests, onComplete, completingId, errors, no
         <GameTopBar />
         <TodaysTasksPanel quests={quests} onComplete={onComplete} completingId={completingId} errors={errors} notice={notice} />
       </div>
-      <GameHudActions onOpenBuildings={() => setShopOpen(true)} />
+      <GameHudActions onOpenBuildings={() => setShopOpen(true)} onReturnHome={returnHome} />
       {placing && <div className="placement-banner pixel-panel" role="status">
         <p>Drag the {placingName}, or tap where it should go.</p>
         <div className="placement-actions">

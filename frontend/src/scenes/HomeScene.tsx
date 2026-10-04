@@ -13,6 +13,8 @@ import { MovableObject, MoveModeScene } from '../components/MoveModeScene';
 
 interface HomeSceneProps {
   onOpenComputer: () => void;
+  onOpenRewardBoard: () => void;
+  claimedBadges: number;
   items: Item[];
   editing: boolean;
   onEditingChange: (editing: boolean) => void;
@@ -39,15 +41,19 @@ function Sprite({ src, sheetWidth, sheetHeight, crop, className }: SpriteProps) 
   </svg>;
 }
 
-export default function HomeScene({ onOpenComputer, items, editing, onEditingChange }: HomeSceneProps) {
+export default function HomeScene({ onOpenComputer, onOpenRewardBoard, claimedBadges, items, editing, onEditingChange }: HomeSceneProps) {
   const room = useRoomPlacement();
   const player = usePlayer();
   const placement = (objectId: string) => ({ position: room.positions[objectId], onPositionChange: room.setPosition });
   return (
-    <MoveModeScene className="bedroom" label="A simple bedroom with a bed, desk, and computer" editing={editing} onEditingChange={onEditingChange} floorOnly>
+    <MoveModeScene className="bedroom" label="A simple bedroom with a bed, desk, and computer" editing={editing} onEditingChange={onEditingChange} toggleTutorialTarget="move-objects" floorOnly>
       {/* The equipped wallpaper tiles across the wall at the room's pixel scale. */}
       <div className="room-wall" aria-hidden="true" style={wallpaperStyle(room.wallpaper, 'var(--room-scale)')} />
       <div className="room-floor" aria-hidden="true" />
+      <button type="button" className="reward-board-wall" data-tutorial="reward-board" onClick={onOpenRewardBoard}
+        aria-label={`Open Reward Board, ${claimedBadges} badges earned`} title="Reward Board">
+        <span>REWARDS</span><span className="reward-board-pins" aria-hidden="true">{claimedBadges ? '★'.repeat(Math.min(3, claimedBadges)) : '✦ ✦'}</span>
+      </button>
       <WorldDoor className="bedroom-door" to="/world" prompt="GO OUTSIDE" tutorialTarget="world" />
       <MovableObject objectId="home-bed" className="room-bed" name="Bed" {...placement('home-bed')}>
         <Sprite src={beds} sheetWidth={1920} sheetHeight={784} crop={[0, 112, 32, 32]} />
@@ -72,7 +78,7 @@ export default function HomeScene({ onOpenComputer, items, editing, onEditingCha
         <PetCorner />
       </MovableObject>
       <MovableObject objectId="home-computer" className="room-computer" name="Computer" {...placement('home-computer')}>
-        {(moveMode) => <button className="room-computer-button" type="button"
+        {(moveMode) => <button className="room-computer-button" type="button" data-tutorial="computer"
           onClick={() => { if (!moveMode) onOpenComputer(); }}
           aria-label={moveMode ? 'Drag computer' : 'Open computer'}>
           <span className="computer-prompt">OPEN ME!</span>

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useWorldBuildings } from '../hooks/useWorldBuildings';
 import GameTopBar from '../components/GameTopBar';
@@ -15,18 +15,25 @@ import TodaysTasksPanel from '../components/TodaysTasksPanel';
 import type { QuestCompletionProps } from '../components/QuestList';
 import QuestBoard from '../components/QuestBoard';
 import HomeScene from '../scenes/HomeScene';
+import RewardBoard from '../components/RewardBoard';
+import { getHabitBoard } from '../services/api';
+import type { HabitBoard } from '../types';
 
 interface HomePageProps extends QuestCompletionProps {
   tutorialTab?: 'plan' | 'quests' | 'calendar';
+  tutorialActive?: boolean;
   onAcceptQuest: (quest: Quest) => void;
   acceptedCount: number;
   quests: Quest[];
 }
 
-export default function HomePage({ tutorialTab, onAcceptQuest, acceptedCount, quests, onComplete, completingId, errors, notice }: HomePageProps) {
+export default function HomePage({ tutorialTab, tutorialActive = false, onAcceptQuest, acceptedCount, quests, onComplete, completingId, errors, notice }: HomePageProps) {
   const catalog = useCatalog();
   const buildings = useWorldBuildings();
   const [backpackOpen, setBackpackOpen] = useState(false);
+  const [rewardBoardOpen, setRewardBoardOpen] = useState(false);
+  const [habitBoard, setHabitBoard] = useState<HabitBoard | null>(null);
+  const [boardLoadError, setBoardLoadError] = useState('');
   const room = useRoomPlacement();
   const sceneRef = useRef<HTMLElement>(null);
   const [editing, setEditing] = useState(false);
@@ -34,6 +41,21 @@ export default function HomePage({ tutorialTab, onAcceptQuest, acceptedCount, qu
   const [activeTab, setActiveTab] = useState<'plan' | 'quests' | 'calendar'>('plan');
   const shownTab = tutorialTab ?? activeTab;
   const completion = { onComplete, completingId, errors, notice };
+  useEffect(() => {
+    if (!tutorialActive) return;
+    setOpen(false);
+    setBackpackOpen(false);
+    setRewardBoardOpen(false);
+  }, [tutorialActive]);
+  useEffect(() => { let active = true; void getHabitBoard().then((board) => { if (active) setHabitBoard(board); }).catch(() => {}); return () => { active = false; }; }, []);
+  function refreshBoard() {
+    setBoardLoadError('');
+    void getHabitBoard().then(setHabitBoard).catch((reason: unknown) => setBoardLoadError(reason instanceof Error ? reason.message : 'Could not load rewards.'));
+  }
+  function openRewardBoard() {
+    setRewardBoardOpen(true);
+    refreshBoard();
+  }
 
   function placeFromBackpack(item: Item) {
     const scene = sceneRef.current;
@@ -69,15 +91,19 @@ export default function HomePage({ tutorialTab, onAcceptQuest, acceptedCount, qu
   </>;
 
   return <section ref={sceneRef} className="home-game" aria-label="Your bedroom">
-    <HomeScene onOpenComputer={() => setOpen(true)} items={catalog.items} editing={editing} onEditingChange={setEditing} />
+    <HomeScene onOpenComputer={() => setOpen(true)} onOpenRewardBoard={openRewardBoard} claimedBadges={habitBoard?.claimedIds.length ?? 0}
+      items={catalog.items} editing={editing} onEditingChange={setEditing} />
     <div className="home-player-tasks-hud">
       <GameTopBar />
       <TodaysTasksPanel quests={quests} {...completion} />
     </div>
-    <GameHudActions onOpenBackpack={() => setBackpackOpen(true)} />
+    <GameHudActions onOpenBackpack={() => setBackpackOpen(true)} tutorialActive={tutorialActive} />
     {buildings.level('home') >= 2 && <Link className="home-upstairs-link pixel-panel" to="/home/upstairs">↑ UPSTAIRS</Link>}
     <PixelModal open={backpackOpen} onClose={() => setBackpackOpen(false)} titleId="backpack-title">
       <Backpack items={catalog.items} loading={catalog.loading} error={catalog.error} onRetry={catalog.retry} locationId="home" onPlace={placeFromBackpack} />
+    </PixelModal>
+    <PixelModal open={rewardBoardOpen} onClose={() => setRewardBoardOpen(false)} titleId="reward-board-title">
+      <RewardBoard board={habitBoard} onBoardChange={setHabitBoard} loadError={boardLoadError} onRetry={refreshBoard} />
     </PixelModal>
     <div className="room-caption"><span>HOME · YOUR FIRST LITTLE SPACE</span><p>A new beginning. Make yourself at home.</p></div>
     {tutorialTab ? <PixelModal open onClose={() => {}} titleId="computer-screen-title" inline>{computerContent}</PixelModal>

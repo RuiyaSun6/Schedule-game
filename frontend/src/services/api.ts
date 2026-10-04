@@ -1,4 +1,4 @@
-import type { CompleteQuestResponse, GenerateQuestsResponse, Item, Player, Quest } from '../types';
+import type { CompleteQuestResponse, GenerateQuestsResponse, HabitBoard, Item, Player, Quest } from '../types';
 import { isItem, isPlayer, isQuest } from './apiValidators';
 
 export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001').replace(/\/+$/, '');
@@ -29,9 +29,12 @@ async function request(path: string, method = 'GET', body?: unknown, timeoutMs =
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
+    const headers: Record<string, string> = { Accept: 'application/json' };
+    if (body !== undefined) headers['Content-Type'] = 'application/json';
+    if (path.startsWith('/api/habits')) headers['X-LifeQuest-Time-Zone'] = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const response = await fetch(`${API_BASE_URL}${path}`, {
       method,
-      headers: body === undefined ? { Accept: 'application/json' } : { Accept: 'application/json', 'Content-Type': 'application/json' },
+      headers,
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
       signal: controller.signal,
     });
@@ -67,7 +70,7 @@ export async function getPlayer(): Promise<Player> {
   return playerResponse(await request('/api/player'), MVP_PLAYER_ID);
 }
 export async function generateQuests(userId: string, text: string): Promise<GenerateQuestsResponse> {
-  if (!text.trim()) return invalid('Please enter at least one task for today.');
+  if (!text.trim()) return invalid('Please enter at least one task for this week.');
   // Generation waits for the AI (the backend allows ~11s before falling back), so give it more time
   // than ordinary requests; otherwise the browser gives up while the backend is still answering.
   const data = await request('/api/quests/generate', 'POST', { userId, text }, GENERATE_TIMEOUT_MS);
@@ -104,4 +107,17 @@ export async function equipOutfit(userId: string, outfit: string): Promise<Playe
   const player = playerResponse(await request(`/api/player/${encodeURIComponent(userId)}/outfit`, 'PUT', { outfit }), userId);
   if (player.outfit !== outfit) return invalid('The backend did not confirm the equipped outfit.');
   return player;
+}
+export async function getHabitBoard(): Promise<HabitBoard> {
+  return await request('/api/habits') as HabitBoard;
+}
+export async function createHabit(text: string): Promise<HabitBoard> {
+  return await request('/api/habits', 'POST', { text }) as HabitBoard;
+}
+export async function checkInHabit(id: string): Promise<HabitBoard> {
+  return await request(`/api/habits/${encodeURIComponent(id)}/check-in`, 'POST') as HabitBoard;
+}
+export async function claimHabitReward(id: string): Promise<{ board: HabitBoard; player: Player }> {
+  const data = await request(`/api/habits/rewards/${encodeURIComponent(id)}/claim`, 'POST') as { board: HabitBoard; player: unknown };
+  return { board: data.board, player: playerResponse(data.player, MVP_PLAYER_ID) };
 }

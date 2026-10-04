@@ -263,6 +263,23 @@ try {
     ok("legacy quest (NULL completion_line) completes without a line");
   }
 
+  if (mode === "memory") {
+    const createdHabit = await call<{ habits: { id: string }[]; achievements: { id: string; state: string }[] }>("POST", "/habits", { text: "Go to the gym 1 time a week" });
+    assert.equal(createdHabit.status, 201);
+    const habitId = createdHabit.body.habits[0].id;
+    assert.equal(createdHabit.body.achievements.find((item) => item.id === "global:new-beginning")?.state, "ready");
+    assert.equal((await call("POST", `/habits/${habitId}/check-in`)).status, 200);
+    assert.equal((await call("POST", `/habits/${habitId}/check-in`)).status, 409);
+    const claimed = await call<{ player: Player; alreadyClaimed: boolean }>("POST", "/habits/rewards/global:new-beginning/claim");
+    assert.equal(claimed.status, 200);
+    assert.equal(claimed.body.alreadyClaimed, false);
+    const retry = await call<{ player: Player; alreadyClaimed: boolean }>("POST", "/habits/rewards/global:new-beginning/claim");
+    assert.equal(retry.status, 200);
+    assert.equal(retry.body.alreadyClaimed, true);
+    assert.equal(retry.body.player.coins, claimed.body.player.coins);
+    ok("habit API: create, check in, reject duplicate day, claim once across retries");
+  }
+
   console.log(`All API checks passed (${mode}).`);
 } catch (error) {
   console.error("✗", error, `\n--- server log ---\n${serverLog}`);

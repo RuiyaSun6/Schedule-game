@@ -28,8 +28,8 @@ export default function PixelModal({ open, onClose, children, titleId, inline = 
     <dialog ref={ref} className={`pixel-modal ${className}`} aria-labelledby={titleId}
       onCancel={(event) => { event.preventDefault(); onClose(); }}>
       <div className="computer-titlebar">
-        <span><span aria-hidden="true">▣</span> {titleId === 'level-up-title' ? 'LIFEQUEST · A NEW CHAPTER' : titleId === 'backpack-title' ? 'LIFEQUEST · BACKPACK' : titleId === 'building-shop-title' ? 'LIFEQUEST · BUILDING SHOP' : titleId === 'building-upgrade-title' ? 'LIFEQUEST · BUILDING UPGRADE' : titleId === 'furniture-shop-title' ? 'LIFEQUEST · FURNITURE SHOP' : 'LIFEQUEST · PERSONAL COMPUTER'}</span>
-        <button className="close-button" onClick={onClose} aria-label={titleId === 'backpack-title' ? 'Close Backpack' : titleId === 'building-shop-title' ? 'Close Building Shop' : titleId === 'building-upgrade-title' ? 'Close building upgrade' : titleId === 'furniture-shop-title' ? 'Close Furniture Shop' : 'Close computer'}>×</button>
+        <span><span aria-hidden="true">▣</span> {titleId === 'reward-board-title' ? 'LIFEQUEST · REWARD BOARD' : titleId === 'level-up-title' ? 'LIFEQUEST · A NEW CHAPTER' : titleId === 'backpack-title' ? 'LIFEQUEST · BACKPACK' : titleId === 'building-shop-title' ? 'LIFEQUEST · BUILDING SHOP' : titleId === 'building-upgrade-title' ? 'LIFEQUEST · BUILDING UPGRADE' : titleId === 'furniture-shop-title' ? 'LIFEQUEST · FURNITURE SHOP' : 'LIFEQUEST · PERSONAL COMPUTER'}</span>
+        <button className="close-button" onClick={onClose} aria-label={titleId === 'reward-board-title' ? 'Close Reward Board' : titleId === 'backpack-title' ? 'Close Backpack' : titleId === 'building-shop-title' ? 'Close Building Shop' : titleId === 'building-upgrade-title' ? 'Close building upgrade' : titleId === 'furniture-shop-title' ? 'Close Furniture Shop' : 'Close computer'}>×</button>
       </div>
       <div className="computer-content">{children}</div>
     </dialog>

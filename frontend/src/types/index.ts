@@ -55,3 +55,37 @@ export interface CompleteQuestResponse {
   source?: 'mock-fallback';
   warning?: string;
 }
+
+export interface Habit {
+  id: string;
+  userId: string;
+  title: string;
+  description: string;
+  period: 'daily' | 'weekly';
+  targetCount: number;
+  createdAt: string;
+  completionDates: string[];
+  currentProgress: number;
+  periodTarget: number;
+  totalCompletions: number;
+  currentStreak: number;
+  successfulWeeks: number;
+  checkedToday: boolean;
+}
+export interface HabitReward { xp: number; coins: number; badge: string; itemId?: string; itemName?: string }
+export interface HabitBoardEntry {
+  id: string;
+  name: string;
+  description: string;
+  progress: number;
+  required: number;
+  unit: string;
+  reward: HabitReward;
+  state: 'locked' | 'ready' | 'claimed';
+}
+export interface HabitBoard {
+  habits: Habit[];
+  milestones: { habitId: string; title: string; entries: HabitBoardEntry[] }[];
+  achievements: HabitBoardEntry[];
+  claimedIds: string[];
+}

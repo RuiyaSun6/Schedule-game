@@ -143,8 +143,8 @@ export default function App() {
     <main className="app">
         <Routes>
           <Route path="/" element={<WelcomePage />} />
-          <Route path="/world" element={<WorldPage quests={acceptedQuests} onComplete={finishQuest} completingId={completingId} errors={completionErrors} notice={completionNotice} />} />
-          <Route path="/home" element={<HomePage onComplete={finishQuest} completingId={completingId} errors={completionErrors} notice={completionNotice} onAcceptQuest={acceptQuest} acceptedCount={acceptedQuests.length} quests={acceptedQuests} tutorialTab={tutorialIndex === null ? undefined : tutorialSteps[tutorialIndex].computerTab} />} />
+          <Route path="/world" element={<WorldPage quests={acceptedQuests} onComplete={finishQuest} completingId={completingId} errors={completionErrors} notice={completionNotice} tutorialTarget={tutorialIndex === null ? undefined : tutorialSteps[tutorialIndex].target} />} />
+          <Route path="/home" element={<HomePage onComplete={finishQuest} completingId={completingId} errors={completionErrors} notice={completionNotice} onAcceptQuest={acceptQuest} acceptedCount={acceptedQuests.length} quests={acceptedQuests} tutorialActive={tutorialIndex !== null} tutorialTab={tutorialIndex === null ? undefined : tutorialSteps[tutorialIndex].computerTab} />} />
           <Route path="/planner" element={<PlannerPage />} />
           <Route path="/home/upstairs" element={<HomeUpstairsPage />} />
           <Route path="/quests" element={<QuestsPage quests={acceptedQuests} onComplete={finishQuest} completingId={completingId} errors={completionErrors} notice={completionNotice} />} />

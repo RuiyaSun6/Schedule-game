@@ -161,6 +161,26 @@ Returns the fixed shop catalog as an array (`200`), in shop order:
 
 The list and order match `CATALOG` in `src/services/shopService.ts` and the seed in `src/db/schema.sql` (TiDB keeps the order in `items.sort_order`). `npm run db:init` updates existing rows, adds new ones, and removes retired item IDs unless a player owns them; owned leftovers are kept and listed so they can be mapped to a current variant. It also adds `items.stackable` and `user_items.quantity` to databases created before them (existing rows get `quantity = 1`). Prices are in coins. Current item types are `furniture` and `farm` (`garden` and `clothing` only appear on retired items a player may still own). `asset` is the image file name; the frontend bundles furniture and garden PNGs under `frontend/src/assets/<type>/` and serves farm PNGs from `frontend/public/assets/farm/`.
 
+### Long-term habits and Reward Board
+
+Habits are separate from generated quests. Run `npm run db:init` after deploying this version to add
+`habits`, `habit_checkins`, and `habit_claims` to TiDB. Without TiDB, habits follow the existing
+in-memory game mode: they survive browser refreshes while the backend process is running, and reset
+when that process restarts.
+
+`GET /api/habits` returns active habits, computed weekly progress, milestones, achievements, and
+claimed reward IDs. `POST /api/habits` with `{ "text": "Go to the gym 3 times a week" }` creates a
+habit through deterministic parsing. `POST /api/habits/:id/check-in` records one check-in per calendar
+day (duplicate: `409`). `POST /api/habits/rewards/:id/claim` applies a ready reward and returns the
+updated board and player; a retry returns `alreadyClaimed: true` without granting anything again.
+The browser sends its IANA time zone in `X-LifeQuest-Time-Zone`; the server uses its current clock to
+determine that player's calendar day. Tests inject fixture dates directly into the habit service.
+
+Claims and player currency/item grants share a transaction in TiDB. Reward-only item IDs are kept out
+of the purchasable shop catalog, but appear in the player's inventory and item list after claiming.
+Per-habit cosmetics can grant multiple copies when earned from different habits.
+Badges are derived from durable `habit_claims` rows (or the in-memory claimed ID set).
+
 ### `POST /api/shop/purchase` (also `POST /api/shop/buy`)
 
 Buys one of an item. Both paths run the same handler. Request body:

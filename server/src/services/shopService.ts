@@ -3,6 +3,9 @@ import { getPlayer, savePlayer } from "./storageService.js";
 import { isTiDBEnabled } from "../db/tidb.js";
 import { getItems, purchaseItem as purchaseItemInDb } from "../repositories/itemRepository.js";
 import { DEFAULT_PLAYER_ID } from "../types/defaultPlayer.js";
+import { HABIT_REWARD_ITEMS } from "./habitRewards.js";
+import { getPlayer as getMemoryPlayer } from "./storageService.js";
+import { getOwnedItems } from "../repositories/itemRepository.js";
 
 // Keep in sync with the items seeded in db/schema.sql (same IDs, values, and order) so in-memory and TiDB storage match.
 // Array order is the shop order; TiDB stores it as items.sort_order.
@@ -92,9 +95,11 @@ export const CATALOG: readonly Item[] = [
 const CATALOG_IDS = new Set(CATALOG.map((item) => item.id));
 
 export async function getCatalog(): Promise<Item[]> {
-  return isTiDBEnabled()
+  const sold = isTiDBEnabled()
     ? (await getItems()).filter((item) => CATALOG_IDS.has(item.id))
     : CATALOG.map((item) => ({ ...item }));
+  const owned = new Set(isTiDBEnabled() ? await getOwnedItems(DEFAULT_PLAYER_ID) : getMemoryPlayer().ownedItems);
+  return [...sold, ...HABIT_REWARD_ITEMS.filter((item) => owned.has(item.id))];
 }
 
 type PurchaseResult =

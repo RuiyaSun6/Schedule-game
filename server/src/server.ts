@@ -6,6 +6,7 @@ import playerRoutes from "./routes/playerRoutes.js";
 import questRoutes from "./routes/questRoutes.js";
 import itemRoutes from "./routes/itemRoutes.js";
 import shopRoutes from "./routes/shopRoutes.js";
+import habitRoutes from "./routes/habitRoutes.js";
 import { isTiDBEnabled } from "./db/tidb.js";
 import { createPlayer } from "./repositories/playerRepository.js";
 import { makeDefaultPlayer } from "./types/defaultPlayer.js";
@@ -22,6 +23,7 @@ app.use("/api/player", playerRoutes);
 app.use("/api/quests", questRoutes);
 app.use("/api/items", itemRoutes);
 app.use("/api/shop", shopRoutes);
+app.use("/api/habits", habitRoutes);
 
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true });

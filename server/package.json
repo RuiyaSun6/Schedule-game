@@ -16,7 +16,8 @@
     "test:db": "tsc && node dist/scripts/testRepositories.js",
     "test:mock": "tsc && node --test dist/scripts/testMockQuests.js",
     "test:api": "tsc && node dist/scripts/testApi.js",
-    "test:levels": "tsc && node --test dist/scripts/testLevelProgression.js"
+    "test:levels": "tsc && node --test dist/scripts/testLevelProgression.js",
+    "test:habits": "tsc && node --test dist/scripts/testHabits.js"
   },
   "dependencies": {
     "@google/genai": "^2.27.0",

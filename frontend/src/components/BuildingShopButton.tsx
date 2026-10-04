@@ -1,6 +1,6 @@
 // Compact Building Shop icon for the bottom-left of the World, in the HUD's pixel-panel style.
 export default function BuildingShopButton({ onClick }: { onClick: () => void }) {
-  return <button type="button" className="building-shop-button pixel-panel" onClick={onClick} aria-label="Open Building Shop" title="Building Shop">
+  return <button type="button" className="building-shop-button pixel-panel" onClick={onClick} aria-label="Open Building Shop" title="Building Shop" data-tutorial="building-shop">
     <svg width="30" height="30" viewBox="0 0 16 16" shapeRendering="crispEdges" aria-hidden="true">
       <path fill="#a9473f" d="M8 1 1 7h2v1h10V7h2z" />
       <path fill="#f1dfbf" d="M3 8h10v7H3z" />

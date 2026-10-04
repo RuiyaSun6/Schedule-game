@@ -62,6 +62,31 @@ CREATE TABLE IF NOT EXISTS user_items (
   PRIMARY KEY (user_id, item_id)
 );
 
+-- Habits are separate from quests. The date key is UTC (YYYY-MM-DD); one check-in per habit/day.
+CREATE TABLE IF NOT EXISTS habits (
+  id VARCHAR(64) PRIMARY KEY,
+  user_id VARCHAR(64) NOT NULL,
+  title VARCHAR(200) NOT NULL,
+  description VARCHAR(200) NOT NULL,
+  period VARCHAR(16) NOT NULL,
+  target_count INT NOT NULL,
+  created_date VARCHAR(10) NOT NULL,
+  INDEX idx_habits_user (user_id)
+);
+CREATE TABLE IF NOT EXISTS habit_checkins (
+  user_id VARCHAR(64) NOT NULL,
+  habit_id VARCHAR(64) NOT NULL,
+  completed_date VARCHAR(10) NOT NULL,
+  PRIMARY KEY (habit_id, completed_date),
+  INDEX idx_habit_checkins_user (user_id)
+);
+CREATE TABLE IF NOT EXISTS habit_claims (
+  user_id VARCHAR(64) NOT NULL,
+  reward_id VARCHAR(128) NOT NULL,
+  claimed_date VARCHAR(10) NOT NULL,
+  PRIMARY KEY (user_id, reward_id)
+);
+
 -- How many of an item the player owns (1 for regular items). Existing rows get 1.
 ALTER TABLE user_items ADD COLUMN IF NOT EXISTS quantity INT NOT NULL DEFAULT 1;
 

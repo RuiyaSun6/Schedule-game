@@ -1,0 +1,30 @@
+.badge-collection { padding: 10px 0 4px; }
+.badge-collection-heading { display: flex; align-items: end; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.badge-collection-heading h3 { margin: 3px 0 0; color: #594d34; font: bold 17px monospace; }
+.badge-count { padding: 5px 7px; background: #e8dfbc; border: 2px solid #a28a5d; color: #6d5b3a; font: bold 10px monospace; white-space: nowrap; }
+.badge-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
+.badge-tile { --badge-main: #759461; --badge-light: #cde4a9; --badge-dark: #4d6e4a; position: relative; min-width: 0; min-height: 150px; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 11px 7px 9px; border: 3px solid var(--badge-dark); background: #f8f3e1; box-shadow: inset 0 0 0 2px #fffdf3, 3px 4px #5a513c40; color: #554b38; cursor: pointer; text-align: center; }
+.badge-tile.badge-rare, .badge-detail.badge-rare { --badge-main: #618ca1; --badge-light: #c4e7ea; --badge-dark: #487180; }
+.badge-tile.badge-epic, .badge-detail.badge-epic { --badge-main: #a47b47; --badge-light: #f1d99a; --badge-dark: #805e3d; }
+.badge-tile.badge-legendary, .badge-detail.badge-legendary { --badge-main: #9d6c9c; --badge-light: #f6da91; --badge-dark: #745379; }
+.badge-tile.badge-global-on-fire, .badge-detail.badge-global-on-fire, .badge-tile.badge-milestone-habit-builder, .badge-detail.badge-milestone-habit-builder { --badge-main: #bb6643; --badge-light: #f5c784; --badge-dark: #894b37; }
+.badge-tile.badge-global-perfect-week, .badge-detail.badge-global-perfect-week { --badge-main: #b8903d; --badge-light: #f7e19c; --badge-dark: #836333; }
+.badge-tile.badge-global-balanced-life, .badge-detail.badge-global-balanced-life { --badge-main: #9a7aa7; --badge-light: #ead5f1; --badge-dark: #71577f; }
+.badge-global-balanced-life .badge-medallion { background: linear-gradient(90deg,#a97492 0 25%,#b9a163 25% 50%,#72a08b 50% 75%,#8d85b2 75%); }
+.badge-tile.badge-global-never-give-up, .badge-detail.badge-global-never-give-up { --badge-main: #648f68; --badge-light: #c6e5ae; --badge-dark: #476c4b; }
+.badge-tile.badge-global-lifequest-master, .badge-detail.badge-global-lifequest-master { --badge-main: #b9933d; --badge-light: #fff0ad; --badge-dark: #775e34; }
+.badge-tile.is-locked { filter: grayscale(1); opacity: .55; }
+.badge-tile.is-selected { outline: 3px solid #d7aa58; outline-offset: 2px; }
+.badge-tile:focus-visible { outline: 3px solid #5f8d5a; outline-offset: 3px; }
+.badge-medallion { width: 55px; height: 55px; display: grid; place-items: center; border: 5px solid var(--badge-dark); border-radius: 50%; background: var(--badge-main); box-shadow: inset 0 0 0 3px var(--badge-light), 0 4px #54473655; }
+.badge-legendary .badge-medallion { width: 61px; height: 61px; border: 6px double #cfaa51; box-shadow: inset 0 0 0 3px #f7e5a4, 0 4px #54473688; }
+.badge-symbol { font-size: 26px; line-height: 1; filter: drop-shadow(1px 2px #342b3555); }
+.badge-tile-name { font: bold 11px/1.25 monospace; text-transform: uppercase; }
+.badge-tile-requirement { flex: 1; font: 10px/1.3 sans-serif; overflow-wrap: anywhere; }
+.badge-tile-status { margin-top: auto; color: var(--badge-dark); font: bold 10px monospace; }
+.badge-detail { --badge-main: #759461; --badge-light: #cde4a9; --badge-dark: #4d6e4a; display: flex; gap: 15px; margin-top: 17px; padding: 14px; border: 3px solid var(--badge-dark); background: #fff9e8; box-shadow: inset 0 0 0 2px var(--badge-light); }
+.badge-detail-icon { flex: 0 0 58px; width: 58px; height: 58px; display: grid; place-items: center; border: 5px solid var(--badge-dark); border-radius: 50%; background: var(--badge-main); box-shadow: inset 0 0 0 3px var(--badge-light); font-size: 29px; }
+.badge-detail h4 { margin: 0 0 3px; font: bold 17px monospace; color: #574a32; }
+.badge-detail strong { color: var(--badge-dark); font: bold 10px monospace; letter-spacing: 1px; }
+.badge-detail p { margin: 7px 0 0; font-size: 12px; line-height: 1.45; }
+@media (max-width: 480px) { .badge-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .badge-detail { gap: 9px; padding: 10px; } .badge-detail-icon { flex-basis: 46px; width: 46px; height: 46px; font-size: 23px; } }

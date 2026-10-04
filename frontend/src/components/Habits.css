@@ -1,0 +1,31 @@
+.habit-planner { margin-top: 28px; padding: 18px; background: #f2efdd; border-color: #9b956f; }
+.habit-planner h2, .reward-board-content h2 { margin: 4px 0 16px; color: #5b7046; }
+.habit-planner input { display: block; width: 100%; min-height: 42px; margin: 9px 0 6px; padding: 9px; border: 2px solid #8d8467; background: #fffdf3; color: #463f30; font: 13px monospace; }
+.habit-planner .habit-hint { margin: 4px 0 12px; color: #716d5c; font-size: 12px; }
+.habit-planner h3 { margin: 22px 0 12px; color: #6b664b; font: bold 13px monospace; }
+.habit-active-list { display: grid; gap: 10px; }
+.habit-active-card, .reward-entry { padding: 12px; border: 2px solid #a99d76; background: #fffaf0; box-shadow: 2px 3px #766c4b33; }
+.habit-active-card h4, .reward-entry h4 { margin: 0 0 6px; color: #514c38; font: bold 14px monospace; }
+.habit-active-card p, .reward-entry p { margin: 4px 0; font-size: 12px; line-height: 1.45; }
+.habit-active-card .pixel-button { margin-top: 10px; }
+.reward-board-content { min-height: 200px; }
+.reward-board-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 0 0 18px; }
+.reward-board-tabs button { border: 2px solid #756c50; background: #e9e5d2; color: #534b37; padding: 8px; font: bold 11px monospace; }
+.reward-board-tabs button[aria-selected="true"] { background: #769064; color: #fff9e9; }
+.reward-group { margin-bottom: 20px; }
+.reward-group h3 { color: #61563b; font: bold 15px monospace; }
+.reward-list { display: grid; gap: 10px; }
+.reward-entry.locked { filter: grayscale(.8); opacity: .65; }
+.reward-entry.ready { border-color: #c79c42; background: #fff6d9; box-shadow: 0 0 0 2px #ecd39b; }
+.reward-entry.claimed { border-color: #78a36c; background: #edf4e6; }
+.reward-state { display: inline-block; margin-top: 8px; color: #5b6e48; font: bold 11px monospace; }
+.reward-entry .pixel-button { margin-top: 9px; }
+.reward-board-wall { position: absolute; top: calc(36% - 68px); left: 55%; z-index: 4; width: 96px; height: 60px; padding: 5px; border: 5px solid #785137; background: #b48859; box-shadow: inset 0 0 0 2px #d5ad71, 3px 5px #4a362a77; cursor: pointer; font: bold 10px monospace; color: #fff3cf; text-align: center; }
+.reward-board-wall::before { content: ''; position: absolute; inset: 12px 7px 5px; background: repeating-linear-gradient(90deg,#eadab1 0 15px,#d5bc87 15px 17px); border: 2px solid #845e3f; }
+.reward-board-wall span { position: relative; display: block; text-shadow: 1px 1px #594327; }
+.reward-board-wall .reward-board-pins { margin-top: 5px; color: #ffe493; letter-spacing: 5px; }
+.reward-board-wall:hover, .reward-board-wall:focus-visible { filter: brightness(1.12); outline: 3px solid #ffe494; }
+@media (max-width: 699px) {
+  .home-game:not(.outdoor-game) .home-player-tasks-hud { bottom: calc(64% + 8px + 65px); }
+  .reward-board-wall { left: 35%; width: 73px; height: 51px; font-size: 8px; top: calc(36% - 55px); }
+}

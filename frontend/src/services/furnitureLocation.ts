@@ -22,12 +22,14 @@ export function furnitureState(itemId: string, ownedItems: readonly string[] | u
   const placement = layout.placed.find((p) => p.itemId === itemId);
   if (placement) return { kind: 'placed', placement };
   if (layout.stored.includes(itemId)) return { kind: 'backpack' };
+  if (itemId.startsWith('reward-')) return { kind: 'backpack' };
   if ((HOME_SLOTS as readonly string[]).includes(family) && latestOwned(ownedItems, family) === itemId) return { kind: 'home-slot', family };
   return { kind: 'backpack' };
 }
 
 /** Whether an item's kind fits in a location (e.g. no sofas on the farm). */
 export function fitsLocation(itemId: string, locationId: LocationId) {
+  if (itemFamily(itemId) === 'world-decoration') return false;
   return getBuilding(locationId === 'home-upstairs' ? 'home' : locationId)?.interior.furnitureFamilies.includes(itemFamily(itemId)) ?? false;
 }
 

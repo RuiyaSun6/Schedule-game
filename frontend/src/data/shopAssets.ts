@@ -18,7 +18,19 @@ const urls = import.meta.glob('../assets/{furniture,garden,clothing}/*.png', { e
 
 export interface ItemArt { src: string; width: number; height: number; }
 
+const REWARD_ART: Record<string, string> = {
+  'reward-seedling': 'plant-blue-pot',
+  'reward-habit-planter': 'tree-blue-pot',
+  'reward-month-lamp': 'lamp-gold',
+  'reward-balanced-plant': 'tree-grey-pot',
+  'reward-resilience-chair': 'chair-green',
+  'reward-master-sofa': 'sofa-purple',
+  'reward-world-crown': 'tree-red-pot',
+};
+
 export function getItemArt(id: string): ItemArt | undefined {
+  if (id === 'reward-world-crown') return { src: '/assets/rewards/world-crown.svg', width: 32, height: 32 };
+  if (REWARD_ART[id]) return getItemArt(REWARD_ART[id]);
   // Farm art is served from public/assets/farm/ (cropped by scripts/split-farm-sprites.mjs).
   const wallpaper = wallpaperTile(id);
   if (wallpaper) return { src: wallpaperSrc(wallpaper), width: wallpaper.width, height: wallpaper.height };
@@ -34,6 +46,7 @@ export function getItemArt(id: string): ItemArt | undefined {
 
 /** "lamp-gold" -> "lamp", "pet-bowl" -> "pet", "crop-carrot" -> "crop", "haystack" -> "farm-decor", "fountain" -> "fountain". */
 export function itemFamily(id: string): string {
+  if (REWARD_ART[id]) return id === 'reward-world-crown' ? 'world-decoration' : itemFamily(REWARD_ART[id]);
   if (isWallpaper(id)) return 'wallpaper';
   // Animals walk around the Farm on their own; they are never placed like furniture.
   if (isAnimal(id)) return 'animal';
@@ -56,6 +69,7 @@ const FAMILY_CATEGORY: Record<string, ShopCategory> = {
 };
 /** Shop tab for an item, or null for items the shop no longer sells (e.g. retired garden or clothing items). */
 export function shopCategory(item: Item): ShopCategory | null {
+  if (item.id.startsWith('reward-')) return null;
   return FAMILY_CATEGORY[itemFamily(item.id)] ?? null;
 }
 
@@ -67,6 +81,6 @@ export const GARDEN_SLOTS = ['flowers', 'tree', 'bench', 'fountain'] as const;
 
 /** ownedItems is in purchase order (oldest first), so the last match is the newest. */
 export function latestOwned(ownedItems: readonly string[] | undefined, family: string) {
-  return [...(ownedItems ?? [])].reverse().find((id) => itemFamily(id) === family);
+  return [...(ownedItems ?? [])].reverse().find((id) => !id.startsWith('reward-') && itemFamily(id) === family);
 }
 

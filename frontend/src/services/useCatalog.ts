@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import type { Item } from '../types';
 import { loadItems } from './shop';
+import { usePlayer } from './PlayerContext';
 
 export function useCatalog() {
+  const ownedKey = (usePlayer().ownedItems ?? []).join('|');
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -15,6 +17,6 @@ export function useCatalog() {
       .catch((reason: unknown) => { if (active) setError(reason instanceof Error ? reason.message : 'Couldn’t load items.'); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [attempt]);
+  }, [attempt, ownedKey]);
   return { items, loading, error, demo, retry: () => setAttempt((value) => value + 1) };
 }

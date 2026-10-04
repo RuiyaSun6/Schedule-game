@@ -4,11 +4,12 @@ import { buildingRoute, getBuilding } from '../data/buildingCatalog';
 import type { BuildingId } from '../types/building';
 
 /** Enter on a normal click/tap; editing and pointer drags never navigate. */
-export default function BuildingEntryButton({ id, editing, className, children }: {
+export default function BuildingEntryButton({ id, editing, className, children, tutorialTarget }: {
   id: BuildingId;
   editing: boolean;
   className: string;
   children: ReactNode;
+  tutorialTarget?: string;
 }) {
   const navigate = useNavigate();
   const gesture = useRef<{ x: number; y: number; moved: boolean } | null>(null);
@@ -16,7 +17,7 @@ export default function BuildingEntryButton({ id, editing, className, children }
     const start = gesture.current;
     if (start && Math.hypot(x - start.x, y - start.y) > 8) start.moved = true;
   }
-  return <button type="button" className={className} aria-label={`Enter ${getBuilding(id)!.name}`} aria-disabled={editing}
+  return <button type="button" className={className} aria-label={`Enter ${getBuilding(id)!.name}`} aria-disabled={editing} data-tutorial={tutorialTarget}
     onPointerDown={(event) => { gesture.current = { x: event.clientX, y: event.clientY, moved: false }; }}
     onPointerMove={(event) => trackMovement(event.clientX, event.clientY)}
     onPointerUp={(event) => trackMovement(event.clientX, event.clientY)}

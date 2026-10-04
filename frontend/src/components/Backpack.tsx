@@ -4,7 +4,7 @@ import PixelButton from './PixelButton';
 import { usePlayer } from '../services/PlayerContext';
 import { useRoomPlacement } from '../services/RoomPlacementContext';
 import { availableCopies, fitsLocation, furnitureState } from '../services/furnitureLocation';
-import { ownedCount } from '../data/shopAssets';
+import { itemFamily, ownedCount } from '../data/shopAssets';
 import { getBuilding } from '../data/buildingCatalog';
 import { isWallpaper } from '../data/shopAssets';
 import { isAnimal } from '../data/animals';
@@ -42,7 +42,7 @@ export default function Backpack({ items, loading, error, onRetry, locationId, o
       return <article className="item-card pixel-panel" key={item.id}>
         <div className="item-card-art"><ItemArtwork item={item} /></div><h3>{item.name}</h3>
         {item.stackable && <p className="backpack-count">Available {available} · Owned {total}</p>}
-        <p>{!fits ? `Doesn’t fit in the ${here}` : available < 1 ? 'All placed' : `Ready to place in the ${here}`}</p>
+        <p>{itemFamily(item.id) === 'world-decoration' ? 'Displayed in your World' : !fits ? `Doesn’t fit in the ${here}` : available < 1 ? 'All placed' : `Ready to place in the ${here}`}</p>
         <PixelButton disabled={!fits || available < 1} onClick={() => onPlace(item)}>PLACE HERE</PixelButton>
       </article>;
     })}</div>
