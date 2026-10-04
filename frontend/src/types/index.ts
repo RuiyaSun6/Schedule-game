@@ -39,8 +39,8 @@ export interface Item {
 export interface CompleteQuestResponse {
   quest: Quest;
   player: Player;
-  levelUp: boolean;
-  newlyUnlocked: string[];
+  levelUp?: boolean;
+  newlyUnlocked?: string[];
   source?: 'mock-fallback';
   warning?: string;
 }

@@ -22,7 +22,7 @@ export default function ShopPage() {
     try {
       const result = await buyItem(player, item);
       actions.updatePlayer(result.player);
-      setNotice(`${result.item.name} is yours!${result.demo ? ' Demo purchase — saved for this session only.' : ''}`);
+      setNotice(`${result.item.name} is yours!`);
     } catch (reason) { setError(reason instanceof Error ? reason.message : 'Purchase failed.'); }
     finally { actions.endMutation(); setBuying(null); }
   }

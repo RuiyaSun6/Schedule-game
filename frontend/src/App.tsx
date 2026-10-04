@@ -2,9 +2,8 @@ import { Route, Routes } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import type { Player, Quest } from './types';
 import { AreaProvider } from './services/AreaContext';
-import { mockPlayer } from './services/mockPlayer';
+import { completeQuest, getPlayer, getQuests } from './services/api';
 import { PlayerContext, PlayerActionsContext } from './services/PlayerContext';
-import { completeQuest } from './services/completeQuest';
 import LevelUpModal, { type LevelUpDetails } from './components/LevelUpModal';
 import WelcomePage from './pages/WelcomePage';
 import WorldPage from './pages/WorldPage';
@@ -19,7 +18,10 @@ import CafePage from './pages/CafePage';
 export default function App() {
   const [hasSeenTutorial, setHasSeenTutorial] = useState(false);
   const [acceptedQuests, setAcceptedQuests] = useState<Quest[]>([]);
-  const [player, setPlayer] = useState<Player>(mockPlayer);
+  const [questsLoaded, setQuestsLoaded] = useState(false);
+  const [questsError, setQuestsError] = useState('');
+  const [player, setPlayer] = useState<Player | null>(null);
+  const [playerError, setPlayerError] = useState('');
   const [completingId, setCompletingId] = useState<string | null>(null);
   const pending = useRef(false);
   const [completionErrors, setCompletionErrors] = useState<Record<string, string>>({});
@@ -27,13 +29,27 @@ export default function App() {
   const [levelUp, setLevelUp] = useState<LevelUpDetails | null>(null);
   const [reward, setReward] = useState<{ xp: number; coins: number } | null>(null);
   useEffect(() => {
+    let active = true;
+    getPlayer()
+      .then((loaded) => { if (active) setPlayer(loaded); })
+      .catch((error: unknown) => { if (active) setPlayerError(error instanceof Error ? error.message : 'Could not load player.'); });
+    return () => { active = false; };
+  }, []);
+  useEffect(() => {
+    let active = true;
+    getQuests()
+      .then((loaded) => { if (active) { setAcceptedQuests(loaded); setQuestsLoaded(true); } })
+      .catch((error: unknown) => { if (active) setQuestsError(error instanceof Error ? error.message : 'Could not load quests.'); });
+    return () => { active = false; };
+  }, []);
+  useEffect(() => {
     if (!reward) return;
     const timeout = setTimeout(() => setReward(null), 2800);
     return () => clearTimeout(timeout);
   }, [reward]);
 
   function updatePlayer(updated: Player) {
-    setPlayer((current) => ({ ...current, ...updated, builtAreas: updated.builtAreas ?? current.builtAreas }));
+    setPlayer((current) => ({ ...current, ...updated, builtAreas: updated.builtAreas ?? current?.builtAreas }));
   }
   function beginMutation() {
     if (pending.current) return false;
@@ -43,18 +59,22 @@ export default function App() {
   function endMutation() { pending.current = false; }
 
   async function finishQuest(quest: Quest) {
-    if (quest.completed || !beginMutation()) return;
+    if (!player || quest.completed || !beginMutation()) return;
     setCompletingId(quest.id);
     setCompletionErrors({});
     setCompletionNotice('');
     try {
-      const result = await completeQuest(quest, player);
+      const result = await completeQuest(quest.id);
       // Reward numbers are feedback only. Returned balances are authoritative.
       setReward({ xp: Math.max(0, result.player.xp - player.xp), coins: Math.max(0, result.player.coins - player.coins) });
       updatePlayer(result.player);
       setAcceptedQuests((current) => current.map((q) => q.id === result.quest.id ? result.quest : q));
-      setCompletionNotice(result.warning ?? 'Quest completed. Lovely work!');
-      if (result.levelUp) setLevelUp({ previousLevel: player.level, level: result.player.level, newlyUnlocked: result.newlyUnlocked });
+      setCompletionNotice('Quest completed. Lovely work!');
+      if (result.player.level > player.level) setLevelUp({
+        previousLevel: player.level,
+        level: result.player.level,
+        newlyUnlocked: result.player.unlockedAreas.filter((area) => !player.unlockedAreas.includes(area)),
+      });
     } catch (error) {
       setCompletionErrors({ [quest.id]: error instanceof Error ? error.message : 'Couldn’t complete this quest. Please retry.' });
     } finally {
@@ -64,6 +84,10 @@ export default function App() {
   }
   function acceptQuest(quest: Quest) {
     setAcceptedQuests((current) => current.some((q) => q.id === quest.id) ? current : [...current, quest]);
+  }
+  if (!player || !questsLoaded) {
+    const error = playerError || questsError;
+    return <main className="app"><p role={error ? 'alert' : 'status'}>{error || 'Loading player and quests...'}</p></main>;
   }
   return (
     <PlayerContext.Provider value={player}>

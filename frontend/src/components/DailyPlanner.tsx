@@ -1,8 +1,8 @@
 import { useRef, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import type { Quest } from '../types';
-import { generateQuests } from '../services/quests';
-import { mockPlayer } from '../services/mockPlayer';
+import { generateQuests } from '../services/api';
+import { usePlayer } from '../services/PlayerContext';
 import PixelButton from './PixelButton';
 import QuestPreviewCard from './QuestPreviewCard';
 
@@ -12,6 +12,7 @@ interface DailyPlannerProps {
 }
 
 export default function DailyPlanner({ onAccept, acceptedCount }: DailyPlannerProps) {
+  const player = usePlayer();
   const [text, setText] = useState('');
   const [previews, setPreviews] = useState<Quest[]>([]);
   const [loading, setLoading] = useState(false);
@@ -29,10 +30,10 @@ export default function DailyPlanner({ onAccept, acceptedCount }: DailyPlannerPr
     setLoading(true);
     setNotice('');
     try {
-      const result = await generateQuests(mockPlayer.id, text);
+      const result = await generateQuests(player.id, text);
       if (!mounted.current) return;
       setPreviews(result.quests);
-      setNotice(result.warning ?? (result.source === 'mock-fallback' ? 'The service returned demo quests. Review and edit them before accepting.' : 'Your quests are ready. Make them your own.'));
+      setNotice('Your quests are ready. Make them your own.');
     } catch {
       if (mounted.current) setError('Something went wrong. Please try again.');
     } finally {

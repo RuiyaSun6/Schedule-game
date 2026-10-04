@@ -1,9 +1,12 @@
 import { createContext, useContext } from 'react';
 import type { Player } from '../types';
-import { mockPlayer } from './mockPlayer';
 
-export const PlayerContext = createContext<Player>(mockPlayer);
-export function usePlayer() { return useContext(PlayerContext); }
+export const PlayerContext = createContext<Player | null>(null);
+export function usePlayer() {
+  const player = useContext(PlayerContext);
+  if (!player) throw new Error('Player provider is missing');
+  return player;
+}
 
 interface PlayerActions {
   updatePlayer: (player: Player) => void;
