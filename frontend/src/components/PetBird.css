@@ -1,0 +1,19 @@
+/* Pet bird (budgie on a cage stand). Position comes from the movable .pet-bird-slot (scenes/RoomSlots.css).
+   Shown at 3x (fixed size like the pet corner): the 16x32 GIF is 48x96 on screen. */
+.pet-bird { position: relative; display: block; padding: 0; border: 0; background: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.pet-bird:focus-visible { outline: 2px dashed #536b42; outline-offset: 3px; }
+.pet-bird-sprite { image-rendering: pixelated; }
+/* Room items ignore the pointer outside MOVE OBJECTS (.room-owned-item); the bird stays tappable. */
+.room-owned-item .pet-bird { pointer-events: auto; }
+.move-mode-scene.is-editing .pet-bird { cursor: grab; }
+
+/* Tap: a small hop and a music note floating up. */
+.pet-bird-sprite.is-hopping { animation: pet-bird-hop 360ms ease-out; }
+@keyframes pet-bird-hop { 40% { transform: translateY(-6px); } }
+.pet-bird-note { position: absolute; left: 70%; top: -6px; font: bold 18px monospace; color: #3f6f8f; text-shadow: 1px 1px #fff9e6; pointer-events: none; animation: pet-bird-note 1100ms ease-out forwards; }
+@keyframes pet-bird-note { from { opacity: 0; transform: translate(0, 6px); } 20% { opacity: 1; } to { opacity: 0; transform: translate(10px, -26px); } }
+@media (prefers-reduced-motion: reduce) {
+  .pet-bird-sprite.is-hopping { animation: none; }
+  .pet-bird-note { animation-name: pet-bird-note-fade; }
+  @keyframes pet-bird-note-fade { from { opacity: 1; } to { opacity: 0; } }
+}

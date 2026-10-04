@@ -1,0 +1,3 @@
+/* Bed colour preview in shop cards: the whole bed (frame + bedding) at 3x, crisp pixels. */
+.bed-preview { position: relative; display: block; width: 96px; height: 96px; }
+.bed-preview > .asset-sprite { position: absolute; inset: 0; width: 100%; height: 100%; }

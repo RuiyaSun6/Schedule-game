@@ -16,10 +16,12 @@ interface ItemCardProps {
   busy: boolean;
   buying: boolean;
   onBuy: () => void;
+  /** Owned items that can be switched from the shop (bed colours): the button equips instead of saying OWNED. */
+  onEquip?: () => void;
 }
 
 // The one shop card: single sprite, name, price, ownership, and a direct Buy button.
-export default function ItemCard({ item, owned, count, coins, busy, buying, onBuy, equipped = false }: ItemCardProps) {
+export default function ItemCard({ item, owned, count, coins, busy, buying, onBuy, onEquip, equipped = false }: ItemCardProps) {
   const shortBy = item.price - coins;
   // Stackable items never lock as "owned": every purchase adds one more.
   const locked = owned && !item.stackable;
@@ -33,11 +35,12 @@ export default function ItemCard({ item, owned, count, coins, busy, buying, onBu
     {shopCategory(item) === 'Pets' && <span className="item-pet-tag">PET</span>}
     <div className="item-card-art"><ItemArtwork item={item} /></div>
     <h2>{item.name}</h2>
-    <p className="item-card-price">{item.price} coins</p>
+    <p className="item-card-price">{item.price === 0 ? 'Free' : `${item.price} coins`}</p>
     <p className={`item-card-status ${locked && equipped ? 'is-equipped' : locked || full || (showOwned && shortBy <= 0) ? 'is-owned' : shortBy > 0 ? 'is-short' : ''}`}>{status}</p>
     {showOwned && !full && shortBy > 0 && <p className="item-card-status is-owned">{ownedText}</p>}
-    <PixelButton aria-busy={buying} disabled={locked || full || shortBy > 0 || busy} onClick={onBuy}>
+    {locked && onEquip ? <PixelButton disabled={equipped} onClick={onEquip}>{equipped ? 'EQUIPPED' : 'EQUIP'}</PixelButton>
+    : <PixelButton aria-busy={buying} disabled={locked || full || shortBy > 0 || busy} onClick={onBuy}>
       {locked ? 'OWNED' : full ? 'FULL' : buying ? 'BUYING…' : shortBy > 0 ? 'NOT ENOUGH COINS' : item.stackable && count > 0 ? 'BUY ANOTHER' : 'BUY'}
-    </PixelButton>
+    </PixelButton>}
   </article>;
 }

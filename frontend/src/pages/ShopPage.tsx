@@ -10,6 +10,11 @@ import { buyItem } from '../services/shop';
 import { SHOP_CATEGORIES, isWallpaper, ownedCount, shopCategory } from '../data/shopAssets';
 import { useRoomPlacement } from '../services/RoomPlacementContext';
 import { isAnimal } from '../data/animals';
+import { isElectronics } from '../components/RoomTV';
+import { DEFAULT_BED_COLOR, isBedColor } from '../components/BedColors';
+
+// The free default bed colour: not a backend item, always owned, shown first in the Bed tab.
+const DEFAULT_BED_ITEM: Item = { id: DEFAULT_BED_COLOR, name: 'Forest Green Bed', type: 'furniture', price: 0, asset: '' };
 
 export default function ShopPage({ embedded = false }: { embedded?: boolean }) {
   const player = usePlayer();
@@ -20,11 +25,17 @@ export default function ShopPage({ embedded = false }: { embedded?: boolean }) {
   const [buying, setBuying] = useState<string | null>(null);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
+  const ownsItem = (item: Item) => item.id === DEFAULT_BED_COLOR || (player.ownedItems?.includes(item.id) ?? false);
+  function equipBed(item: Item) {
+    room.setBedColor(item.id === DEFAULT_BED_COLOR ? null : item.id);
+    setError(''); setNotice(`${item.name} is on your bed now.`);
+  }
   const categories = SHOP_CATEGORIES.filter((name) => catalog.items.some((item) => shopCategory(item) === name));
   // A tab can disappear (e.g. after a catalog update); fall back to All instead of an empty view.
   const activeCategory = category === 'All' || (categories as readonly string[]).includes(category) ? category : 'All';
   // Only items with a shop tab are sold; anything else (retired items) is skipped safely.
   const sellable = catalog.items.filter((item) => shopCategory(item) !== null);
+  if (sellable.some((item) => isBedColor(item.id))) sellable.splice(sellable.findIndex((item) => isBedColor(item.id)), 0, DEFAULT_BED_ITEM);
   const shown = sellable.filter((item) => activeCategory === 'All' || shopCategory(item) === activeCategory);
 
   async function buy(item: Item) {
@@ -36,7 +47,7 @@ export default function ShopPage({ embedded = false }: { embedded?: boolean }) {
       actions.updatePlayer(result.player);
       // New regular furniture waits in Backpack instead of filling a bedroom slot.
       // Existing placed items and stackable copies keep their current placements.
-      if (result.item.type !== 'clothing' && !isWallpaper(result.item.id) && !result.item.stackable && !player.ownedItems?.includes(result.item.id)) room.storeItem(result.item.id);
+      if (result.item.type !== 'clothing' && !isWallpaper(result.item.id) && !isElectronics(result.item.id) && !isBedColor(result.item.id) && !result.item.stackable && !player.ownedItems?.includes(result.item.id)) room.storeItem(result.item.id);
       setNotice(isAnimal(result.item.id) ? `A new ${result.item.name.toLowerCase()} is on your Farm! −${result.item.price} coins.` : `${result.item.name} is yours! −${result.item.price} coins.`);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Purchase failed. Please try again.');
@@ -57,7 +68,9 @@ export default function ShopPage({ embedded = false }: { embedded?: boolean }) {
     <p role="status" className={`shop-feedback ${notice ? 'is-success' : ''}`}>{notice}</p>
     {error && <p role="alert" className="shop-feedback is-error">{error}</p>}
     {!catalog.loading && !catalog.error && <div className="item-grid shop-item-grid" tabIndex={0} aria-label="Shop items">
-      {shown.map((item) => <ItemCard key={item.id} item={item} coins={player.coins} owned={player.ownedItems?.includes(item.id) ?? false} count={ownedCount(player, item.id)} equipped={room.wallpaper === item.id}
+      {shown.map((item) => <ItemCard key={item.id} item={item} coins={player.coins} owned={ownsItem(item)} count={ownedCount(player, item.id)}
+        equipped={isBedColor(item.id) ? (room.bedColor ?? DEFAULT_BED_COLOR) === item.id : room.wallpaper === item.id}
+        onEquip={isBedColor(item.id) ? () => equipBed(item) : undefined}
         busy={buying !== null || catalog.demo} buying={buying === item.id} onBuy={() => void buy(item)} />)}
     </div>}
     {!catalog.loading && !catalog.error && shown.length === 0 && <p>No items in this category yet.</p>}

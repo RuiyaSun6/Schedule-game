@@ -1,0 +1,12 @@
+/* Bedroom TV. Position comes from the movable .room-tv-slot (scenes/RoomSlots.css).
+   Whole-number scale for crisp pixels: 2x on phones (64x64), 3x from 700px wide (96x96). */
+.bedroom { --tv-scale: 2; }
+@media (min-width: 700px) { .bedroom { --tv-scale: 3; } }
+.room-tv { display: block; padding: 0; border: 0; background: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+/* Room items ignore the pointer outside MOVE OBJECTS (.room-owned-item); the TV stays tappable. */
+.room-owned-item .room-tv { pointer-events: auto; }
+.move-mode-scene.is-editing .room-tv { cursor: grab; }
+.room-tv:focus-visible { outline: 2px dashed #536b42; outline-offset: 2px; }
+.room-tv-screen { display: block; width: calc(var(--tv-w) * var(--tv-scale) * 1px); height: calc(var(--tv-h) * var(--tv-scale) * 1px); max-width: none; image-rendering: pixelated; }
+/* Paused: the first frame, slightly dimmed. */
+.room-tv.is-paused .room-tv-screen { filter: brightness(.85) saturate(.8); }

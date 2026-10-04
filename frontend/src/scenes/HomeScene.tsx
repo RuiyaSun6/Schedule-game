@@ -1,5 +1,8 @@
 import ItemArtwork from '../components/ItemArtwork';
 import PetCorner from '../components/PetCorner';
+import PetBird, { PET_BIRD_ID } from '../components/PetBird';
+import RoomTV, { TV_ITEMS } from '../components/RoomTV';
+import { useBedding } from '../components/BedColors';
 import { useRoomPlacement } from '../services/RoomPlacementContext';
 import { usePlayer } from '../services/PlayerContext';
 import { HOME_SLOTS, latestOwned } from '../data/shopAssets';
@@ -44,6 +47,8 @@ function Sprite({ src, sheetWidth, sheetHeight, crop, className }: SpriteProps) 
 export default function HomeScene({ onOpenComputer, onOpenRewardBoard, claimedBadges, items, editing, onEditingChange }: HomeSceneProps) {
   const room = useRoomPlacement();
   const player = usePlayer();
+  // The equipped bed colour (recoloured bedding, cached); the frame and the bed's position never change.
+  const bedding = useBedding(room.bedColor);
   const placement = (objectId: string) => ({ position: room.positions[objectId], onPositionChange: room.setPosition });
   return (
     <MoveModeScene className="bedroom" label="A simple bedroom with a bed, desk, and computer" editing={editing} onEditingChange={onEditingChange} toggleTutorialTarget="move-objects" floorOnly>
@@ -57,7 +62,7 @@ export default function HomeScene({ onOpenComputer, onOpenRewardBoard, claimedBa
       <WorldDoor className="bedroom-door" to="/world" prompt="GO OUTSIDE" tutorialTarget="world" />
       <MovableObject objectId="home-bed" className="room-bed" name="Bed" {...placement('home-bed')}>
         <Sprite src={beds} sheetWidth={1920} sheetHeight={784} crop={[0, 112, 32, 32]} />
-        <Sprite className="bed-bedding" src={beds} sheetWidth={1920} sheetHeight={784} crop={[384, 240, 32, 32]} />
+        {bedding && <Sprite className="bed-bedding" {...bedding} />}
       </MovableObject>
       <MovableObject objectId="home-desk" className="room-desk" name="Desk" {...placement('home-desk')}>
         <Sprite src={tables} sheetWidth={448} sheetHeight={352} crop={[64, 48, 32, 32]} />
@@ -77,6 +82,14 @@ export default function HomeScene({ onOpenComputer, onOpenRewardBoard, claimedBa
       <MovableObject objectId="home-pet-corner" className="room-owned-item room-slot pet-corner-slot" name="Pet corner" {...placement('home-pet-corner')}>
         <PetCorner />
       </MovableObject>
+      {/* The pet bird, once bought: its own movable spot, like the pet corner. */}
+      {player.ownedItems?.includes(PET_BIRD_ID) && <MovableObject objectId="home-pet-bird" className="room-owned-item room-slot pet-bird-slot" name="Bird" {...placement('home-pet-bird')}>
+        {(moveMode) => <PetBird moveMode={moveMode} />}
+      </MovableObject>}
+      {/* TVs (Electronics), once bought: each has its own movable spot in the bedroom. */}
+      {Object.keys(TV_ITEMS).filter((id) => player.ownedItems?.includes(id)).map((id) => <MovableObject key={id} objectId={`home-${id}`} className={`room-owned-item room-slot room-tv-slot room-tv-slot-${id}`} name={TV_ITEMS[id]!.name} {...placement(`home-${id}`)}>
+        {(moveMode) => <RoomTV itemId={id} moveMode={moveMode} />}
+      </MovableObject>)}
       <MovableObject objectId="home-computer" className="room-computer" name="Computer" {...placement('home-computer')}>
         {(moveMode) => <button className="room-computer-button" type="button" data-tutorial="computer"
           onClick={() => { if (!moveMode) onOpenComputer(); }}

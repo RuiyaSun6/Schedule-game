@@ -12,10 +12,11 @@ import { ownedCount } from '../data/shopAssets';
 // Ownership stays global: copies placed anywhere count against what the player owns.
 type Positions = Record<string, WorldObjectPosition>;
 // - wallpaper: the wallpaper item equipped on the bedroom wall (null = plain wall). One at a time.
-interface FurnitureLayout { positions: Positions; placed: PlacedFurniture[]; stored: string[]; wallpaper: string | null; }
+// - bedColor: the bed colour item equipped on the bedroom bed (null = the free Forest Green). One at a time.
+interface FurnitureLayout { positions: Positions; placed: PlacedFurniture[]; stored: string[]; wallpaper: string | null; bedColor: string | null; }
 
 function readLayout(key: string): FurnitureLayout {
-  const layout: FurnitureLayout = { positions: {}, placed: [], stored: [], wallpaper: null };
+  const layout: FurnitureLayout = { positions: {}, placed: [], stored: [], wallpaper: null, bedColor: null };
   try {
     const raw = JSON.parse(localStorage.getItem(key) ?? 'null');
     if (!raw || typeof raw !== 'object') return layout;
@@ -37,6 +38,7 @@ function readLayout(key: string): FurnitureLayout {
     }
     if (Array.isArray(raw.stored)) layout.stored = raw.stored.filter((id: unknown) => typeof id === 'string');
     if (typeof raw.wallpaper === 'string') layout.wallpaper = raw.wallpaper;
+    if (typeof raw.bedColor === 'string') layout.bedColor = raw.bedColor;
   } catch { /* Start with an empty layout. */ }
   return layout;
 }
@@ -58,6 +60,8 @@ interface RoomPlacementState extends FurnitureLayout {
   storeInstance: (instanceId: string) => void;
   /** Equips an owned wallpaper on the bedroom wall, or null for the plain wall. */
   setWallpaper: (itemId: string | null) => void;
+  /** Equips an owned bed colour, or null for the default Forest Green. The bed keeps its position. */
+  setBedColor: (itemId: string | null) => void;
 }
 const RoomContext = createContext<RoomPlacementState | null>(null);
 
@@ -116,7 +120,11 @@ export function RoomPlacementProvider({ children }: { children: ReactNode }) {
     if (itemId !== null && !player.ownedItems?.includes(itemId)) return;
     commit({ ...current.current, wallpaper: itemId });
   }
-  return <RoomContext.Provider value={{ ...layout, setPosition, placeItem, moveItem, storeItem, storeInstance, setWallpaper }}>{children}</RoomContext.Provider>;
+  function setBedColor(itemId: string | null) {
+    if (itemId !== null && !player.ownedItems?.includes(itemId)) return;
+    commit({ ...current.current, bedColor: itemId });
+  }
+  return <RoomContext.Provider value={{ ...layout, setPosition, placeItem, moveItem, storeItem, storeInstance, setWallpaper, setBedColor }}>{children}</RoomContext.Provider>;
 }
 
 export function useRoomPlacement() {

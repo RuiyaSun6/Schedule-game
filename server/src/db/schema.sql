@@ -185,7 +185,14 @@ INSERT INTO seed_items (id, name, type, price, asset, stackable, sort_order) VAL
   ('flowers-red', 'Red Tulips', 'farm', 6, 'flowers-red.png', TRUE, 64),
   ('rock', 'Rock', 'farm', 5, 'rock.png', TRUE, 65),
   ('bush-clover', 'Clover Bush', 'farm', 6, 'bush-clover.png', TRUE, 66),
-  ('haystack', 'Haystack', 'farm', 15, 'haystack.png', TRUE, 67);
+  ('haystack', 'Haystack', 'farm', 15, 'haystack.png', TRUE, 67),
+  ('pet-bird', 'Bird', 'furniture', 80, 'budgie_blue.gif', FALSE, 69),
+  ('tv-cooking', 'TV (cooking)', 'furniture', 120, 'TV_cooking_dessert.gif', FALSE, 70),
+  ('bed-dusty-rose', 'Dusty Rose Bed', 'furniture', 50, 'bed-dusty-rose', FALSE, 71),
+  ('bed-navy-blue', 'Navy Blue Bed', 'furniture', 50, 'bed-navy-blue', FALSE, 72),
+  ('bed-mustard-yellow', 'Mustard Yellow Bed', 'furniture', 50, 'bed-mustard-yellow', FALSE, 73),
+  ('bed-lavender', 'Lavender Bed', 'furniture', 50, 'bed-lavender', FALSE, 74),
+  ('bed-cream-white', 'Cream White Bed', 'furniture', 50, 'bed-cream-white', FALSE, 75);
 -- Items with a per-player limit (max_quantity); everything above has none.
 INSERT INTO seed_items (id, name, type, price, asset, stackable, max_quantity, sort_order) VALUES
   ('chicken', 'Chicken', 'farm', 40, 'Chicken_Sprite_Sheet.png', TRUE, 5, 68);
