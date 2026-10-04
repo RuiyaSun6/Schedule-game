@@ -119,6 +119,11 @@ try {
   assert.equal(again.body.quest, undefined);
   ok("repeat completion -> 409, no line");
 
+  // Earn coins for the purchase checks: a boss quest pays 100.
+  const bonus = await call<Quest>("POST", "/quests", { title: "Shop test bonus", difficulty: "boss" });
+  createdIds.push(bonus.body.id);
+  assert.equal((await call("POST", `/quests/${bonus.body.id}/complete`)).status, 200);
+
   // Shop catalog: exactly the shared CATALOG (same IDs, names, prices, order), incl. pet items and colour variants.
   const items = await call<Item[]>("GET", "/items");
   assert.equal(items.status, 200);
@@ -147,7 +152,44 @@ try {
     ok(`POST /shop/purchase ${item.id} -> coins ${before.coins} -> ${after.coins}; repeat -> 409, charged once`);
   }
   await buyOnce(items.body.filter((i) => i.id.startsWith("pet-")), "pet item");
-  await buyOnce(items.body.filter((i) => i.id.includes("-") && !i.id.startsWith("pet-")).sort((a, b) => a.price - b.price), "colour variant");
+  await buyOnce(items.body.filter((i) => i.id.includes("-") && !i.id.startsWith("pet-") && !i.stackable).sort((a, b) => a.price - b.price), "colour variant");
+
+  // Stackable (farm) items: every purchase adds one and charges once, via the /buy alias.
+  const stackable = items.body.filter((i) => i.stackable).sort((a, b) => a.price - b.price)[0];
+  assert.equal(stackable.type, "farm");
+  assert.ok(items.body.filter((i) => !i.stackable).every((i) => i.type !== "farm"), "non-farm items must not be stackable");
+  purchasedItemIds.push(stackable.id);
+  const s0 = (await call<Player>("GET", "/player")).body;
+  const have = s0.itemCounts[stackable.id] ?? 0;
+  for (let n = 1; n <= 3; n++) {
+    const res = await call<{ player: Player }>("POST", "/shop/buy", { itemId: stackable.id });
+    assert.equal(res.status, 200, `stackable purchase ${n}`);
+    assert.equal(res.body.player.itemCounts[stackable.id], have + n);
+  }
+  const s1 = (await call<Player>("GET", "/player")).body;
+  assert.equal(s1.itemCounts[stackable.id], have + 3);
+  assert.equal(s1.coins, s0.coins - 3 * stackable.price, "stackable charged once per purchase");
+  assert.equal(s1.ownedItems.filter((id) => id === stackable.id).length, 1, "ownedItems stays distinct");
+  ok(`3x POST /shop/buy ${stackable.id} -> count ${have} -> ${s1.itemCounts[stackable.id]}, coins ${s0.coins} -> ${s1.coins}`);
+
+  // Two purchases at the same time: both stackable buys land; a regular item is sold only once.
+  const both = await Promise.all([1, 2].map(() => call("POST", "/shop/buy", { itemId: stackable.id })));
+  assert.deepEqual(both.map((r) => r.status), [200, 200]);
+  const s2 = (await call<Player>("GET", "/player")).body;
+  assert.equal(s2.itemCounts[stackable.id], have + 5);
+  assert.equal(s2.coins, s1.coins - 2 * stackable.price);
+  ok(`concurrent stackable x2 -> count ${s2.itemCounts[stackable.id]}, coins ${s1.coins} -> ${s2.coins}`);
+
+  const single = items.body.filter((i) => !i.stackable && !s2.ownedItems.includes(i.id) && i.price <= s2.coins).sort((a, b) => a.price - b.price)[0];
+  assert.ok(single, `no unowned regular item affordable with ${s2.coins} coins`);
+  purchasedItemIds.push(single.id);
+  const race = await Promise.all([1, 2].map(() => call("POST", "/shop/buy", { itemId: single.id })));
+  assert.deepEqual(race.map((r) => r.status).sort(), [200, 409]);
+  const s3 = (await call<Player>("GET", "/player")).body;
+  assert.equal(s3.coins, s2.coins - single.price, "regular item charged once under concurrency");
+  assert.equal(s3.itemCounts[single.id], 1);
+  ok(`concurrent regular x2 ${single.id} -> 200 + 409, coins ${s2.coins} -> ${s3.coins}, count 1`);
+
 
   if (mode === "tidb") {
     // A quest stored before the column existed (NULL) completes fine and simply has no line.
@@ -171,8 +213,11 @@ try {
   child.kill();
   if (mode === "tidb") {
     if (createdIds.length) await getPool().query("DELETE FROM quests WHERE id IN (?)", [createdIds]);
-    if (purchasedItemIds.length) {
-      await getPool().query("DELETE FROM user_items WHERE user_id = ? AND item_id IN (?)", [DEFAULT_PLAYER_ID, purchasedItemIds]);
+    // Put item ownership back as it was: restore earlier quantities, remove items that were new.
+    for (const id of new Set(purchasedItemIds)) {
+      const before = startPlayer?.itemCounts?.[id];
+      if (before) await getPool().query("UPDATE user_items SET quantity = ? WHERE user_id = ? AND item_id = ?", [before, DEFAULT_PLAYER_ID, id]);
+      else await getPool().query("DELETE FROM user_items WHERE user_id = ? AND item_id = ?", [DEFAULT_PLAYER_ID, id]);
     }
     if (startPlayer) {
       await getPool().query("UPDATE players SET xp = ?, coins = ?, level = ? WHERE id = ?",

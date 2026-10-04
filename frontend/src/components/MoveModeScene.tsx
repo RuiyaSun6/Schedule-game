@@ -31,7 +31,7 @@ interface SceneState {
 
 const SceneContext = createContext<SceneState | null>(null);
 
-export function MoveModeScene({ className, label, children, editing, onEditingChange, floorOnly = false }: { className: string; label: string; children: ReactNode; editing?: boolean; onEditingChange?: (value: boolean) => void; floorOnly?: boolean }) {
+export function MoveModeScene({ className, label, children, editing, onEditingChange, floorOnly = false, toggleLabel = 'MOVE OBJECTS' }: { className: string; label: string; children: ReactNode; editing?: boolean; onEditingChange?: (value: boolean) => void; floorOnly?: boolean; toggleLabel?: string }) {
   const container = useRef<HTMLDivElement>(null);
   const [localMoveMode, setLocalMoveMode] = useState(false);
   const moveMode = editing ?? localMoveMode;
@@ -41,7 +41,7 @@ export function MoveModeScene({ className, label, children, editing, onEditingCh
       {children}
       <button className="move-mode-toggle" type="button" aria-pressed={moveMode}
         onClick={() => setMoveMode(!moveMode)}>
-        {moveMode ? (editing === undefined ? 'DONE MOVING' : 'DONE') : 'MOVE OBJECTS'}
+        {moveMode ? (editing === undefined ? 'DONE MOVING' : 'DONE') : toggleLabel}
       </button>
     </div>
   </SceneContext.Provider>;

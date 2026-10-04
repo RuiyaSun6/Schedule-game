@@ -9,6 +9,8 @@ export interface Player {
   builtAreas?: import('./world').AreaId[];
   outfit?: string;
   ownedItems?: string[];
+  /** How many of each owned item (stackable farm items can be more than 1). */
+  itemCounts?: Record<string, number>;
 }
 
 export interface Quest {
@@ -36,9 +38,11 @@ export interface GenerateQuestsResponse {
 export interface Item {
   id: string;
   name: string;
-  type: 'furniture' | 'garden' | 'clothing';
+  type: 'furniture' | 'garden' | 'clothing' | 'farm';
   price: number;
   asset: string;
+  /** Stackable items (farm) can be bought repeatedly; others can be owned once. */
+  stackable?: boolean;
 }
 
 export interface CompleteQuestResponse {

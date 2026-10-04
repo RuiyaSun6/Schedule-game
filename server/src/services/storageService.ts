@@ -31,6 +31,7 @@ export function getPlayer(): Player {
     ...player,
     unlockedAreas: [...player.unlockedAreas],
     ownedItems: [...player.ownedItems],
+    itemCounts: { ...player.itemCounts },
   };
 }
 
@@ -39,6 +40,7 @@ export function savePlayer(updatedPlayer: Player): void {
     ...updatedPlayer,
     unlockedAreas: [...updatedPlayer.unlockedAreas],
     ownedItems: [...updatedPlayer.ownedItems],
+    itemCounts: { ...updatedPlayer.itemCounts },
   };
 }
 

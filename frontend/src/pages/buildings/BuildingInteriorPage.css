@@ -1,0 +1,11 @@
+/* Building interiors: the bedroom's wall/floor layout, recoloured per building from buildingCatalog. */
+.building-interior-game .room-wall { background: var(--interior-wall); }
+.building-interior-game .room-floor { background-color: var(--interior-floor); }
+/* The Backpack shortcut sits alone in the bottom-left here (no Shop shortcut). */
+.building-interior-game .interior-backpack { left: 14px; }
+@media (min-width: 700px) { .building-interior-game .interior-backpack { left: 24px; } }
+.building-interior-game > .room-caption { left: 74px; max-width: calc(100% - 90px); }
+.interior-exit { position: absolute; top: 14px; right: 14px; z-index: 5; display: inline-flex; align-items: center; min-height: 44px; padding: 8px 14px; font: bold 13px monospace; color: #534735; text-decoration: none; }
+.interior-exit:hover { background: #edf0dc; }
+/* MOVE OBJECTS sits below the EXIT button. */
+.building-interior-game .move-mode-toggle { top: 70px; }

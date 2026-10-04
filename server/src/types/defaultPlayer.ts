@@ -12,5 +12,6 @@ export function makeDefaultPlayer(): Player {
     outfit: "default",
     unlockedAreas: getUnlockedAreas(1),
     ownedItems: [],
+    itemCounts: {},
   };
 }

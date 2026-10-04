@@ -7,7 +7,7 @@ import PixelButton from '../components/PixelButton';
 import { usePlayer, usePlayerActions } from '../services/PlayerContext';
 import { useCatalog } from '../services/useCatalog';
 import { buyItem } from '../services/shop';
-import { SHOP_CATEGORIES, shopCategory } from '../data/shopAssets';
+import { SHOP_CATEGORIES, ownedCount, shopCategory } from '../data/shopAssets';
 
 export default function ShopPage() {
   const player = usePlayer();
@@ -47,7 +47,7 @@ export default function ShopPage() {
     <p role="status" className={`shop-feedback ${notice ? 'is-success' : ''}`}>{notice}</p>
     {error && <p role="alert" className="shop-feedback is-error">{error}</p>}
     {!catalog.loading && !catalog.error && <div className="item-grid shop-item-grid" tabIndex={0} aria-label="Shop items">
-      {shown.map((item) => <ItemCard key={item.id} item={item} coins={player.coins} owned={player.ownedItems?.includes(item.id) ?? false}
+      {shown.map((item) => <ItemCard key={item.id} item={item} coins={player.coins} owned={player.ownedItems?.includes(item.id) ?? false} count={ownedCount(player, item.id)}
         busy={buying !== null || catalog.demo} buying={buying === item.id} onBuy={() => void buy(item)} />)}
     </div>}
     {!catalog.loading && !catalog.error && shown.length === 0 && <p>No items in this category yet.</p>}

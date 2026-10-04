@@ -1,0 +1,7 @@
+/* Farm interior: tiled grass field instead of walls and floor. */
+.farm-field { position: absolute; inset: 0; background-color: #a5c543; background-repeat: no-repeat; image-rendering: pixelated; }
+.building-interior-game.interior-farm { background: #a5c543; }
+/* Crops sit exactly on tiles; keep them crisp and stacked by row. */
+.placed-furniture.is-crop .item-art-sprite { image-rendering: pixelated; }
+.farm-hint { position: absolute; left: 50%; top: 14px; transform: translateX(-50%); z-index: 6; max-width: calc(100% - 200px); padding: 8px 12px; font: bold 12px monospace; color: #87432d; text-align: center; }
+@media (max-width: 480px) { .farm-hint { top: auto; bottom: 150px; max-width: calc(100% - 24px); } }

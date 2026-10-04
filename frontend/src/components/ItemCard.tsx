@@ -7,6 +7,8 @@ import { shopCategory } from '../data/shopAssets';
 interface ItemCardProps {
   item: Item;
   owned: boolean;
+  /** How many the player owns; stackable items show it and stay buyable. */
+  count: number;
   coins: number;
   /** Another purchase is in flight; every Buy button waits. */
   busy: boolean;
@@ -15,17 +17,20 @@ interface ItemCardProps {
 }
 
 // The one shop card: single sprite, name, price, ownership, and a direct Buy button.
-export default function ItemCard({ item, owned, coins, busy, buying, onBuy }: ItemCardProps) {
+export default function ItemCard({ item, owned, count, coins, busy, buying, onBuy }: ItemCardProps) {
   const shortBy = item.price - coins;
-  const status = owned ? '✓ Owned' : shortBy > 0 ? `Need ${shortBy} more coins` : '';
-  return <article className={`item-card pixel-panel ${owned ? 'item-owned' : ''}`} aria-label={item.name}>
+  // Stackable items never lock as "owned": every purchase adds one more.
+  const locked = owned && !item.stackable;
+  const status = locked ? '✓ Owned' : shortBy > 0 ? `Need ${shortBy} more coins` : item.stackable && count > 0 ? `Owned: ${count}` : '';
+  return <article className={`item-card pixel-panel ${locked ? 'item-owned' : ''}`} aria-label={item.name}>
     {shopCategory(item) === 'Pets' && <span className="item-pet-tag">PET</span>}
     <div className="item-card-art"><ItemArtwork item={item} /></div>
     <h2>{item.name}</h2>
     <p className="item-card-price">{item.price} coins</p>
-    <p className={`item-card-status ${owned ? 'is-owned' : shortBy > 0 ? 'is-short' : ''}`}>{status}</p>
-    <PixelButton aria-busy={buying} disabled={owned || shortBy > 0 || busy} onClick={onBuy}>
-      {owned ? 'OWNED' : buying ? 'BUYING…' : shortBy > 0 ? 'NOT ENOUGH COINS' : 'BUY'}
+    <p className={`item-card-status ${locked || (item.stackable && count > 0) ? 'is-owned' : shortBy > 0 ? 'is-short' : ''}`}>{status}</p>
+    {item.stackable && count > 0 && shortBy > 0 && <p className="item-card-status is-owned">Owned: {count}</p>}
+    <PixelButton aria-busy={buying} disabled={locked || shortBy > 0 || busy} onClick={onBuy}>
+      {locked ? 'OWNED' : buying ? 'BUYING…' : shortBy > 0 ? 'NOT ENOUGH COINS' : item.stackable && count > 0 ? 'BUY ANOTHER' : 'BUY'}
     </PixelButton>
   </article>;
 }

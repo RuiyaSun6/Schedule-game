@@ -1,25 +1,47 @@
 import type { Item } from '../types';
 import ItemArtwork from './ItemArtwork';
 import PixelButton from './PixelButton';
-import { isDisplayed } from '../data/shopAssets';
 import { usePlayer } from '../services/PlayerContext';
+import { useRoomPlacement } from '../services/RoomPlacementContext';
+import { availableCopies, fitsLocation, furnitureState } from '../services/furnitureLocation';
+import { ownedCount } from '../data/shopAssets';
+import { getBuilding } from '../data/buildingCatalog';
+import type { LocationId } from '../types/building';
 
-// Owned items that are not on display. Furniture, garden items, and pet items appear in their
-// scene slots automatically (newest variant per slot), so they are listed here only when a newer
-// variant has taken their slot, plus clothing.
-export default function Backpack({ items, loading, error, onRetry }: { items: Item[]; loading: boolean; error: string; onRetry: () => void }) {
+// The one furniture Backpack, shared by Home and every building. Ownership is global:
+// a regular item placed somewhere is not in the Backpack until it is stored again; stackable
+// items (farm) list how many copies are still unplaced.
+export default function Backpack({ items, loading, error, onRetry, locationId, onPlace }: {
+  items: Item[];
+  loading: boolean;
+  error: string;
+  onRetry: () => void;
+  /** Where PLACE puts an item (the room or building the Backpack was opened in). */
+  locationId: LocationId;
+  onPlace: (item: Item) => void;
+}) {
   const player = usePlayer();
-  const stored = items.filter((item) => player.ownedItems?.includes(item.id) && !isDisplayed(player.ownedItems, item.id));
+  const room = useRoomPlacement();
+  const owned = items.filter((item) => item.type !== 'clothing' && player.ownedItems?.includes(item.id));
+  const listed = owned.filter((item) => item.stackable || furnitureState(item.id, player.ownedItems, room).kind === 'backpack');
+  const here = getBuilding(locationId)?.name ?? 'here';
   return <div className="backpack-view">
     <h2 id="backpack-title">BACKPACK</h2>
-    <p>New furniture and garden items appear in their spot right away. When you buy another colour of the same kind, the newest one is shown and the older one waits here.</p>
+    <p>Everything you own but haven’t placed. Place an item here in the {here}, or store furniture with MOVE OBJECTS to bring it back.</p>
     {loading && <p role="status">Opening your backpack…</p>}
     {error && <div role="alert"><p>{error}</p><PixelButton onClick={onRetry}>RETRY CATALOG</PixelButton></div>}
-    {!loading && !error && stored.length === 0 && <p>Nothing stored right now. Everything you own is out on display.</p>}
-    <div className="item-grid">{stored.map((item) => <article className="item-card pixel-panel" key={item.id}>
-      <div className="item-card-art"><ItemArtwork item={item} /></div><h3>{item.name}</h3>
-      <p>{item.type === 'clothing' ? 'Wear it from the Wardrobe' : 'Stored · a newer one is on display'}</p>
-    </article>)}</div>
-    <small>Use MOVE OBJECTS in the room to rearrange furniture and the pet corner.</small>
+    {!loading && !error && listed.length === 0 && <p>Nothing stored right now. Visit the Shop, or store something with MOVE OBJECTS.</p>}
+    <div className="item-grid">{listed.map((item) => {
+      const fits = fitsLocation(item.id, locationId);
+      const total = ownedCount(player, item.id);
+      const available = item.stackable ? availableCopies(item.id, total, room) : 1;
+      return <article className="item-card pixel-panel" key={item.id}>
+        <div className="item-card-art"><ItemArtwork item={item} /></div><h3>{item.name}</h3>
+        {item.stackable && <p className="backpack-count">Available {available} · Owned {total}</p>}
+        <p>{!fits ? `Doesn’t fit in the ${here}` : available < 1 ? 'All placed' : `Ready to place in the ${here}`}</p>
+        <PixelButton disabled={!fits || available < 1} onClick={() => onPlace(item)}>PLACE HERE</PixelButton>
+      </article>;
+    })}</div>
+    <small>Starter furniture and the pet corner always stay home. Farm items only fit on the Farm. Use MOVE OBJECTS to rearrange.</small>
   </div>;
 }
