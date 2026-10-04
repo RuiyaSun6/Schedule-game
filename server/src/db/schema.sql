@@ -20,10 +20,18 @@ CREATE TABLE IF NOT EXISTS quests (
   xp_reward INT NOT NULL,
   coin_reward INT NOT NULL,
   completed BOOLEAN NOT NULL DEFAULT FALSE,
+  scheduled_date VARCHAR(10) NULL,
+  start_time VARCHAR(5) NULL,
+  end_time VARCHAR(5) NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   completed_at TIMESTAMP NULL,
   INDEX idx_quests_user (user_id)
 );
+
+-- Add scheduling columns to databases created before these optional fields existed.
+ALTER TABLE quests ADD COLUMN IF NOT EXISTS scheduled_date VARCHAR(10) NULL;
+ALTER TABLE quests ADD COLUMN IF NOT EXISTS start_time VARCHAR(5) NULL;
+ALTER TABLE quests ADD COLUMN IF NOT EXISTS end_time VARCHAR(5) NULL;
 
 CREATE TABLE IF NOT EXISTS items (
   id VARCHAR(64) PRIMARY KEY,

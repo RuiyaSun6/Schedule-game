@@ -9,6 +9,7 @@ import { worldAreas } from '../services/worldAreas';
 import { getAreaStatus } from '../types/world';
 import { useCatalog } from '../services/useCatalog';
 import { mockItems } from '../services/shop';
+import { MovableObject, MoveModeScene } from '../components/MoveModeScene';
 
 function GardenScene() {
   const player = usePlayer();
@@ -16,11 +17,13 @@ function GardenScene() {
   const supported = ['flowers', 'tree', 'bench', 'fountain'];
   const items = (catalog.items.length ? catalog.items : mockItems).filter((item) => item.type === 'garden' && supported.includes(item.id) && player.ownedItems?.includes(item.id));
   return <section className="home-game garden-game" aria-label="Your Garden">
-    <div className="garden-soil" aria-hidden="true" />
-    {items.map((item) => <div key={item.id} className={`garden-item garden-slot-${item.id}`}>
-      <ItemArtwork item={item} /><span>{item.name}</span>
-    </div>)}
-    <div className="garden-player"><PlayerAvatar /></div>
+    <MoveModeScene className="garden-stage" label="Garden decorations">
+      <div className="garden-soil" aria-hidden="true" />
+      {items.map((item) => <MovableObject key={item.id} objectId={`garden-${item.id}`} className={`garden-item garden-slot-${item.id}`}>
+        <ItemArtwork item={item} /><span>{item.name}</span>
+      </MovableObject>)}
+      <div className="garden-player"><PlayerAvatar /></div>
+    </MoveModeScene>
     <GameTopBar />
     <div className="room-caption"><span>GARDEN · A QUIET PLACE TO GROW</span>
       <p>Your own little patch of possibility.</p>

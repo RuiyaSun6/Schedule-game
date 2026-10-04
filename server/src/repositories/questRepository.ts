@@ -14,15 +14,18 @@ function toQuest(r: RowDataPacket): Quest {
     xpReward: r.xp_reward,
     coinReward: r.coin_reward,
     completed: Boolean(r.completed),
+    ...(r.scheduled_date != null && { scheduledDate: r.scheduled_date }),
+    ...(r.start_time != null && { startTime: r.start_time }),
+    ...(r.end_time != null && { endTime: r.end_time }),
   };
 }
 
 export async function createQuests(quests: Quest[]): Promise<Quest[]> {
   if (quests.length === 0) return [];
   await getPool().query(
-    `INSERT INTO quests (id, user_id, title, category, difficulty, estimated_minutes, xp_reward, coin_reward, completed)
+    `INSERT INTO quests (id, user_id, title, category, difficulty, estimated_minutes, xp_reward, coin_reward, completed, scheduled_date, start_time, end_time)
      VALUES ?`,
-    [quests.map((q) => [q.id, q.userId, q.title, q.category, q.difficulty, q.estimatedMinutes, q.xpReward, q.coinReward, q.completed])],
+    [quests.map((q) => [q.id, q.userId, q.title, q.category, q.difficulty, q.estimatedMinutes, q.xpReward, q.coinReward, q.completed, q.scheduledDate ?? null, q.startTime ?? null, q.endTime ?? null])],
   );
   return quests;
 }
