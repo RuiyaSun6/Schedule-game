@@ -46,6 +46,12 @@ Good completion lines:
 "Laundry Run" -> "Every sock is home safe! Your laundry smells like sunshine."
 "Math Exam Prep" -> "You won the equation duel! Math exam, you don't scare us."
 
+Category rules (always include category; the app groups quests as Study, Fitness, Chores, Other):
+- "study": homework, assignments, exams, reading, classes, projects.
+- "health": workouts, gym, running, sports, walks, stretching.
+- "life": housework and errands (cleaning, laundry, dishes, groceries, cooking) and other daily tasks.
+- "social" or "creative" only for friends/family plans or making art and music.
+
 Other rules:
 - Use "boss" only for genuinely large deadlines, exams, major projects, or multi-step tasks.
 - Use "easy" for short/simple tasks, "medium" for moderate tasks, "hard" for demanding tasks.

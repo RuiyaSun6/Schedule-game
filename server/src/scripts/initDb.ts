@@ -14,12 +14,13 @@ await getPool().query(sql);
 console.log("TiDB schema ready.");
 
 // The seed in schema.sql and the in-memory CATALOG must match (IDs, values, order).
-const [rows] = await getPool().query<RowDataPacket[]>("SELECT id, name, type, price, asset, stackable FROM items ORDER BY sort_order, id");
+const [rows] = await getPool().query<RowDataPacket[]>("SELECT id, name, type, price, asset, stackable, max_quantity FROM items ORDER BY sort_order, id");
 const catalogIds = new Set(CATALOG.map((item) => item.id));
 const seeded = rows.filter((row) => catalogIds.has(row.id));
 const mismatch = CATALOG.findIndex((item, i) => {
   const row = seeded[i];
-  return !row || row.id !== item.id || row.name !== item.name || row.type !== item.type || row.price !== item.price || row.asset !== item.asset || Boolean(row.stackable) !== item.stackable;
+  return !row || row.id !== item.id || row.name !== item.name || row.type !== item.type || row.price !== item.price || row.asset !== item.asset || Boolean(row.stackable) !== item.stackable
+    || (row.max_quantity ?? undefined) !== item.maxQuantity;
 });
 if (mismatch !== -1 || seeded.length !== CATALOG.length) {
   console.error(`✗ schema.sql seed and shopService CATALOG differ (first difference at ${CATALOG[mismatch]?.id ?? "end of list"}).`);

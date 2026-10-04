@@ -12,7 +12,8 @@ import { defaultFurnitureSpot } from '../services/furnitureLocation';
 import type { Item, Quest } from '../types';
 import MonthlyCalendar from '../components/MonthlyCalendar';
 import TodaysTasksPanel from '../components/TodaysTasksPanel';
-import QuestList, { type QuestCompletionProps } from '../components/QuestList';
+import type { QuestCompletionProps } from '../components/QuestList';
+import QuestBoard from '../components/QuestBoard';
 import HomeScene from '../scenes/HomeScene';
 
 interface HomePageProps extends QuestCompletionProps {
@@ -59,7 +60,7 @@ export default function HomePage({ tutorialTab, onAcceptQuest, acceptedCount, qu
     </div>
     <div className="computer-tab-panel computer-view" id="panel-quests" role="tabpanel" aria-labelledby="tab-quests" hidden={shownTab !== 'quests'}>
       <h2 id="quests-screen-title">TODAY'S QUESTS</h2>
-      <QuestList quests={quests} {...completion} />
+      <QuestBoard quests={quests} {...completion} />
     </div>
     <div className="computer-tab-panel computer-view" id="panel-calendar" role="tabpanel" aria-labelledby="tab-calendar" hidden={shownTab !== 'calendar'}>
       <h2 id="calendar-screen-title">CALENDAR</h2>

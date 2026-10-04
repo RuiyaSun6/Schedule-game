@@ -11,6 +11,7 @@ function toItem(r: RowDataPacket, owned?: boolean): Item {
     price: r.price,
     asset: r.asset,
     stackable: Boolean(r.stackable),
+    ...(r.max_quantity == null ? {} : { maxQuantity: Number(r.max_quantity) }),
     ...(owned === undefined ? {} : { owned }),
   };
 }
@@ -37,12 +38,13 @@ export async function addOwnedItem(userId: string, itemId: string): Promise<void
 
 export type PurchaseResult =
   | { ok: true; player: Player; item: Item }
-  | { ok: false; reason: "player_not_found" | "not_found" | "already_owned" | "insufficient_coins" };
+  | { ok: false; reason: "player_not_found" | "not_found" | "already_owned" | "insufficient_coins" | "limit_reached" };
 
 /**
  * Deducts coins and grants the item in ONE transaction. The player row is locked (FOR UPDATE), so
  * concurrent purchases run one after another: coins are checked and charged exactly once each.
- * Stackable items add 1 to user_items.quantity per purchase; regular items can be owned once.
+ * Stackable items add 1 to user_items.quantity per purchase (up to items.max_quantity when set);
+ * regular items can be owned once.
  */
 export async function purchaseItem(userId: string, itemId: string): Promise<PurchaseResult> {
   try {
@@ -70,6 +72,8 @@ async function purchaseInTransaction(userId: string, itemId: string): Promise<Pu
       [userId, itemId],
     );
     if (owned.length > 0 && !item.stackable) return { ok: false, reason: "already_owned" };
+    // The user_items row is locked above, so two buys at the limit cannot both pass this check.
+    if (item.maxQuantity !== undefined && Number(owned[0]?.quantity ?? 0) >= item.maxQuantity) return { ok: false, reason: "limit_reached" };
     if (pRows[0].coins < item.price) return { ok: false, reason: "insufficient_coins" };
 
     await conn.query("UPDATE players SET coins = coins - ? WHERE id = ?", [item.price, userId]);

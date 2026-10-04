@@ -11,10 +11,11 @@ import { ownedCount } from '../data/shopAssets';
 // - stored: regular items the player put away; they wait in the Backpack.
 // Ownership stays global: copies placed anywhere count against what the player owns.
 type Positions = Record<string, WorldObjectPosition>;
-interface FurnitureLayout { positions: Positions; placed: PlacedFurniture[]; stored: string[]; }
+// - wallpaper: the wallpaper item equipped on the bedroom wall (null = plain wall). One at a time.
+interface FurnitureLayout { positions: Positions; placed: PlacedFurniture[]; stored: string[]; wallpaper: string | null; }
 
 function readLayout(key: string): FurnitureLayout {
-  const layout: FurnitureLayout = { positions: {}, placed: [], stored: [] };
+  const layout: FurnitureLayout = { positions: {}, placed: [], stored: [], wallpaper: null };
   try {
     const raw = JSON.parse(localStorage.getItem(key) ?? 'null');
     if (!raw || typeof raw !== 'object') return layout;
@@ -35,6 +36,7 @@ function readLayout(key: string): FurnitureLayout {
       });
     }
     if (Array.isArray(raw.stored)) layout.stored = raw.stored.filter((id: unknown) => typeof id === 'string');
+    if (typeof raw.wallpaper === 'string') layout.wallpaper = raw.wallpaper;
   } catch { /* Start with an empty layout. */ }
   return layout;
 }
@@ -54,6 +56,8 @@ interface RoomPlacementState extends FurnitureLayout {
   storeItem: (itemId: string) => void;
   /** Puts one placed copy back in the Backpack (used by MOVE OBJECTS → STORE). */
   storeInstance: (instanceId: string) => void;
+  /** Equips an owned wallpaper on the bedroom wall, or null for the plain wall. */
+  setWallpaper: (itemId: string | null) => void;
 }
 const RoomContext = createContext<RoomPlacementState | null>(null);
 
@@ -108,7 +112,11 @@ export function RoomPlacementProvider({ children }: { children: ReactNode }) {
       stored: current.current.stored.includes(itemId) ? current.current.stored : [...current.current.stored, itemId],
     });
   }
-  return <RoomContext.Provider value={{ ...layout, setPosition, placeItem, moveItem, storeItem, storeInstance }}>{children}</RoomContext.Provider>;
+  function setWallpaper(itemId: string | null) {
+    if (itemId !== null && !player.ownedItems?.includes(itemId)) return;
+    commit({ ...current.current, wallpaper: itemId });
+  }
+  return <RoomContext.Provider value={{ ...layout, setPosition, placeItem, moveItem, storeItem, storeInstance, setWallpaper }}>{children}</RoomContext.Provider>;
 }
 
 export function useRoomPlacement() {

@@ -12,10 +12,12 @@ import { useRoomPlacement } from '../../services/RoomPlacementContext';
 import { defaultFurnitureSpot } from '../../services/furnitureLocation';
 import { useWorldBuildings } from '../../hooks/useWorldBuildings';
 import { getBuilding, buildingInteriorWidth } from '../../data/buildingCatalog';
-import { getItemArt, itemFamily } from '../../data/shopAssets';
+import { getItemArt, itemFamily, ownedCount } from '../../data/shopAssets';
 import FarmFieldBackground from '../../components/farm/FarmFieldBackground';
 import { cellKey, cellToPosition, tilledCells, useFieldGrid } from '../../components/farm/farmGrid';
 import '../../components/farm/FarmField.css';
+import FarmAnimals from '../../components/animals/FarmAnimals';
+import { usePlayer } from '../../services/PlayerContext';
 import type { Item } from '../../types';
 import '../../scenes/RoomSlots.css';
 import './BuildingInteriorPage.css';
@@ -28,6 +30,7 @@ export default function BuildingInteriorPage() {
   const buildings = useWorldBuildings();
   const catalog = useCatalog();
   const room = useRoomPlacement();
+  const player = usePlayer();
   const sceneRef = useRef<HTMLElement>(null);
   const decorationRef = useRef<HTMLDivElement>(null);
   const [editing, setEditing] = useState(false);
@@ -72,6 +75,9 @@ export default function BuildingInteriorPage() {
     setBackpackOpen(false);
     setEditing(true);
   }
+  // Chickens bought in the Shop roam the Farm field (count from the player, capped by the item limit).
+  const farmAnimals = catalog.items.filter((item) => itemFamily(item.id) === 'animal')
+    .map((item) => ({ id: item.id, count: Math.min(item.maxQuantity ?? Infinity, ownedCount(player, item.id)) }));
   const colours = {
     '--interior-wall': building.interior.wall, '--interior-floor': building.interior.floor,
     '--interior-width': buildingInteriorWidth(id, buildings.level(id)),
@@ -89,6 +95,8 @@ export default function BuildingInteriorPage() {
           <WorldDoor className="bedroom-door" to="/world" prompt={`EXIT ${building.name.toUpperCase()}`} />
         </>}
         <PlacedFurnitureLayer locationId={id} items={catalog.items} grid={grid} onHint={setHint} />
+        {grid && <FarmAnimals animals={farmAnimals} scale={grid.scale >= 4 ? 3 : 2} areaRef={decorationRef} interactive={!editing}
+          avoid={grid.field.tilled.map((t) => ({ x: grid.originX + t.col * grid.cell, y: grid.originY + t.row * grid.cell, width: t.cols * grid.cell, height: t.rows * grid.cell }))} />}
         </div></div>
       </MoveModeScene>
       <GameTopBar />

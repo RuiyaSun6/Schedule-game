@@ -53,6 +53,18 @@ export const CATALOG: readonly Item[] = [
   { id: "pet-scratcher", name: "Scratching Post", type: "furniture", price: 40, asset: "pet-scratcher.png", stackable: false },
   { id: "pet-bed", name: "Cozy Cat Bed", type: "furniture", price: 60, asset: "pet-bed.png", stackable: false },
   { id: "pet-tree", name: "Cat Tree", type: "furniture", price: 120, asset: "pet-tree.png", stackable: false },
+  // Wallpapers (one equipped at a time on the bedroom wall; equip state is kept by the frontend).
+  // Art: frontend/public/assets/wallpapers/wallpaper_NN.png (scripts/crop-wallpapers.mjs). Default price 30.
+  { id: "wallpaper-sage-pinstripe", name: "Sage Pinstripe", type: "wallpaper", price: 30, asset: "wallpaper_01.png", stackable: false },
+  { id: "wallpaper-navy-stripes", name: "Navy Stripes", type: "wallpaper", price: 30, asset: "wallpaper_02.png", stackable: false },
+  { id: "wallpaper-butter-stripes", name: "Butter Stripes", type: "wallpaper", price: 30, asset: "wallpaper_03.png", stackable: false },
+  { id: "wallpaper-walnut-panels", name: "Walnut Panels", type: "wallpaper", price: 30, asset: "wallpaper_04.png", stackable: false },
+  { id: "wallpaper-blush-roses", name: "Blush Roses", type: "wallpaper", price: 30, asset: "wallpaper_05.png", stackable: false },
+  { id: "wallpaper-crimson-roses", name: "Crimson Roses", type: "wallpaper", price: 30, asset: "wallpaper_06.png", stackable: false },
+  { id: "wallpaper-orange-grove", name: "Orange Grove", type: "wallpaper", price: 30, asset: "wallpaper_07.png", stackable: false },
+  { id: "wallpaper-bunny-moon", name: "Bunny Moon", type: "wallpaper", price: 30, asset: "wallpaper_08.png", stackable: false },
+  { id: "wallpaper-snowflake-frost", name: "Snowflake Frost", type: "wallpaper", price: 30, asset: "wallpaper_09.png", stackable: false },
+  { id: "wallpaper-starry-night", name: "Starry Night", type: "wallpaper", price: 30, asset: "wallpaper_10.png", stackable: false },
   // Farm (stackable: buy as many as you like). Crops go on tilled soil, decor anywhere on the farm.
   // Art: frontend/public/assets/farm/<id>.png, cropped by frontend/scripts/split-farm-sprites.mjs.
   { id: "crop-pumpkin", name: "Pumpkin", type: "farm", price: 12, asset: "crop-pumpkin.png", stackable: true },
@@ -71,6 +83,9 @@ export const CATALOG: readonly Item[] = [
   { id: "rock", name: "Rock", type: "farm", price: 5, asset: "rock.png", stackable: true },
   { id: "bush-clover", name: "Clover Bush", type: "farm", price: 6, asset: "bush-clover.png", stackable: true },
   { id: "haystack", name: "Haystack", type: "farm", price: 15, asset: "haystack.png", stackable: true },
+  // Farm animals: each one bought walks around the farm, up to maxQuantity per player.
+  // Art: frontend/public/assets/chicken/Chicken_Sprite_Sheet*.png (4x4 frames of 32px, animated by the frontend).
+  { id: "chicken", name: "Chicken", type: "farm", price: 40, asset: "Chicken_Sprite_Sheet.png", stackable: true, maxQuantity: 5 },
 ];
 
 // Retired items someone still owns stay in TiDB (see db:init) but are no longer sold.
@@ -86,6 +101,7 @@ type PurchaseResult =
   | { status: "not_found" }
   | { status: "already_owned" }
   | { status: "insufficient_coins" }
+  | { status: "limit_reached" }
   | { status: "player_not_found" }
   | { status: "purchased"; item: Item; player: Player };
 
@@ -104,6 +120,7 @@ export async function purchaseItem(itemId: string): Promise<PurchaseResult> {
   const player = getPlayer();
   const owned = player.ownedItems.includes(item.id);
   if (owned && !item.stackable) return { status: "already_owned" };
+  if (item.maxQuantity !== undefined && (player.itemCounts[item.id] ?? 0) >= item.maxQuantity) return { status: "limit_reached" };
   if (player.coins < item.price) return { status: "insufficient_coins" };
 
   const updatedPlayer: Player = {

@@ -1,0 +1,30 @@
+/* Quest board on the bedroom computer: same pixel/cottage palette as the computer tabs (index.css). */
+.quest-board-status { display: flex; gap: 6px; border-bottom: 3px solid #79775e; }
+.quest-board-tab { flex: 1; min-height: 44px; padding: 8px 6px; border: 2px solid #79775e; border-bottom: 0; border-radius: 2px 2px 0 0; background: #e5e8d2; color: #5f714b; font: bold 12px monospace; letter-spacing: .5px; cursor: pointer; }
+.quest-board-tab:hover { background: #d7dfc2; }
+.quest-board-tab[aria-selected="true"] { background: #81966b; color: #fff9e6; box-shadow: inset 0 3px #a1b68b; }
+
+.quest-board-filters { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
+.quest-board-filter { min-height: 36px; padding: 6px 10px; border: 2px solid #918064; border-radius: 2px; background: #fbf7e8; color: #534735; font: bold 11px monospace; cursor: pointer; }
+.quest-board-filter small { font-weight: normal; color: #8a7a5c; }
+.quest-board-filter:hover { background: #edf0dc; }
+.quest-board-filter[aria-pressed="true"] { background: #d7e1bf; border-color: #637c4e; box-shadow: inset 0 -2px #9caf84; color: #3f5530; }
+
+/* The list scrolls inside the computer screen instead of stretching it. */
+.quest-board-list { max-height: min(48svh, 420px); overflow-y: auto; overscroll-behavior: contain; padding-right: 4px; scrollbar-width: thin; scrollbar-color: #9caf84 #f1ecd9; }
+.quest-board-list:focus-visible { outline: 2px solid #648257; outline-offset: 2px; }
+.quest-board-list .planner-notice:empty { display: none; }
+.quest-board-more { display: block; width: 100%; min-height: 44px; margin: 12px 0 4px; border: 2px dashed #918064; background: #f6f1df; color: #5f714b; font: bold 12px monospace; cursor: pointer; }
+.quest-board-more:hover { background: #edf0dc; }
+
+/* Small category tag on each quest card. */
+.quest-group-tag { display: inline-flex; align-items: center; gap: 4px; margin-bottom: 6px; padding: 2px 7px; border: 2px solid; font: bold 10px monospace; letter-spacing: .5px; text-transform: uppercase; }
+.quest-group-study { background: #e3ebd5; border-color: #8aa06c; color: #4c6338; }
+.quest-group-fitness { background: #f4dfcf; border-color: #b98962; color: #7a4b2b; }
+.quest-group-chores { background: #efe4c4; border-color: #a99260; color: #6b5527; }
+.quest-group-other { background: #ece8dc; border-color: #9d9682; color: #5d5747; }
+
+@media (max-width: 480px) {
+  .quest-board-tab { font-size: 11px; padding: 8px 4px; }
+  .quest-board-list { max-height: 44svh; }
+}

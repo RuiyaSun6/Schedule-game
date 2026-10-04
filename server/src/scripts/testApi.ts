@@ -222,6 +222,32 @@ try {
   assert.equal(s3.itemCounts[single.id], 1);
   ok(`concurrent regular x2 ${single.id} -> 200 + 409, coins ${s2.coins} -> ${s3.coins}, count 1`);
 
+  // Limited stackable items (chickens, max 5): buys stop at the limit, and the last free slot is
+  // sold once even when two purchases race for it. A refused buy charges nothing.
+  const limited = items.body.find((i) => i.maxQuantity !== undefined);
+  assert.ok(limited && limited.stackable, "a limited stackable item is in the catalog");
+  const max = limited.maxQuantity!;
+  purchasedItemIds.push(limited.id);
+  for (let earned = (await call<Player>("GET", "/player")).body.coins; earned < max * limited.price; earned += 100) {
+    const extra = await call<Quest>("POST", "/quests", { title: "Shop limit bonus", difficulty: "boss" });
+    createdIds.push(extra.body.id);
+    assert.equal((await call("POST", `/quests/${extra.body.id}/complete`)).status, 200);
+  }
+  let count = (await call<Player>("GET", "/player")).body.itemCounts[limited.id] ?? 0;
+  while (count < max - 1) {
+    assert.equal((await call("POST", "/shop/buy", { itemId: limited.id })).status, 200);
+    count++;
+  }
+  const l0 = (await call<Player>("GET", "/player")).body;
+  const lastSlot = await Promise.all([1, 2].map(() => call("POST", "/shop/buy", { itemId: limited.id })));
+  assert.deepEqual(lastSlot.map((r) => r.status).sort(), [200, 409]);
+  const full = await call<{ error: string }>("POST", "/shop/buy", { itemId: limited.id });
+  assert.equal(full.status, 409);
+  const l1 = (await call<Player>("GET", "/player")).body;
+  assert.equal(l1.itemCounts[limited.id], max);
+  assert.equal(l1.coins, l0.coins - limited.price, "only the purchase that fit was charged");
+  ok(`${limited.id} limit ${max}: racing for the last slot -> 200 + 409, then 409 "${full.body.error}"; count ${max}, charged once`);
+
 
   if (mode === "tidb") {
     // A quest stored before the column existed (NULL) completes fine and simply has no line.

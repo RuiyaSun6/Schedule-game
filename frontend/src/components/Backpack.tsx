@@ -6,6 +6,9 @@ import { useRoomPlacement } from '../services/RoomPlacementContext';
 import { availableCopies, fitsLocation, furnitureState } from '../services/furnitureLocation';
 import { ownedCount } from '../data/shopAssets';
 import { getBuilding } from '../data/buildingCatalog';
+import { isWallpaper } from '../data/shopAssets';
+import { isAnimal } from '../data/animals';
+import { WallpaperPicker } from './Wallpaper';
 import type { LocationId } from '../types/building';
 
 // The one furniture Backpack, shared by Home and every building. Ownership is global:
@@ -22,12 +25,13 @@ export default function Backpack({ items, loading, error, onRetry, locationId, o
 }) {
   const player = usePlayer();
   const room = useRoomPlacement();
-  const owned = items.filter((item) => item.type !== 'clothing' && player.ownedItems?.includes(item.id));
+  const owned = items.filter((item) => item.type !== 'clothing' && !isWallpaper(item.id) && !isAnimal(item.id) && player.ownedItems?.includes(item.id));
   const listed = owned.filter((item) => item.stackable || furnitureState(item.id, player.ownedItems, room).kind === 'backpack');
   const here = locationId === 'home-upstairs' ? 'Home second floor' : getBuilding(locationId)?.name ?? 'here';
   return <div className="backpack-view">
     <h2 id="backpack-title">BACKPACK</h2>
     <p>Everything you own but haven’t placed. Place an item here in the {here}, or store furniture with MOVE OBJECTS to bring it back.</p>
+    {locationId === 'home' && !loading && !error && <WallpaperPicker items={items} />}
     {loading && <p role="status">Opening your backpack…</p>}
     {error && <div role="alert"><p>{error}</p><PixelButton onClick={onRetry}>RETRY CATALOG</PixelButton></div>}
     {!loading && !error && listed.length === 0 && <p>Nothing stored right now. Visit the Shop, or store something with MOVE OBJECTS.</p>}

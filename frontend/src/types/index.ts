@@ -38,11 +38,13 @@ export interface GenerateQuestsResponse {
 export interface Item {
   id: string;
   name: string;
-  type: 'furniture' | 'garden' | 'clothing' | 'farm';
+  type: 'furniture' | 'garden' | 'clothing' | 'farm' | 'wallpaper';
   price: number;
   asset: string;
   /** Stackable items (farm) can be bought repeatedly; others can be owned once. */
   stackable?: boolean;
+  /** Stackable items only: the most one player may own (e.g. 5 chickens). */
+  maxQuantity?: number;
 }
 
 export interface CompleteQuestResponse {

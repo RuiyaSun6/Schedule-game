@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS items (
   price INT NOT NULL,
   asset VARCHAR(255) NOT NULL,
   stackable BOOLEAN NOT NULL DEFAULT FALSE,
+  max_quantity INT NULL,
   sort_order INT NOT NULL DEFAULT 0
 );
 
@@ -50,6 +51,8 @@ CREATE TABLE IF NOT EXISTS items (
 ALTER TABLE items ADD COLUMN IF NOT EXISTS sort_order INT NOT NULL DEFAULT 0;
 -- Stackable items (farm) can be owned many times; see user_items.quantity.
 ALTER TABLE items ADD COLUMN IF NOT EXISTS stackable BOOLEAN NOT NULL DEFAULT FALSE;
+-- Most copies of a stackable item one player may own (e.g. 5 chickens); NULL = no limit.
+ALTER TABLE items ADD COLUMN IF NOT EXISTS max_quantity INT NULL;
 
 CREATE TABLE IF NOT EXISTS user_items (
   user_id VARCHAR(64) NOT NULL,
@@ -87,6 +90,7 @@ CREATE TEMPORARY TABLE seed_items (
   price INT NOT NULL,
   asset VARCHAR(255) NOT NULL,
   stackable BOOLEAN NOT NULL,
+  max_quantity INT NULL,
   sort_order INT NOT NULL
 );
 INSERT INTO seed_items (id, name, type, price, asset, stackable, sort_order) VALUES
@@ -131,25 +135,38 @@ INSERT INTO seed_items (id, name, type, price, asset, stackable, sort_order) VAL
   ('pet-scratcher', 'Scratching Post', 'furniture', 40, 'pet-scratcher.png', FALSE, 39),
   ('pet-bed', 'Cozy Cat Bed', 'furniture', 60, 'pet-bed.png', FALSE, 40),
   ('pet-tree', 'Cat Tree', 'furniture', 120, 'pet-tree.png', FALSE, 41),
-  ('crop-pumpkin', 'Pumpkin', 'farm', 12, 'crop-pumpkin.png', TRUE, 42),
-  ('crop-carrot', 'Carrot', 'farm', 5, 'crop-carrot.png', TRUE, 43),
-  ('crop-potato', 'Potato', 'farm', 5, 'crop-potato.png', TRUE, 44),
-  ('crop-tomato', 'Tomato', 'farm', 8, 'crop-tomato.png', TRUE, 45),
-  ('crop-pea', 'Peas', 'farm', 8, 'crop-pea.png', TRUE, 46),
-  ('fence-wood', 'Wooden Fence', 'farm', 10, 'fence-wood.png', TRUE, 47),
-  ('fence-post', 'Fence Post', 'farm', 5, 'fence-post.png', TRUE, 48),
-  ('tree-birch', 'Birch Tree', 'farm', 20, 'tree-birch.png', TRUE, 49),
-  ('tree-stump', 'Tree Stump', 'farm', 8, 'tree-stump.png', TRUE, 50),
-  ('chest', 'Chest', 'farm', 15, 'chest.png', TRUE, 51),
-  ('chest-open', 'Open Chest', 'farm', 15, 'chest-open.png', TRUE, 52),
-  ('flowers-white', 'White Flowers', 'farm', 6, 'flowers-white.png', TRUE, 53),
-  ('flowers-red', 'Red Tulips', 'farm', 6, 'flowers-red.png', TRUE, 54),
-  ('rock', 'Rock', 'farm', 5, 'rock.png', TRUE, 55),
-  ('bush-clover', 'Clover Bush', 'farm', 6, 'bush-clover.png', TRUE, 56),
-  ('haystack', 'Haystack', 'farm', 15, 'haystack.png', TRUE, 57);
-INSERT INTO items (id, name, type, price, asset, stackable, sort_order)
-  SELECT id, name, type, price, asset, stackable, sort_order FROM seed_items
-  ON DUPLICATE KEY UPDATE name = VALUES(name), type = VALUES(type), price = VALUES(price), asset = VALUES(asset), stackable = VALUES(stackable), sort_order = VALUES(sort_order);
+  ('wallpaper-sage-pinstripe', 'Sage Pinstripe', 'wallpaper', 30, 'wallpaper_01.png', FALSE, 42),
+  ('wallpaper-navy-stripes', 'Navy Stripes', 'wallpaper', 30, 'wallpaper_02.png', FALSE, 43),
+  ('wallpaper-butter-stripes', 'Butter Stripes', 'wallpaper', 30, 'wallpaper_03.png', FALSE, 44),
+  ('wallpaper-walnut-panels', 'Walnut Panels', 'wallpaper', 30, 'wallpaper_04.png', FALSE, 45),
+  ('wallpaper-blush-roses', 'Blush Roses', 'wallpaper', 30, 'wallpaper_05.png', FALSE, 46),
+  ('wallpaper-crimson-roses', 'Crimson Roses', 'wallpaper', 30, 'wallpaper_06.png', FALSE, 47),
+  ('wallpaper-orange-grove', 'Orange Grove', 'wallpaper', 30, 'wallpaper_07.png', FALSE, 48),
+  ('wallpaper-bunny-moon', 'Bunny Moon', 'wallpaper', 30, 'wallpaper_08.png', FALSE, 49),
+  ('wallpaper-snowflake-frost', 'Snowflake Frost', 'wallpaper', 30, 'wallpaper_09.png', FALSE, 50),
+  ('wallpaper-starry-night', 'Starry Night', 'wallpaper', 30, 'wallpaper_10.png', FALSE, 51),
+  ('crop-pumpkin', 'Pumpkin', 'farm', 12, 'crop-pumpkin.png', TRUE, 52),
+  ('crop-carrot', 'Carrot', 'farm', 5, 'crop-carrot.png', TRUE, 53),
+  ('crop-potato', 'Potato', 'farm', 5, 'crop-potato.png', TRUE, 54),
+  ('crop-tomato', 'Tomato', 'farm', 8, 'crop-tomato.png', TRUE, 55),
+  ('crop-pea', 'Peas', 'farm', 8, 'crop-pea.png', TRUE, 56),
+  ('fence-wood', 'Wooden Fence', 'farm', 10, 'fence-wood.png', TRUE, 57),
+  ('fence-post', 'Fence Post', 'farm', 5, 'fence-post.png', TRUE, 58),
+  ('tree-birch', 'Birch Tree', 'farm', 20, 'tree-birch.png', TRUE, 59),
+  ('tree-stump', 'Tree Stump', 'farm', 8, 'tree-stump.png', TRUE, 60),
+  ('chest', 'Chest', 'farm', 15, 'chest.png', TRUE, 61),
+  ('chest-open', 'Open Chest', 'farm', 15, 'chest-open.png', TRUE, 62),
+  ('flowers-white', 'White Flowers', 'farm', 6, 'flowers-white.png', TRUE, 63),
+  ('flowers-red', 'Red Tulips', 'farm', 6, 'flowers-red.png', TRUE, 64),
+  ('rock', 'Rock', 'farm', 5, 'rock.png', TRUE, 65),
+  ('bush-clover', 'Clover Bush', 'farm', 6, 'bush-clover.png', TRUE, 66),
+  ('haystack', 'Haystack', 'farm', 15, 'haystack.png', TRUE, 67);
+-- Items with a per-player limit (max_quantity); everything above has none.
+INSERT INTO seed_items (id, name, type, price, asset, stackable, max_quantity, sort_order) VALUES
+  ('chicken', 'Chicken', 'farm', 40, 'Chicken_Sprite_Sheet.png', TRUE, 5, 68);
+INSERT INTO items (id, name, type, price, asset, stackable, max_quantity, sort_order)
+  SELECT id, name, type, price, asset, stackable, max_quantity, sort_order FROM seed_items
+  ON DUPLICATE KEY UPDATE name = VALUES(name), type = VALUES(type), price = VALUES(price), asset = VALUES(asset), stackable = VALUES(stackable), max_quantity = VALUES(max_quantity), sort_order = VALUES(sort_order);
 DELETE FROM items WHERE id NOT IN (SELECT id FROM seed_items) AND id NOT IN (SELECT item_id FROM user_items);
 DROP TEMPORARY TABLE seed_items;
 

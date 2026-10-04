@@ -1,0 +1,15 @@
+/* Wallpaper swatches (shop cards, picker) and the bedroom wallpaper picker. Same cottage palette. */
+.wallpaper-swatch { display: block; width: 96px; height: 72px; border: 2px solid #79775e; box-shadow: inset 0 0 0 2px #fffdf2; image-rendering: pixelated; }
+.wallpaper-swatch-plain { background: #f0e6d1; }
+
+.wallpaper-picker { margin: 0 0 18px; padding-bottom: 14px; border-bottom: 2px dashed #b6a489; }
+.wallpaper-picker h3 { margin: 0 0 6px; font: bold 14px monospace; color: #536b42; letter-spacing: 1px; }
+.wallpaper-picker > p { margin: 0 0 10px; font-size: 13px; line-height: 1.5; }
+.wallpaper-options { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; max-height: 300px; overflow-y: auto; padding: 2px; }
+.wallpaper-option { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 8px; text-align: center; min-width: 0; }
+.wallpaper-option h4 { margin: 0; font-size: 12px; overflow-wrap: anywhere; }
+.wallpaper-option .pixel-button { width: 100%; min-height: 40px; font-size: 11px; padding: 6px; }
+.wallpaper-option.is-equipped { background: #eef2df; outline: 2px solid #81966b; outline-offset: -2px; }
+
+/* Shop card status for an equipped wallpaper. */
+.item-card .item-card-status.is-equipped { color: #3f5530; font-weight: bold; }

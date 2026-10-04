@@ -7,8 +7,9 @@ import PixelButton from '../components/PixelButton';
 import { usePlayer, usePlayerActions } from '../services/PlayerContext';
 import { useCatalog } from '../services/useCatalog';
 import { buyItem } from '../services/shop';
-import { SHOP_CATEGORIES, ownedCount, shopCategory } from '../data/shopAssets';
+import { SHOP_CATEGORIES, isWallpaper, ownedCount, shopCategory } from '../data/shopAssets';
 import { useRoomPlacement } from '../services/RoomPlacementContext';
+import { isAnimal } from '../data/animals';
 
 export default function ShopPage({ embedded = false }: { embedded?: boolean }) {
   const player = usePlayer();
@@ -35,8 +36,8 @@ export default function ShopPage({ embedded = false }: { embedded?: boolean }) {
       actions.updatePlayer(result.player);
       // New regular furniture waits in Backpack instead of filling a bedroom slot.
       // Existing placed items and stackable copies keep their current placements.
-      if (result.item.type !== 'clothing' && !result.item.stackable && !player.ownedItems?.includes(result.item.id)) room.storeItem(result.item.id);
-      setNotice(`${result.item.name} is yours! −${result.item.price} coins.`);
+      if (result.item.type !== 'clothing' && !isWallpaper(result.item.id) && !result.item.stackable && !player.ownedItems?.includes(result.item.id)) room.storeItem(result.item.id);
+      setNotice(isAnimal(result.item.id) ? `A new ${result.item.name.toLowerCase()} is on your Farm! −${result.item.price} coins.` : `${result.item.name} is yours! −${result.item.price} coins.`);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Purchase failed. Please try again.');
     } finally {
@@ -56,7 +57,7 @@ export default function ShopPage({ embedded = false }: { embedded?: boolean }) {
     <p role="status" className={`shop-feedback ${notice ? 'is-success' : ''}`}>{notice}</p>
     {error && <p role="alert" className="shop-feedback is-error">{error}</p>}
     {!catalog.loading && !catalog.error && <div className="item-grid shop-item-grid" tabIndex={0} aria-label="Shop items">
-      {shown.map((item) => <ItemCard key={item.id} item={item} coins={player.coins} owned={player.ownedItems?.includes(item.id) ?? false} count={ownedCount(player, item.id)}
+      {shown.map((item) => <ItemCard key={item.id} item={item} coins={player.coins} owned={player.ownedItems?.includes(item.id) ?? false} count={ownedCount(player, item.id)} equipped={room.wallpaper === item.id}
         busy={buying !== null || catalog.demo} buying={buying === item.id} onBuy={() => void buy(item)} />)}
     </div>}
     {!catalog.loading && !catalog.error && shown.length === 0 && <p>No items in this category yet.</p>}

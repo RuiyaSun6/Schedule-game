@@ -31,6 +31,10 @@ export async function postPurchase(request: Request, response: Response): Promis
     response.status(409).json({ error: "Item already owned." });
     return;
   }
+  if (result.status === "limit_reached") {
+    response.status(409).json({ error: "You already have the most you can keep of this item." });
+    return;
+  }
   if (result.status === "insufficient_coins") {
     response.status(409).json({ error: "Not enough coins." });
     return;

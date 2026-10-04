@@ -1,0 +1,10 @@
+/* Animal sprites: one frame of a sprite sheet, whole-number scale, crisp pixels. */
+.animal-sprite { display: block; background-repeat: no-repeat; image-rendering: pixelated; }
+
+/* The Farm's animal layer: above the ground and placed items, below the HUD (which comes later in the
+   page). z-index 0 makes it its own stacking context, so animals sort by height only inside it. */
+.farm-animals { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.farm-animal { position: absolute; left: 0; top: 0; padding: 0; border: 0; background: none; cursor: pointer; pointer-events: auto; visibility: hidden; will-change: transform; -webkit-tap-highlight-color: transparent; }
+.farm-animal:focus-visible { outline: 2px dashed #536b42; outline-offset: 2px; }
+.farm-animal-hop { display: block; }
+.farm-animals.is-passive .farm-animal { pointer-events: none; }

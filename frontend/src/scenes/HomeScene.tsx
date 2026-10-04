@@ -5,6 +5,7 @@ import { usePlayer } from '../services/PlayerContext';
 import { HOME_SLOTS, latestOwned } from '../data/shopAssets';
 import { furnitureState } from '../services/furnitureLocation';
 import PlacedFurnitureLayer from '../components/PlacedFurnitureLayer';
+import { wallpaperStyle } from '../components/Wallpaper';
 import type { Item } from '../types';
 import './RoomSlots.css';
 import WorldDoor from '../components/WorldDoor';
@@ -44,7 +45,8 @@ export default function HomeScene({ onOpenComputer, items, editing, onEditingCha
   const placement = (objectId: string) => ({ position: room.positions[objectId], onPositionChange: room.setPosition });
   return (
     <MoveModeScene className="bedroom" label="A simple bedroom with a bed, desk, and computer" editing={editing} onEditingChange={onEditingChange} floorOnly>
-      <div className="room-wall" aria-hidden="true" />
+      {/* The equipped wallpaper tiles across the wall at the room's pixel scale. */}
+      <div className="room-wall" aria-hidden="true" style={wallpaperStyle(room.wallpaper, 'var(--room-scale)')} />
       <div className="room-floor" aria-hidden="true" />
       <WorldDoor className="bedroom-door" to="/world" prompt="GO OUTSIDE" tutorialTarget="world" />
       <MovableObject objectId="home-bed" className="room-bed" name="Bed" {...placement('home-bed')}>

@@ -2,7 +2,7 @@
 
 export type QuestCategory = "study" | "health" | "life" | "social" | "creative";
 export type QuestDifficulty = "easy" | "medium" | "hard" | "boss";
-export type ItemType = "furniture" | "garden" | "clothing" | "farm";
+export type ItemType = "furniture" | "garden" | "clothing" | "farm" | "wallpaper";
 
 export const QUEST_CATEGORIES: QuestCategory[] = ["study", "health", "life", "social", "creative"];
 export const QUEST_DIFFICULTIES: QuestDifficulty[] = ["easy", "medium", "hard", "boss"];
@@ -47,6 +47,8 @@ export interface Item {
   // Stackable items (farm crops and decor) can be bought many times; each purchase adds one.
   // Regular items can be owned once.
   stackable: boolean;
+  // Stackable items only: the most one player may own (e.g. 5 chickens). Missing = no limit.
+  maxQuantity?: number;
   // Only set on per-player catalog responses.
   owned?: boolean;
 }
