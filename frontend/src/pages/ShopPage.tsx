@@ -1,41 +1,43 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import type { Item } from '../types';
+import { shopProducts, shopCategory } from '../data/shopAssets';
+import { useDemoShop } from '../services/DemoShopContext';
 import GameTopBar from '../components/GameTopBar';
-import ItemCard from '../components/ItemCard';
+import ItemArtwork from '../components/ItemArtwork';
 import PixelButton from '../components/PixelButton';
-import { usePlayer, usePlayerActions } from '../services/PlayerContext';
+import ShopProductDetail, { type DisplayProduct } from '../components/ShopProductDetail';
 import { useCatalog } from '../services/useCatalog';
-import { buyItem } from '../services/shop';
 
 export default function ShopPage() {
-  const player = usePlayer();
-  const actions = usePlayerActions();
   const catalog = useCatalog();
-  const [category, setCategory] = useState<Item['type']>('furniture');
-  const [buying, setBuying] = useState<string | null>(null);
-  const [notice, setNotice] = useState('');
-  const [error, setError] = useState('');
-  async function buy(item: Item) {
-    if (!actions.beginMutation()) { setError('Another update is in progress. Please wait.'); return; }
-    setBuying(item.id); setError(''); setNotice('');
-    try {
-      const result = await buyItem(player, item);
-      actions.updatePlayer(result.player);
-      setNotice(`${result.item.name} is yours!`);
-    } catch (reason) { setError(reason instanceof Error ? reason.message : 'Purchase failed.'); }
-    finally { actions.endMutation(); setBuying(null); }
-  }
+  const demo = useDemoShop();
+  const [mode, setMode] = useState<'shop' | 'demo'>('shop');
+  const [category, setCategory] = useState('All');
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const products: DisplayProduct[] = mode === 'demo' ? shopProducts : catalog.items.map((item) => ({ id: item.id, name: item.name, category: shopCategory(item), styles: [{ id: 'standard', name: 'Standard', variants: [item] }] }));
+  const categories = [...new Set(products.map((product) => product.category))];
+  const selected = products.find((product) => product.id === selectedId);
+  function changeMode(next: 'shop' | 'demo') { setMode(next); setCategory('All'); setSelectedId(null); }
   return <section className="inventory-page accepted-quests-page">
     <GameTopBar /><h1>SHOP</h1>
-    <div className="shop-categories" aria-label="Shop categories">{(['furniture', 'garden', 'clothing'] as const).map((type) => <PixelButton key={type} aria-pressed={type === category} onClick={() => setCategory(type)}>{type === 'furniture' ? 'HOME' : type.toUpperCase()}</PixelButton>)}</div>
-    {catalog.loading && <p className="loading-feedback" role="status">Loading little treasures…</p>}
-    {catalog.demo && <p className="planner-notice">Demo catalog · progress lasts for this session.</p>}
-    {catalog.error && <div role="alert"><p>{catalog.error}</p><PixelButton onClick={catalog.retry}>RETRY</PixelButton></div>}
-    {error && <p role="alert" className="planner-error">{error}</p>}
-    <p role="status" className="planner-notice">{notice}</p>
-    {!catalog.loading && !catalog.error && <div className="item-grid">{catalog.items.filter((item) => item.type === category).map((item) => <ItemCard key={item.id} item={item} owned={player.ownedItems?.includes(item.id) ?? false} affordable={player.coins >= item.price} busy={buying !== null} buying={buying === item.id} onBuy={() => void buy(item)} />)}</div>}
-    {!catalog.loading && !catalog.error && !catalog.items.some((item) => item.type === category) && <p>No items in this category yet.</p>}
+    <div className="shop-mode" aria-label="Shop mode">
+      <PixelButton aria-pressed={mode === 'shop'} onClick={() => changeMode('shop')}>SHOP</PixelButton>
+      <PixelButton aria-pressed={mode === 'demo'} onClick={() => changeMode('demo')}>FURNITURE DEMO</PixelButton>
+    </div>
+    {mode === 'demo' && <p className="planner-notice">Local furniture demo · {demo.coins} demo coins. Multiple copies stay on this device and use a separate balance from player coins.</p>}
+    {mode === 'shop' && catalog.loading && <p className="loading-feedback" role="status">Loading little treasures…</p>}
+    {mode === 'shop' && catalog.demo && <p className="planner-notice">Offline catalog preview · purchases require the backend. Furniture Demo supports local purchases.</p>}
+    {mode === 'shop' && catalog.error && <div role="alert"><p>{catalog.error}</p><PixelButton onClick={catalog.retry}>RETRY</PixelButton></div>}
+    {selected ? <ShopProductDetail key={`${mode}-${selected.id}`} product={selected} demoMode={mode === 'demo'} onBack={() => setSelectedId(null)} /> : <>
+      <div className="shop-categories" aria-label="Furniture categories">{['All', ...categories].map((name) => <PixelButton key={name} aria-pressed={name === category} onClick={() => setCategory(name)}>{name.toUpperCase()}</PixelButton>)}</div>
+      {(mode === 'demo' || (!catalog.loading && !catalog.error)) && <div className="item-grid shop-item-grid" tabIndex={0} aria-label="Product families">
+        {products.filter((product) => category === 'All' || product.category === category).map((product) => <article className="item-card pixel-panel" key={product.id}>
+          <ItemArtwork item={product.styles[0].variants[0]} /><h2>{product.name}</h2>
+          <p>{product.styles.length} {product.styles.length === 1 ? 'style' : 'styles'} · {product.styles.reduce((count, style) => count + style.variants.length, 0)} variants</p>
+          <PixelButton onClick={() => setSelectedId(product.id)}>EXPLORE</PixelButton>
+        </article>)}
+      </div>}
+    </>}
     <div className="inventory-links"><Link to="/home">← Bedroom</Link><Link to="/wardrobe">Wardrobe →</Link></div>
   </section>;
 }

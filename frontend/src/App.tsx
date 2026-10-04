@@ -1,6 +1,8 @@
 import { Route, Routes } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import type { Player, Quest } from './types';
+import { DemoShopProvider } from './services/DemoShopContext';
+import { RoomPlacementProvider } from './services/RoomPlacementContext';
 import { AreaProvider } from './services/AreaContext';
 import { completeQuest, getPlayer, getQuests } from './services/api';
 import { PlayerContext, PlayerActionsContext } from './services/PlayerContext';
@@ -92,12 +94,14 @@ export default function App() {
   return (
     <PlayerContext.Provider value={player}>
     <PlayerActionsContext.Provider value={{ updatePlayer, beginMutation, endMutation }}>
+    <DemoShopProvider key={player.id}>
+    <RoomPlacementProvider key={player.id}>
     <AreaProvider>
     <main className="app">
         <Routes>
           <Route path="/" element={<WelcomePage />} />
           <Route path="/world" element={<WorldPage />} />
-          <Route path="/home" element={<HomePage onAcceptQuest={acceptQuest} acceptedCount={acceptedQuests.length} quests={acceptedQuests} hasSeenTutorial={hasSeenTutorial} onCompleteTutorial={() => setHasSeenTutorial(true)} />} />
+          <Route path="/home" element={<HomePage onComplete={finishQuest} completingId={completingId} errors={completionErrors} notice={completionNotice} onAcceptQuest={acceptQuest} acceptedCount={acceptedQuests.length} quests={acceptedQuests} hasSeenTutorial={hasSeenTutorial} onCompleteTutorial={() => setHasSeenTutorial(true)} />} />
           <Route path="/planner" element={<PlannerPage />} />
           <Route path="/quests" element={<QuestsPage quests={acceptedQuests} onComplete={finishQuest} completingId={completingId} errors={completionErrors} notice={completionNotice} />} />
           <Route path="/shop" element={<ShopPage />} />
@@ -110,6 +114,8 @@ export default function App() {
       <LevelUpModal details={levelUp} onClose={() => setLevelUp(null)} />
     </main>
     </AreaProvider>
+    </RoomPlacementProvider>
+    </DemoShopProvider>
     </PlayerActionsContext.Provider>
     </PlayerContext.Provider>
   );
