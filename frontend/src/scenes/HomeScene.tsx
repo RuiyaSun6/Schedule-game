@@ -1,5 +1,7 @@
 import ItemArtwork from '../components/ItemArtwork';
 import PetCorner from '../components/PetCorner';
+import PetBird, { PET_BIRD_ID } from '../components/PetBird';
+import RoomTV, { TV_ITEMS } from '../components/RoomTV';
 import { useRoomPlacement } from '../services/RoomPlacementContext';
 import { usePlayer } from '../services/PlayerContext';
 import { HOME_SLOTS, latestOwned } from '../data/shopAssets';
@@ -71,6 +73,14 @@ export default function HomeScene({ onOpenComputer, items, editing, onEditingCha
       <MovableObject objectId="home-pet-corner" className="room-owned-item room-slot pet-corner-slot" name="Pet corner" {...placement('home-pet-corner')}>
         <PetCorner />
       </MovableObject>
+      {/* The pet bird, once bought: its own movable spot, like the pet corner. */}
+      {player.ownedItems?.includes(PET_BIRD_ID) && <MovableObject objectId="home-pet-bird" className="room-owned-item room-slot pet-bird-slot" name="Bird" {...placement('home-pet-bird')}>
+        {(moveMode) => <PetBird moveMode={moveMode} />}
+      </MovableObject>}
+      {/* TVs (Electronics), once bought: each has its own movable spot in the bedroom. */}
+      {Object.keys(TV_ITEMS).filter((id) => player.ownedItems?.includes(id)).map((id) => <MovableObject key={id} objectId={`home-${id}`} className={`room-owned-item room-slot room-tv-slot room-tv-slot-${id}`} name={TV_ITEMS[id]!.name} {...placement(`home-${id}`)}>
+        {(moveMode) => <RoomTV itemId={id} moveMode={moveMode} />}
+      </MovableObject>)}
       <MovableObject objectId="home-computer" className="room-computer" name="Computer" {...placement('home-computer')}>
         {(moveMode) => <button className="room-computer-button" type="button"
           onClick={() => { if (!moveMode) onOpenComputer(); }}

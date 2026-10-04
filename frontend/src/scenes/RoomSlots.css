@@ -17,6 +17,8 @@
 .room-slot-chair { left: 76%; top: 64.5%; }
 .room-slot-sofa { left: 66%; top: 78%; }
 .pet-corner-slot { left: 3%; bottom: 162px; }
+.pet-bird-slot { left: 42%; top: 48.5%; }
+.room-tv-slot { left: 15%; top: 51%; }
 
 @media (min-width: 700px) {
   .bedroom { --room-scale: 5; }
@@ -25,6 +27,8 @@
   .room-slot-chair { left: 54%; top: 50%; }
   .room-slot-sofa { left: 27%; top: 66%; }
   .pet-corner-slot { left: 4%; bottom: 88px; }
+  .pet-bird-slot { left: 6%; top: 30%; }
+  .room-tv-slot { left: 87%; top: 30%; }
 }
 
 /* Small furniture (a 3x chair is ~39px wide) would be covered by the 36-44px select button and the

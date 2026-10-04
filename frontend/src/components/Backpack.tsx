@@ -8,6 +8,7 @@ import { ownedCount } from '../data/shopAssets';
 import { getBuilding } from '../data/buildingCatalog';
 import { isWallpaper } from '../data/shopAssets';
 import { isAnimal } from '../data/animals';
+import { isElectronics } from './RoomTV';
 import { WallpaperPicker } from './Wallpaper';
 import type { LocationId } from '../types/building';
 
@@ -25,7 +26,7 @@ export default function Backpack({ items, loading, error, onRetry, locationId, o
 }) {
   const player = usePlayer();
   const room = useRoomPlacement();
-  const owned = items.filter((item) => item.type !== 'clothing' && !isWallpaper(item.id) && !isAnimal(item.id) && player.ownedItems?.includes(item.id));
+  const owned = items.filter((item) => item.type !== 'clothing' && !isWallpaper(item.id) && !isAnimal(item.id) && !isElectronics(item.id) && player.ownedItems?.includes(item.id));
   const listed = owned.filter((item) => item.stackable || furnitureState(item.id, player.ownedItems, room).kind === 'backpack');
   const here = locationId === 'home-upstairs' ? 'Home second floor' : getBuilding(locationId)?.name ?? 'here';
   return <div className="backpack-view">

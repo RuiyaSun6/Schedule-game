@@ -86,6 +86,12 @@ export const CATALOG: readonly Item[] = [
   // Farm animals: each one bought walks around the farm, up to maxQuantity per player.
   // Art: frontend/public/assets/chicken/Chicken_Sprite_Sheet*.png (4x4 frames of 32px, animated by the frontend).
   { id: "chicken", name: "Chicken", type: "farm", price: 40, asset: "Chicken_Sprite_Sheet.png", stackable: true, maxQuantity: 5 },
+  // Pet bird (sold under Pets, owned once): an animated budgie on a cage stand in the bedroom.
+  // Art: frontend/public/assets/interior full/pets/budgie/budgie_blue.gif. Listed last to keep the seed order stable.
+  { id: "pet-bird", name: "Bird", type: "furniture", price: 80, asset: "budgie_blue.gif", stackable: false },
+  // Electronics (owned once): a TV playing a cooking show, shown in the bedroom.
+  // Art: frontend/public/assets/interior full/TV gifs/TV_cooking_dessert.gif.
+  { id: "tv-cooking", name: "TV (cooking)", type: "furniture", price: 120, asset: "TV_cooking_dessert.gif", stackable: false },
 ];
 
 // Retired items someone still owns stay in TiDB (see db:init) but are no longer sold.

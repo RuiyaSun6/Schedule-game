@@ -63,6 +63,7 @@ const PET_ITEMS: [string, string, number][] = [
   ["pet-scratcher", "Scratching Post", 40],
   ["pet-bed", "Cozy Cat Bed", 60],
   ["pet-tree", "Cat Tree", 120],
+  ["pet-bird", "Bird", 80],
 ];
 
 const createdIds: string[] = [];

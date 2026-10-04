@@ -1,6 +1,8 @@
 import type { Item } from '../types';
 import { SHOP_SPRITES } from './shopSprites';
 import { PET_ITEM_ART } from '../components/PetCorner';
+import { PET_BIRD_ART, PET_BIRD_ID } from '../components/PetBird';
+import { TV_ITEMS, isElectronics } from '../components/RoomTV';
 import { FARM_SPRITES, type FarmSprite } from './farmSprites';
 import { WALLPAPERS, wallpaperSrc, type WallpaperTile } from './wallpapers';
 import { isAnimal } from './animals';
@@ -29,6 +31,11 @@ export function getItemArt(id: string): ItemArt | undefined {
     const src = urls[`../assets/${sprite.type}/${id}.png`];
     return src ? { src, width: sprite.width, height: sprite.height } : undefined;
   }
+  // The bird's thumbnail is its animated GIF (the shop scales it by a whole number, keeping its shape).
+  if (id === PET_BIRD_ID) return PET_BIRD_ART;
+  // TVs: the animated GIF itself (whole-number scale, square, so nothing is stretched).
+  const tv = TV_ITEMS[id];
+  if (tv) return { src: tv.src, width: tv.width, height: tv.height };
   return PET_ITEM_ART[id];
 }
 
@@ -37,6 +44,7 @@ export function itemFamily(id: string): string {
   if (isWallpaper(id)) return 'wallpaper';
   // Animals walk around the Farm on their own; they are never placed like furniture.
   if (isAnimal(id)) return 'animal';
+  if (isElectronics(id)) return 'electronics';
   return farmSprite(id)?.category ?? SHOP_SPRITES[id]?.family ?? (id.startsWith('pet-') ? 'pet' : id);
 }
 
@@ -46,12 +54,13 @@ export function ownedCount(player: { ownedItems?: string[]; itemCounts?: Record<
 }
 
 // Garden and Clothing were retired: potted trees moved to Plants; garden extras and clothing are no longer sold.
-export const SHOP_CATEGORIES = ['Plants', 'Seating', 'Lighting', 'Wallpaper', 'Pets', 'Farm'] as const;
+export const SHOP_CATEGORIES = ['Plants', 'Seating', 'Lighting', 'Wallpaper', 'Electronics', 'Pets', 'Farm'] as const;
 export type ShopCategory = typeof SHOP_CATEGORIES[number];
 const FAMILY_CATEGORY: Record<string, ShopCategory> = {
   plant: 'Plants', chair: 'Seating', sofa: 'Seating', lamp: 'Lighting', pet: 'Pets',
   tree: 'Plants',
   wallpaper: 'Wallpaper',
+  electronics: 'Electronics',
   crop: 'Farm', 'farm-decor': 'Farm', animal: 'Farm',
 };
 /** Shop tab for an item, or null for items the shop no longer sells (e.g. retired garden or clothing items). */

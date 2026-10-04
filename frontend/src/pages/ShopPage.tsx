@@ -10,6 +10,7 @@ import { buyItem } from '../services/shop';
 import { SHOP_CATEGORIES, isWallpaper, ownedCount, shopCategory } from '../data/shopAssets';
 import { useRoomPlacement } from '../services/RoomPlacementContext';
 import { isAnimal } from '../data/animals';
+import { isElectronics } from '../components/RoomTV';
 
 export default function ShopPage({ embedded = false }: { embedded?: boolean }) {
   const player = usePlayer();
@@ -36,7 +37,7 @@ export default function ShopPage({ embedded = false }: { embedded?: boolean }) {
       actions.updatePlayer(result.player);
       // New regular furniture waits in Backpack instead of filling a bedroom slot.
       // Existing placed items and stackable copies keep their current placements.
-      if (result.item.type !== 'clothing' && !isWallpaper(result.item.id) && !result.item.stackable && !player.ownedItems?.includes(result.item.id)) room.storeItem(result.item.id);
+      if (result.item.type !== 'clothing' && !isWallpaper(result.item.id) && !isElectronics(result.item.id) && !result.item.stackable && !player.ownedItems?.includes(result.item.id)) room.storeItem(result.item.id);
       setNotice(isAnimal(result.item.id) ? `A new ${result.item.name.toLowerCase()} is on your Farm! −${result.item.price} coins.` : `${result.item.name} is yours! −${result.item.price} coins.`);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Purchase failed. Please try again.');
