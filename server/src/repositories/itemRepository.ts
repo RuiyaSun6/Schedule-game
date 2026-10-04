@@ -15,7 +15,7 @@ function toItem(r: RowDataPacket, owned?: boolean): Item {
 }
 
 export async function getItems(userId?: string): Promise<Item[]> {
-  const [rows] = await getPool().query<RowDataPacket[]>("SELECT * FROM items ORDER BY type, price");
+  const [rows] = await getPool().query<RowDataPacket[]>("SELECT * FROM items ORDER BY sort_order, id");
   const owned = new Set(userId ? await getOwnedItems(userId) : []);
   return rows.map((r) => toItem(r, userId === undefined ? undefined : owned.has(r.id)));
 }

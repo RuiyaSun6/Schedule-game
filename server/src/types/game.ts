@@ -30,6 +30,8 @@ export interface Quest {
   scheduledDate?: string;
   startTime?: string;
   endTime?: string;
+  // Companion line shown when the quest is completed. Generated with the quest; may be missing on old quests.
+  completionLine?: string;
 }
 
 export interface Item {
@@ -52,6 +54,8 @@ export interface QuestDraft {
   scheduledDate?: string;
   startTime?: string;
   endTime?: string;
+  // Always set after validation (template fallback when Gemini omits it).
+  completionLine: string;
 }
 
 export interface SimilarQuest {

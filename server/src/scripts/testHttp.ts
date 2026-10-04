@@ -53,7 +53,7 @@ try {
   assert.deepEqual((await request("/api/quests")).data, []);
   const items = await request("/api/items");
   assert.equal(items.status, 200);
-  assert.equal(items.data.length, 11);
+  assert.equal(items.data.length, 57);
   assert.equal(Object.hasOwn(items.data[0], "owned"), false);
   assert.equal(await request("/api/quests", "POST", { title: "Invalid", difficulty: "unknown" }).then((r) => r.status), 400);
   assert.equal(await request("/api/shop/purchase", "POST", {}).then((r) => r.status), 400);
@@ -96,11 +96,11 @@ try {
 
   assert.equal(await request("/api/shop/purchase", "POST", { itemId: "unknown" }).then((r) => r.status), 404);
   assert.equal(await request("/api/shop/purchase", "POST", { itemId: "fountain" }).then((r) => r.status), 409);
-  const purchased = await request("/api/shop/purchase", "POST", { itemId: "plant" });
+  const purchased = await request("/api/shop/purchase", "POST", { itemId: "plant-red-pot" });
   assert.equal(purchased.status, 200);
   assert.equal(purchased.data.player.coins, 15);
-  assert.deepEqual(purchased.data.player.ownedItems, ["plant"]);
-  assert.equal(await request("/api/shop/purchase", "POST", { itemId: "plant" }).then((r) => r.status), 409);
+  assert.deepEqual(purchased.data.player.ownedItems, ["plant-red-pot"]);
+  assert.equal(await request("/api/shop/purchase", "POST", { itemId: "plant-red-pot" }).then((r) => r.status), 409);
   assert.equal((await request("/api/player")).data.coins, 15);
   assert.equal(await request("/api/quests/missing/complete", "POST").then((r) => r.status), 404);
   assert.equal(await request("/api/missing").then((r) => r.status), 404);

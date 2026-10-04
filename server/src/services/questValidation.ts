@@ -5,6 +5,7 @@ import {
   type QuestDifficulty,
   type QuestDraft,
 } from "../types/game.js";
+import { normalizeCompletionLine } from "./completionLine.js";
 
 const MIN_MINUTES = 5;
 const MAX_MINUTES = 480;
@@ -49,6 +50,8 @@ export function validateQuestDraft(raw: unknown): QuestDraft | null {
     ...(validDate && { scheduledDate }),
     ...(timePattern.test(startTime) && { startTime }),
     ...(timePattern.test(endTime) && { endTime }),
+    // Never drop a quest over this field: invalid or missing lines get a template.
+    completionLine: normalizeCompletionLine(q.completionLine, title),
   };
 }
 

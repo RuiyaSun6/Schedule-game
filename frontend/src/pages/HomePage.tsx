@@ -5,13 +5,8 @@ import PixelButton from '../components/PixelButton';
 import PixelModal from '../components/PixelModal';
 import DailyPlanner from '../components/DailyPlanner';
 import Backpack from '../components/Backpack';
-import { useDemoShop } from '../services/DemoShopContext';
-import { getFurnitureVariant, withShopAsset } from '../data/shopAssets';
 import { useCatalog } from '../services/useCatalog';
-import { usePlayer } from '../services/PlayerContext';
-import { useRoomPlacement } from '../services/RoomPlacementContext';
-import { getCatalogItem, mockItems } from '../services/shop';
-import type { Quest, Item } from '../types';
+import type { Quest } from '../types';
 import MonthlyCalendar from '../components/MonthlyCalendar';
 import TodaysTasksPanel from '../components/TodaysTasksPanel';
 import QuestList, { type QuestCompletionProps } from '../components/QuestList';
@@ -33,19 +28,15 @@ const tutorialSteps = [
 
 export default function HomePage({ hasSeenTutorial, onCompleteTutorial, onAcceptQuest, acceptedCount, quests, onComplete, completingId, errors, notice }: HomePageProps) {
   const catalog = useCatalog();
-  const demo = useDemoShop();
-  const player = usePlayer();
-  const room = useRoomPlacement();
   const [backpackOpen, setBackpackOpen] = useState(false);
   const [editing, setEditing] = useState(false);
-  const roomItems: Item[] = [...new Set([...(player.ownedItems ?? []), ...Object.keys(demo.quantities)])].map((id) => getFurnitureVariant(id) ?? catalog.items.find((item) => item.id === id) ?? getCatalogItem(id) ?? mockItems.find((item) => item.id === id) ?? { id, name: id, type: 'furniture' as const, price: 0, asset: '' }).map(withShopAsset);
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'plan' | 'quests' | 'calendar'>('plan');
   const completion = { onComplete, completingId, errors, notice };
 
   return (
     <section className="home-game" aria-label="Your bedroom">
-      <HomeScene onOpenComputer={() => setOpen(true)} items={roomItems} editing={editing} onEditingChange={setEditing} />
+      <HomeScene onOpenComputer={() => setOpen(true)} items={catalog.items} editing={editing} onEditingChange={setEditing} />
       <div className="home-player-tasks-hud">
         <GameTopBar />
         <TodaysTasksPanel quests={quests} {...completion} />
@@ -65,7 +56,7 @@ export default function HomePage({ hasSeenTutorial, onCompleteTutorial, onAccept
         </svg>
       </button>
       <PixelModal open={backpackOpen} onClose={() => setBackpackOpen(false)} titleId="backpack-title">
-        <Backpack items={roomItems} loading={catalog.loading} error={catalog.error} onRetry={catalog.retry} onPlace={(id) => { room.placeItem(id); setBackpackOpen(false); setEditing(true); }} />
+        <Backpack items={catalog.items} loading={catalog.loading} error={catalog.error} onRetry={catalog.retry} />
       </PixelModal>
       <div className="room-caption"><span>HOME · YOUR FIRST LITTLE SPACE</span><p>A new beginning. Make yourself at home.</p></div>
       <PixelModal open={open} onClose={() => setOpen(false)} titleId={hasSeenTutorial && activeTab !== 'plan' ? `${activeTab}-screen-title` : 'computer-screen-title'}>

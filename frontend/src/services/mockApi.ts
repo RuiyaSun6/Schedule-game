@@ -1,5 +1,6 @@
 import type { CompleteQuestResponse, Item, Player, Quest } from '../types';
 import { worldAreas } from './worldAreas';
+import { SHOP_SPRITES } from '../data/shopSprites';
 
 export function createMockQuests(userId: string): Quest[] {
   const templates = [
@@ -27,19 +28,19 @@ export function mockCompleteQuest(quest: Quest, player: Player): CompleteQuestRe
   };
 }
 
-const base = '/assets/interior%20full/furniture/';
+// Offline preview of the shop catalog, built from the same art list as the real shop.
+// Prices mirror server/src/services/shopService.ts; purchases still need the backend.
+const FAMILY_PRICE: Record<string, number> = { plant: 20, lamp: 50, chair: 40, sofa: 100, flowers: 30, tree: 50, bench: 80 };
 export const mockItems: Item[] = [
-  { id: 'plant', name: 'Little plant', type: 'furniture', price: 15, asset: `${base}decorations.png` },
-  { id: 'chair', name: 'Wooden chair', type: 'furniture', price: 20, asset: `${base}chairs.png` },
-  { id: 'sofa', name: 'Cozy sofa', type: 'furniture', price: 50, asset: `${base}couches.png` },
-  { id: 'lamp', name: 'Small lamp', type: 'furniture', price: 25, asset: `${base}decorations.png` },
-  { id: 'flowers', name: 'Flowers', type: 'garden', price: 10, asset: '' },
-  { id: 'tree', name: 'Tree', type: 'garden', price: 35, asset: '' },
-  { id: 'bench', name: 'Bench', type: 'garden', price: 30, asset: '' },
-  { id: 'fountain', name: 'Fountain', type: 'garden', price: 75, asset: '' },
-  { id: 'hat', name: 'Hat outfit', type: 'clothing', price: 10, asset: '' },
-  { id: 'hoodie', name: 'Hoodie outfit', type: 'clothing', price: 25, asset: '' },
-  { id: 'sneakers', name: 'Sneakers outfit', type: 'clothing', price: 15, asset: '' },
+  ...Object.entries(SHOP_SPRITES).map(([id, sprite]) => ({ id, name: sprite.name, type: sprite.type, price: FAMILY_PRICE[sprite.family] ?? 0, asset: `${id}.png` })),
+  { id: 'pet-bowl', name: 'Food Bowl', type: 'furniture', price: 20, asset: 'pet-bowl.png' },
+  { id: 'pet-scratcher', name: 'Scratching Post', type: 'furniture', price: 40, asset: 'pet-scratcher.png' },
+  { id: 'pet-bed', name: 'Cozy Cat Bed', type: 'furniture', price: 60, asset: 'pet-bed.png' },
+  { id: 'pet-tree', name: 'Cat Tree', type: 'furniture', price: 120, asset: 'pet-tree.png' },
+  { id: 'fountain', name: 'Fountain', type: 'garden', price: 150, asset: 'fountain.png' },
+  { id: 'hat', name: 'Hat', type: 'clothing', price: 40, asset: 'player-hat.png' },
+  { id: 'hoodie', name: 'Hoodie', type: 'clothing', price: 60, asset: 'player-hoodie.png' },
+  { id: 'sneakers', name: 'Sneakers', type: 'clothing', price: 80, asset: 'player-sneakers.png' },
 ];
 
 

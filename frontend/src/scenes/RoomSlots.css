@@ -1,0 +1,28 @@
+/* Fixed bedroom slots for bought furniture (HomeScene). Each slot shows the newest variant of its
+   kind at a whole-number scale; MOVE OBJECTS can drag it, and the saved position overrides these. */
+.bedroom { --room-scale: 3; }
+.bedroom .room-slot .item-art-sprite {
+  display: block;
+  width: calc(var(--art-w) * var(--room-scale) * 1px);
+  height: calc(var(--art-h) * var(--room-scale) * 1px);
+  max-width: none;
+  image-rendering: pixelated;
+}
+.bedroom .room-slot .item-art-placeholder { width: 48px; height: 48px; }
+
+/* Phone layout: lamp between bed and desk, plant under the bed; chair and sofa in the strip right of the
+   pet corner (up to 210px wide with the cat bed), above the caption. */
+.room-slot-lamp { left: 44%; top: 37%; }
+.room-slot-plant { left: 2%; top: 52%; }
+.room-slot-chair { left: 76%; top: 64.5%; }
+.room-slot-sofa { left: 66%; top: 78%; }
+.pet-corner-slot { left: 3%; bottom: 162px; }
+
+@media (min-width: 700px) {
+  .bedroom { --room-scale: 5; }
+  .room-slot-lamp { left: 37%; top: 40%; }
+  .room-slot-plant { left: 46%; top: 40%; }
+  .room-slot-chair { left: 54%; top: 50%; }
+  .room-slot-sofa { left: 27%; top: 66%; }
+  .pet-corner-slot { left: 4%; bottom: 88px; }
+}

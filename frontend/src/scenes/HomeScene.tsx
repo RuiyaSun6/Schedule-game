@@ -1,6 +1,10 @@
 import ItemArtwork from '../components/ItemArtwork';
+import PetCorner from '../components/PetCorner';
 import { useRoomPlacement } from '../services/RoomPlacementContext';
+import { usePlayer } from '../services/PlayerContext';
+import { HOME_SLOTS, latestOwned } from '../data/shopAssets';
 import type { Item } from '../types';
+import './RoomSlots.css';
 import WorldDoor from '../components/WorldDoor';
 import { MovableObject, MoveModeScene } from '../components/MoveModeScene';
 
@@ -34,6 +38,7 @@ function Sprite({ src, sheetWidth, sheetHeight, crop, className }: SpriteProps) 
 
 export default function HomeScene({ onOpenComputer, items, editing, onEditingChange }: HomeSceneProps) {
   const room = useRoomPlacement();
+  const player = usePlayer();
   const placement = (objectId: string) => ({ position: room.positions[objectId], onPositionChange: room.setPosition });
   return (
     <MoveModeScene className="bedroom" label="A simple bedroom with a bed, desk, and computer" editing={editing} onEditingChange={onEditingChange} floorOnly>
@@ -47,14 +52,19 @@ export default function HomeScene({ onOpenComputer, items, editing, onEditingCha
       <MovableObject objectId="home-desk" className="room-desk" name="Desk" {...placement('home-desk')}>
         <Sprite src={tables} sheetWidth={448} sheetHeight={352} crop={[64, 48, 32, 32]} />
       </MovableObject>
-      {room.placedRoomItems.map((placed) => {
-        const item = items.find((entry) => entry.id === placed.variantId);
+      {/* One fixed slot per kind of furniture, showing the newest variant the player bought. */}
+      {HOME_SLOTS.map((family) => {
+        const id = latestOwned(player.ownedItems, family);
+        const item = id && (items.find((entry) => entry.id === id) ?? { id, name: id, type: 'furniture' as const, price: 0, asset: '' });
         if (!item) return null;
-        return <MovableObject key={placed.instanceId} objectId={placed.instanceId} className="room-owned-item home-placed-item" name={item.name}
-          {...placement(placed.instanceId)} onStore={() => room.storeItem(placed.instanceId)}>
-          <ItemArtwork item={item} />
+        return <MovableObject key={family} objectId={`home-slot-${family}`} className={`room-owned-item room-slot room-slot-${family}`} name={item.name}
+          {...placement(`home-slot-${family}`)}>
+          <ItemArtwork item={item} fit={null} />
         </MovableObject>;
       })}
+      <MovableObject objectId="home-pet-corner" className="room-owned-item room-slot pet-corner-slot" name="Pet corner" {...placement('home-pet-corner')}>
+        <PetCorner />
+      </MovableObject>
       <MovableObject objectId="home-computer" className="room-computer" name="Computer" {...placement('home-computer')}>
         {(moveMode) => <button className="room-computer-button" type="button"
           onClick={() => { if (!moveMode) onOpenComputer(); }}

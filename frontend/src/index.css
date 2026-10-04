@@ -427,3 +427,15 @@ h1 { font-family: monospace; font-size: clamp(25px, 5vw, 34px); letter-spacing: 
 .shop-purchase-note { font-size: 12px; line-height: 1.6; color: #70634e; }
 .shop-insufficient { color: #87432d; }
 @media (max-width: 480px) { .shop-product-detail { padding: 14px; } }
+/* Sprite sheets played with CSS steps(); see SpriteAnimation.tsx. */
+.sprite-animation { flex-shrink: 0; background-repeat: no-repeat; background-position: 0 0; image-rendering: pixelated; }
+@keyframes sprite-play { from { background-position: 0 0; } to { background-position: calc(-1 * var(--sprite-sheet-width)) 0; } }
+@media (prefers-reduced-motion: reduce) { .sprite-animation { animation: none !important; background-position: 0 0 !important; } }
+
+/* Companion popup after completing a quest; shares the PixelModal frame. */
+.completion-popup { width: min(440px, calc(100% - 28px)); cursor: pointer; }
+.completion-popup-body { display: flex; align-items: center; gap: 18px; padding: 20px 18px 22px; }
+.completion-popup-bubble { position: relative; flex: 1; min-width: 0; margin: 0; padding: 12px 14px; background: #fffdf2; border: 3px solid #79775e; border-radius: 4px; box-shadow: 3px 3px #302b241f; line-height: 1.6; overflow-wrap: anywhere; }
+.completion-popup-bubble::before, .completion-popup-bubble::after { content: ''; position: absolute; top: 50%; transform: translateY(-50%); border-style: solid; border-color: transparent; }
+.completion-popup-bubble::before { left: -14px; border-width: 9px 14px 9px 0; border-right-color: #79775e; }
+.completion-popup-bubble::after { left: -9px; border-width: 6px 9px 6px 0; border-right-color: #fffdf2; }

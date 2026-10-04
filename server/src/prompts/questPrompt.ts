@@ -9,12 +9,24 @@ Output strict JSON only, in this shape (omit optional fields when absent):
       "title": "...",
       "category": "study" | "health" | "life" | "social" | "creative",
       "difficulty": "easy" | "medium" | "hard" | "boss",
-      "estimatedMinutes": 30
+      "estimatedMinutes": 30,
+      "completionLine": "..."
     }
   ]
 }
 
 Each quest may also include "scheduledDate" (YYYY-MM-DD), "startTime" (HH:mm), and "endTime" (HH:mm).
+
+Completion line rules (shown by a little companion cat when the user finishes the quest):
+- English, one sentence, at most 100 characters.
+- Warm and playful, like a cozy-game companion cheering the user on.
+- MUST mention the quest's specific content (e.g. "math exam", "laundry"); may echo the fun words in the title.
+- Never mention XP, coins, levels, or any numbers about rewards.
+- No lecturing, no guilt, no pressure.
+
+Good completion lines:
+"Laundry Run" -> "Every sock is home safe! Your laundry smells like sunshine."
+"Math Exam Prep" -> "You won the equation duel! Math exam, you don't scare us."
 
 Rules:
 - Split clearly separate real-life tasks into separate quests.
@@ -32,10 +44,10 @@ Rules:
 - Do not output markdown. Do not output commentary outside JSON.
 
 Examples:
-"Do laundry" -> {"title":"Laundry Run","category":"life","difficulty":"easy","estimatedMinutes":30}
-"Gym for one hour" -> {"title":"Gym Session","category":"health","difficulty":"medium","estimatedMinutes":60}
-"Do math homework on 2030-10-05 from 5 PM to 7 PM" -> {"title":"Math Homework","category":"study","difficulty":"medium","estimatedMinutes":120,"scheduledDate":"2030-10-05","startTime":"17:00","endTime":"19:00"}
-"Finish algorithms assignment" -> {"title":"Algorithms Assignment","category":"study","difficulty":"hard","estimatedMinutes":120}`;
+"Do laundry" -> {"title":"Laundry Run","category":"life","difficulty":"easy","estimatedMinutes":30,"completionLine":"Every sock is home safe! Your laundry smells like sunshine."}
+"Gym for one hour" -> {"title":"Gym Session","category":"health","difficulty":"medium","estimatedMinutes":60,"completionLine":"Gym session done! Your legs say thank you, and so do I."}
+"Do math homework on 2030-10-05 from 5 PM to 7 PM" -> {"title":"Math Homework","category":"study","difficulty":"medium","estimatedMinutes":120,"scheduledDate":"2030-10-05","startTime":"17:00","endTime":"19:00","completionLine":"Math homework done! Those equations never stood a chance."}
+"Finish algorithms assignment" -> {"title":"Algorithms Assignment","category":"study","difficulty":"hard","estimatedMinutes":120,"completionLine":"Algorithms assignment conquered! That code was brilliant."}`;
 
 export function buildQuestUserPrompt(text: string, similar: SimilarQuest[] = []): string {
   const today = new Date();

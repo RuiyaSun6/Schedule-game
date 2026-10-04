@@ -1,8 +1,9 @@
 import type { QuestDraft } from "../types/game.js";
+import { randomCompletionLine } from "./completionLine.js";
 
 interface Rule {
   pattern: RegExp;
-  draft: QuestDraft;
+  draft: Omit<QuestDraft, "completionLine">;
 }
 
 // Keyword rules used when Gemini is unavailable, so the demo never breaks.
@@ -16,8 +17,8 @@ const RULES: Rule[] = [
 ];
 
 export function generateMockQuestDrafts(text: string): QuestDraft[] {
-  const matches = RULES.filter((r) => r.pattern.test(text)).map((r) => ({ ...r.draft }));
+  const matches = RULES.filter((r) => r.pattern.test(text)).map((r) => ({ ...r.draft, completionLine: randomCompletionLine(r.draft.title) }));
   if (matches.length > 0) return matches;
   const title = text.trim().slice(0, 40) || "Daily Quest";
-  return [{ title, category: "life", difficulty: "medium", estimatedMinutes: 45 }];
+  return [{ title, category: "life", difficulty: "medium", estimatedMinutes: 45, completionLine: randomCompletionLine(title) }];
 }

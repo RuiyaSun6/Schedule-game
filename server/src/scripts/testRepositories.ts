@@ -6,7 +6,7 @@ import { randomUUID } from "node:crypto";
 import assert from "node:assert/strict";
 import { getPool } from "../db/tidb.js";
 import { createPlayer, getPlayer } from "../repositories/playerRepository.js";
-import { completeQuest, createQuests } from "../repositories/questRepository.js";
+import { completeQuest, createQuests, getQuestById } from "../repositories/questRepository.js";
 import { calculateLevel } from "../services/levelService.js";
 import type { Quest } from "../types/game.js";
 import { getRewards } from "../services/rewardService.js";
@@ -30,12 +30,18 @@ try {
   console.log(`✓ getPlayer(${DEFAULT_PLAYER_ID}):`, demo);
 
   await createPlayer({ id: testUserId, level: 1, xp: 0, coins: 0, outfit: "default", unlockedAreas: [], ownedItems: [] });
-  const sequential = makeQuest("Sequential double complete");
+  const sequential = { ...makeQuest("Sequential double complete"), completionLine: "Double complete, single cheer!" };
   const concurrent = makeQuest("Concurrent double complete");
   await createQuests([sequential, concurrent]);
 
+  // completion_line round-trips, and quests without one (old rows) have no field at all.
+  assert.equal((await getQuestById(sequential.id))?.completionLine, "Double complete, single cheer!");
+  assert.equal(Object.hasOwn((await getQuestById(concurrent.id))!, "completionLine"), false);
+  console.log("✓ completionLine: stored, read back, and omitted when NULL");
+
   const first = await completeQuest(sequential.id, calculateLevel);
   const second = await completeQuest(sequential.id, calculateLevel);
+  assert.equal(first?.quest.completionLine, "Double complete, single cheer!");
   assert.equal(first?.alreadyCompleted, false);
   assert.equal(second?.alreadyCompleted, true);
   assert.equal(second?.player.xp, 50, "XP granted more than once (sequential)");

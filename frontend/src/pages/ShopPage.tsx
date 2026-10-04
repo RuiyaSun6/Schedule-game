@@ -1,43 +1,56 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { shopProducts, shopCategory } from '../data/shopAssets';
-import { useDemoShop } from '../services/DemoShopContext';
+import type { Item } from '../types';
 import GameTopBar from '../components/GameTopBar';
-import ItemArtwork from '../components/ItemArtwork';
+import ItemCard from '../components/ItemCard';
 import PixelButton from '../components/PixelButton';
-import ShopProductDetail, { type DisplayProduct } from '../components/ShopProductDetail';
+import { usePlayer, usePlayerActions } from '../services/PlayerContext';
 import { useCatalog } from '../services/useCatalog';
+import { buyItem } from '../services/shop';
+import { SHOP_CATEGORIES, shopCategory } from '../data/shopAssets';
 
 export default function ShopPage() {
+  const player = usePlayer();
+  const actions = usePlayerActions();
   const catalog = useCatalog();
-  const demo = useDemoShop();
-  const [mode, setMode] = useState<'shop' | 'demo'>('shop');
-  const [category, setCategory] = useState('All');
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const products: DisplayProduct[] = mode === 'demo' ? shopProducts : catalog.items.map((item) => ({ id: item.id, name: item.name, category: shopCategory(item), styles: [{ id: 'standard', name: 'Standard', variants: [item] }] }));
-  const categories = [...new Set(products.map((product) => product.category))];
-  const selected = products.find((product) => product.id === selectedId);
-  function changeMode(next: 'shop' | 'demo') { setMode(next); setCategory('All'); setSelectedId(null); }
+  const [category, setCategory] = useState<string>('All');
+  const [buying, setBuying] = useState<string | null>(null);
+  const [notice, setNotice] = useState('');
+  const [error, setError] = useState('');
+  const categories = SHOP_CATEGORIES.filter((name) => catalog.items.some((item) => shopCategory(item) === name));
+  const shown = catalog.items.filter((item) => category === 'All' || shopCategory(item) === category);
+
+  async function buy(item: Item) {
+    if (!actions.beginMutation()) { setError('Another update is in progress. Please wait.'); return; }
+    setBuying(item.id); setError(''); setNotice('');
+    try {
+      const result = await buyItem(player, item);
+      // The returned player is authoritative: coins and ownership update everywhere at once.
+      actions.updatePlayer(result.player);
+      setNotice(`${result.item.name} is yours! −${result.item.price} coins.`);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Purchase failed. Please try again.');
+    } finally {
+      actions.endMutation();
+      setBuying(null);
+    }
+  }
+
   return <section className="inventory-page accepted-quests-page">
     <GameTopBar /><h1>SHOP</h1>
-    <div className="shop-mode" aria-label="Shop mode">
-      <PixelButton aria-pressed={mode === 'shop'} onClick={() => changeMode('shop')}>SHOP</PixelButton>
-      <PixelButton aria-pressed={mode === 'demo'} onClick={() => changeMode('demo')}>FURNITURE DEMO</PixelButton>
+    <div className="shop-categories" aria-label="Shop categories">
+      {['All', ...categories].map((name) => <PixelButton key={name} aria-pressed={name === category} onClick={() => setCategory(name)}>{name.toUpperCase()}</PixelButton>)}
     </div>
-    {mode === 'demo' && <p className="planner-notice">Local furniture demo · {demo.coins} demo coins. Multiple copies stay on this device and use a separate balance from player coins.</p>}
-    {mode === 'shop' && catalog.loading && <p className="loading-feedback" role="status">Loading little treasures…</p>}
-    {mode === 'shop' && catalog.demo && <p className="planner-notice">Offline catalog preview · purchases require the backend. Furniture Demo supports local purchases.</p>}
-    {mode === 'shop' && catalog.error && <div role="alert"><p>{catalog.error}</p><PixelButton onClick={catalog.retry}>RETRY</PixelButton></div>}
-    {selected ? <ShopProductDetail key={`${mode}-${selected.id}`} product={selected} demoMode={mode === 'demo'} onBack={() => setSelectedId(null)} /> : <>
-      <div className="shop-categories" aria-label="Furniture categories">{['All', ...categories].map((name) => <PixelButton key={name} aria-pressed={name === category} onClick={() => setCategory(name)}>{name.toUpperCase()}</PixelButton>)}</div>
-      {(mode === 'demo' || (!catalog.loading && !catalog.error)) && <div className="item-grid shop-item-grid" tabIndex={0} aria-label="Product families">
-        {products.filter((product) => category === 'All' || product.category === category).map((product) => <article className="item-card pixel-panel" key={product.id}>
-          <ItemArtwork item={product.styles[0].variants[0]} /><h2>{product.name}</h2>
-          <p>{product.styles.length} {product.styles.length === 1 ? 'style' : 'styles'} · {product.styles.reduce((count, style) => count + style.variants.length, 0)} variants</p>
-          <PixelButton onClick={() => setSelectedId(product.id)}>EXPLORE</PixelButton>
-        </article>)}
-      </div>}
-    </>}
+    {catalog.loading && <p className="loading-feedback" role="status">Loading little treasures…</p>}
+    {catalog.demo && <p className="planner-notice">Offline catalog preview · purchases need the backend.</p>}
+    {catalog.error && <div role="alert"><p>{catalog.error}</p><PixelButton onClick={catalog.retry}>RETRY</PixelButton></div>}
+    <p role="status" className={`shop-feedback ${notice ? 'is-success' : ''}`}>{notice}</p>
+    {error && <p role="alert" className="shop-feedback is-error">{error}</p>}
+    {!catalog.loading && !catalog.error && <div className="item-grid shop-item-grid" tabIndex={0} aria-label="Shop items">
+      {shown.map((item) => <ItemCard key={item.id} item={item} coins={player.coins} owned={player.ownedItems?.includes(item.id) ?? false}
+        busy={buying !== null || catalog.demo} buying={buying === item.id} onBuy={() => void buy(item)} />)}
+    </div>}
+    {!catalog.loading && !catalog.error && shown.length === 0 && <p>No items in this category yet.</p>}
     <div className="inventory-links"><Link to="/home">← Bedroom</Link><Link to="/wardrobe">Wardrobe →</Link></div>
   </section>;
 }

@@ -1,0 +1,30 @@
+/* Shop card (ItemCard): one centred sprite at a whole-number scale, never cropped. */
+.item-card { position: relative; display: flex; flex-direction: column; }
+.item-card-art { display: grid; place-items: center; height: 116px; } /* tallest art: Cat Tree, 110px at 1x */
+.item-card-art .item-art-sprite { image-rendering: pixelated; object-fit: fill; }
+.item-card .item-card-price { margin: 0 0 4px; }
+.item-card .item-card-status { min-height: 1.4em; margin: 0 0 10px; font-size: 12px; color: #70634e; }
+.item-card .item-card-status.is-owned { color: #4f7a3c; font-weight: bold; }
+.item-card .item-card-status.is-short { color: #87432d; }
+.item-card .pixel-button { margin-top: auto; }
+.item-card.item-owned { background: #f3f5e6; }
+.item-pet-tag { position: absolute; top: 8px; left: 8px; padding: 2px 6px; background: #f3d9b1; border: 2px solid #9a7449; color: #6b4b2a; font: bold 10px monospace; letter-spacing: 1px; }
+
+/* Purchase feedback line above the grid. */
+.shop-feedback { min-height: 1.5em; margin: 8px 0; font-size: 14px; }
+.shop-feedback.is-success { color: #4f7a3c; font-weight: bold; animation: shop-feedback-in 260ms ease-out; }
+.shop-feedback.is-error { color: #87432d; font-weight: bold; }
+@keyframes shop-feedback-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+/* Coin change: the difference floats up from the balance (CoinDisplay). */
+.coin-display { position: relative; }
+.coin-delta { position: absolute; left: 100%; top: -2px; margin-left: 6px; font: bold 12px monospace; white-space: nowrap; pointer-events: none; animation: coin-delta-float 1.4s ease-out forwards; }
+.coin-delta.is-spend { color: #a14b2f; }
+.coin-delta.is-earn { color: #4f7a3c; }
+@keyframes coin-delta-float { 0% { opacity: 0; transform: translateY(4px); } 15% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-14px); } }
+
+/* Category tabs: on phones wrap to three per row instead of squeezing seven into one line.
+   (index.css loads after this file, so the selector is one class more specific.) */
+@media (max-width: 480px) {
+  .inventory-page .shop-categories .pixel-button { flex: 1 1 calc(33.333% - 10px); min-width: 0; padding: 10px 4px; font-size: 11px; white-space: nowrap; }
+}

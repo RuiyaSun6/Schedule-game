@@ -1,21 +1,19 @@
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import type { Item } from '../types';
+import { getItemArt } from '../data/shopAssets';
 
-import { getShopArtwork } from '../data/shopAssets';
-
-export default function ItemArtwork({ item }: { item: Item }) {
+// One standalone sprite per item, scaled by a whole number so pixels stay crisp and nothing is cropped.
+// fit: the largest square (px) the art may fill; the scale is the biggest integer that fits.
+// fit={null}: no inline size; the scene sets it via --art-w/--art-h (see RoomSlots.css).
+export default function ItemArtwork({ item, fit = 96 }: { item: Item; fit?: number | null }) {
   const [failed, setFailed] = useState(false);
-  const sprite = getShopArtwork(item);
-  if (!item.asset || failed) return <span className="item-art-placeholder" aria-label={`${item.name}: artwork coming soon`}>◇</span>;
-  if (sprite) {
-    return <svg className="item-art asset-sprite" viewBox={sprite.crop} role="img" aria-label={item.name}>
-      <image href={item.asset} width={sprite.width} height={sprite.height} onError={() => setFailed(true)} />
-      {sprite.layers?.map((crop) => <svg key={crop} viewBox={crop} x={Number(sprite.crop.split(' ')[0])} y={Number(sprite.crop.split(' ')[1])} width={Number(sprite.crop.split(' ')[2])} height={Number(sprite.crop.split(' ')[3])}>
-        <image href={item.asset} width={sprite.width} height={sprite.height} onError={() => setFailed(true)} />
-      </svg>)}
-    </svg>;
-  }
-  // An unknown sheet is not a single item image.
-  if (decodeURI(item.asset).includes('/interior full/')) return <span className="item-art-placeholder" aria-label="Artwork coming soon">◇</span>;
-  return <img className="item-art" src={item.asset} alt={item.name} onError={() => setFailed(true)} />;
+  const art = getItemArt(item.id);
+  if (!art || failed) return <span className="item-art-placeholder" aria-label={`${item.name}: artwork coming soon`}>◇</span>;
+  const scale = fit === null ? 1 : Math.max(1, Math.floor(Math.min(fit / art.width, fit / art.height)));
+  const style = {
+    '--art-w': art.width,
+    '--art-h': art.height,
+    ...(fit === null ? {} : { width: art.width * scale, height: art.height * scale }),
+  } as CSSProperties;
+  return <img className="item-art item-art-sprite" src={art.src} alt={item.name} style={style} draggable={false} onError={() => setFailed(true)} />;
 }
