@@ -9,7 +9,8 @@ Output strict JSON only, in this shape (omit optional fields when absent):
       "title": "...",
       "category": "study" | "health" | "life" | "social" | "creative",
       "difficulty": "easy" | "medium" | "hard" | "boss",
-      "estimatedMinutes": 30
+      "estimatedMinutes": 30,
+      "completionLine": "..."
     }
   ]
 }
@@ -32,6 +33,17 @@ Title rules:
 Good titles: "Math Exam Prep: Equation Duel", "Physics Exam Prep: Force of Focus", "Laundry Quest: Sock Rescue", "Gym Raid: 60-Minute Power Run"
 Bad titles: "Boss Battle: Big Project", "Study Quest", "Daily Challenge"
 
+Completion line rules (shown by a little companion cat when the user finishes the quest):
+- English, one sentence, at most 100 characters.
+- Warm and playful, like a cozy-game companion cheering the user on.
+- MUST mention the quest's specific content (e.g. "math exam", "laundry"); may echo the fun words in the title.
+- Never mention XP, coins, levels, or any numbers about rewards.
+- No lecturing, no guilt, no pressure.
+
+Good completion lines:
+"Laundry Run" -> "Every sock is home safe! Your laundry smells like sunshine."
+"Math Exam Prep" -> "You won the equation duel! Math exam, you don't scare us."
+
 Other rules:
 - Use "boss" only for genuinely large deadlines, exams, major projects, or multi-step tasks.
 - Use "easy" for short/simple tasks, "medium" for moderate tasks, "hard" for demanding tasks.
@@ -45,11 +57,11 @@ Other rules:
 - Do not output markdown. Do not output commentary outside JSON.
 
 Examples:
-"Do laundry" -> {"quests":[{"title":"Laundry Quest: Sock Rescue","category":"life","difficulty":"easy","estimatedMinutes":30}]}
-"Gym for one hour" -> {"quests":[{"title":"Gym Raid: 60-Minute Power Run","category":"health","difficulty":"medium","estimatedMinutes":60}]}
-"Finish algorithms assignment" -> {"quests":[{"title":"Algorithms Assignment: Code Crusade","category":"study","difficulty":"hard","estimatedMinutes":120}]}
-"Do math homework on 2030-10-05 from 5 PM to 7 PM" -> {"quests":[{"title":"Math Homework: Equation Grind","category":"study","difficulty":"medium","estimatedMinutes":120,"scheduledDate":"2030-10-05","startTime":"17:00","endTime":"19:00"}]}
-"prepare for math exam and physics exam" -> {"quests":[{"title":"Math Exam Prep: Equation Duel","category":"study","difficulty":"boss","estimatedMinutes":180},{"title":"Physics Exam Prep: Force of Focus","category":"study","difficulty":"boss","estimatedMinutes":180}]}`;
+"Do laundry" -> {"quests":[{"title":"Laundry Quest: Sock Rescue","category":"life","difficulty":"easy","estimatedMinutes":30,"completionLine":"Laundry done! Every sock is home safe."}]}
+"Gym for one hour" -> {"quests":[{"title":"Gym Raid: 60-Minute Power Run","category":"health","difficulty":"medium","estimatedMinutes":60,"completionLine":"Gym session done! Your legs say thank you, and so do I."}]}
+"Finish algorithms assignment" -> {"quests":[{"title":"Algorithms Assignment: Code Crusade","category":"study","difficulty":"hard","estimatedMinutes":120,"completionLine":"Algorithms assignment conquered! That code was brilliant."}]}
+"Do math homework on 2030-10-05 from 5 PM to 7 PM" -> {"quests":[{"title":"Math Homework: Equation Grind","category":"study","difficulty":"medium","estimatedMinutes":120,"scheduledDate":"2030-10-05","startTime":"17:00","endTime":"19:00","completionLine":"Math homework done! Those equations never stood a chance."}]}
+"prepare for math exam and physics exam" -> {"quests":[{"title":"Math Exam Prep: Equation Duel","category":"study","difficulty":"boss","estimatedMinutes":180,"completionLine":"You won the equation duel! Math exam, you don't scare us."},{"title":"Physics Exam Prep: Force of Focus","category":"study","difficulty":"boss","estimatedMinutes":180,"completionLine":"Physics exam prep done! Those forces met their match."}]}`;
 
 export function buildQuestUserPrompt(text: string, similar: SimilarQuest[] = []): string {
   const today = new Date();

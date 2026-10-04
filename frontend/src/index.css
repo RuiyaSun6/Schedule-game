@@ -62,22 +62,10 @@ body:has(.welcome-screen) { background: radial-gradient(ellipse at 50% 45%, #fff
 .close-button { display: grid; place-items: center; flex-shrink: 0; width: 32px; height: 32px; padding: 0; background: #f8f3de; border: 2px solid #8d9278; color: #647056; font-size: 24px; }
 .computer-content { padding: 24px 20px 28px; }
 .computer-tabs { display: flex; gap: 6px; margin-bottom: 24px; border-bottom: 3px solid #79775e; }
-.computer-tab { flex: 1; min-height: 44px; padding: 10px 8px; border: 2px solid #79775e; border-bottom: 0; border-radius: 2px 2px 0 0; background: #e5e8d2; color: #5f714b; font-family: monospace; font-size: 12px; font-weight: bold; letter-spacing: 1px; }
+.computer-tab { flex: 1; min-height: 44px; padding: 10px 8px; border: 2px solid #79775e; border-bottom: 0; border-radius: 2px 2px 0 0; background: #e5e8d2; color: #5f714b; font-family: monospace; font-size: 12px; font-weight: bold; letter-spacing: 1px; min-width: 0; }
 .computer-tab:hover { background: #d7dfc2; }
-.computer-tab[aria-pressed="true"] { background: #81966b; color: #fff9e6; box-shadow: inset 0 3px #a1b68b; }
+.computer-tab[aria-selected="true"] { background: #81966b; color: #fff9e6; box-shadow: inset 0 3px #a1b68b; }
 .computer-tab-panel[hidden] { display: none; }
-.calendar-view { min-height: 220px; }
-.calendar-date { padding: 24px 16px; border: 2px solid #b5bd9c; background: #f4f4e6; color: #5f714b; font-family: monospace; font-size: clamp(15px, 4vw, 20px); font-weight: bold; line-height: 1.5; text-align: center; }
-.calendar-controls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-.calendar-controls button { min-height: 48px; padding: 8px 4px; border: 2px solid #536648; border-radius: 2px; background: #81966b; color: #fff9e6; box-shadow: inset 0 2px #a1b68b, 0 3px #536648; font-family: monospace; font-size: 11px; font-weight: bold; }
-.calendar-controls button:hover { background: #8fa779; }
-.calendar-controls button:active { transform: translateY(2px); box-shadow: inset 0 2px #a1b68b, 0 1px #536648; }
-.calendar-empty { margin: 28px 0 0; color: #6d7958; font-family: monospace; font-size: 13px; text-align: center; }
-.calendar-quests { display: grid; gap: 12px; padding: 0; margin: 24px 0 0; list-style: none; }
-.calendar-quests li { padding: 14px 16px; }
-.calendar-quests h3 { margin: 4px 0 10px; font-family: monospace; font-size: 15px; overflow-wrap: anywhere; }
-.calendar-quest-time, .calendar-quest-status { color: #5f714b; font-family: monospace; font-size: 12px; }
-.calendar-quest-time { margin: 0; }
 .computer-view { animation: fade-in 220ms ease-out; }
 .computer-view h2 { font-family: monospace; font-size: clamp(19px, 5vw, 25px); margin: 12px 0 24px; letter-spacing: -.5px; }
 .tutorial-steps { list-style: none; padding: 0; display: grid; gap: 20px; margin: 0; }
@@ -313,3 +301,141 @@ h1 { font-family: monospace; font-size: clamp(25px, 5vw, 34px); letter-spacing: 
 .garden-item > .item-art-placeholder { display: grid; width: 100%; padding: 0; font-size: 30px; }
 .reward-feedback { pointer-events: none; }
 @media (max-width: 480px) { .outdoor-home-image { height: 300px; } }
+
+/* Monthly Calendar restored from my-calendar-backup; current API data remains authoritative. */
+.calendar-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 14px; }
+.calendar-toolbar h3 { font: bold 15px monospace; margin: 0; }
+.calendar-toolbar > div { display: flex; gap: 6px; }
+.calendar-toolbar button { min-width: 40px; min-height: 44px; border: 2px solid #918064; background: #edf0dc; color: #536b42; font: bold 13px monospace; }
+.calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border-left: 1px solid #b6a489; border-top: 1px solid #b6a489; }
+.calendar-weekday { padding: 8px 0; text-align: center; font: bold 10px monospace; color: #536b42; background: #e5ebd2; border-right: 1px solid #b6a489; border-bottom: 1px solid #b6a489; }
+.calendar-day, .calendar-blank { min-width: 0; min-height: 88px; border: 0; border-right: 1px solid #b6a489; border-bottom: 1px solid #b6a489; background: #fffcf2; }
+.calendar-blank { background: #eee8d5; }
+.calendar-day { display: flex; flex-direction: column; align-items: stretch; padding: 5px 3px; text-align: left; color: #534735; gap: 4px; }
+.monthly-calendar .calendar-date { font: bold 12px monospace; }
+.calendar-day.calendar-today .calendar-date { color: #fff8e5; background: #637c4e; padding: 2px; align-self: flex-start; }
+.calendar-day[aria-pressed="true"] { background: #edf0dc; box-shadow: inset 0 0 0 2px #637c4e; }
+.calendar-day:hover { background: #f0edda; }
+.calendar-label { display: block; min-width: 0; padding: 3px 2px; border-left: 2px solid #82966b; background: #dfe8c9; font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.calendar-label-completed { text-decoration: line-through; color: #6b715c; background: #e9e6d8; }
+.calendar-more { font-size: 9px; color: #70634e; }
+.calendar-detail { margin-top: 22px; }
+.calendar-detail > h3 { font: bold 14px monospace; }
+.calendar-detail > p { font-size: 13px; }
+@media (max-width: 480px) {
+  .calendar-toolbar { justify-content: center; }
+  .calendar-toolbar h3 { width: 100%; text-align: center; }
+  .calendar-day, .calendar-blank { min-height: 76px; }
+  .calendar-day { padding: 4px 2px; }
+  .calendar-weekday { font-size: 9px; }
+  .calendar-label { font-size: 9px; }
+  .calendar-more { font-size: 8px; }
+}
+
+.monthly-calendar .calendar-quest-time { color: #5f714b; font: 12px monospace; margin: 0 0 8px; }
+
+/* Compact Home task HUD; room assets and computer/calendar layouts stay intact. */
+.home-player-tasks-hud { position: absolute; top: 14px; left: 14px; right: 14px; display: flex; align-items: flex-start; gap: 12px; z-index: 3; pointer-events: none; }
+.home-player-tasks-hud > .game-top-bar { position: static; flex: 0 0 258px; max-width: none; pointer-events: auto; }
+.today-tasks-panel { display: flex; flex-direction: column; width: 240px; min-width: 0; max-height: 246px; padding: 10px; overflow: hidden; pointer-events: auto; }
+.today-tasks-panel h2 { flex-shrink: 0; margin: 0 0 8px; color: #536b42; font: bold 12px/1.5 monospace; }
+.today-tasks-empty p { margin: 0; font-size: 12px; line-height: 1.5; }
+.today-tasks-empty p + p { margin-top: 4px; color: #70634e; }
+.today-tasks-list { list-style: none; margin: 0; padding: 0 4px 0 0; min-height: 0; max-height: 192px; overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; scrollbar-color: #9caf84 #f1ecd9; scrollbar-gutter: stable; overscroll-behavior-y: contain; }
+.today-tasks-list::-webkit-scrollbar { width: 6px; }
+.today-tasks-list::-webkit-scrollbar-track { background: #f1ecd9; }
+.today-tasks-list::-webkit-scrollbar-thumb { background: #9caf84; border: 1px solid #7f8c68; border-radius: 2px; }
+.today-tasks-list::-webkit-scrollbar-thumb:hover { background: #82966b; }
+.today-tasks-list:focus-visible { outline: 2px solid #648257; outline-offset: -2px; }
+.today-tasks-list li { display: flex; align-items: flex-start; gap: 7px; min-height: 48px; padding: 6px 0; border-top: 1px solid #ddd4b9; font-size: 12px; line-height: 1.4; }
+.today-tasks-list li:first-child { padding-top: 0; border-top: 0; }
+.today-tasks-list li > div { min-width: 0; overflow-wrap: anywhere; }
+.today-task-title { display: block; }
+.today-tasks-list small { display: block; margin-top: 3px; color: #70634e; font-size: 10px; }
+.today-task-check { flex: 0 0 36px; width: 36px; height: 36px; touch-action: manipulation; padding: 0; border: 1px solid #b6bd98; background: #edf0dc; color: #637c4e; font-size: 19px; }
+.today-task-check:hover:not(:disabled) { background: #d7e1bf; }
+.today-task-check:disabled { cursor: default; }
+.today-task-completed .today-task-title { text-decoration: line-through; color: #7a7b68; }
+.today-task-completed .today-task-check { background: #e9e6d8; }
+.today-tasks-list .today-task-error { color: #87432d; }
+.today-tasks-status { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@media (min-width: 700px) { .home-player-tasks-hud { top: 24px; left: 24px; right: 24px; } }
+@media (max-width: 600px) {
+  .home-player-tasks-hud { top: 12px; left: 12px; right: 12px; gap: 8px; }
+  .home-player-tasks-hud > .game-top-bar { flex: 0 0 46%; width: auto; padding: 8px; gap: 6px; }
+  .home-player-tasks-hud .profile-name { flex-wrap: wrap; gap: 2px 6px; font-size: 12px; }
+  .home-player-tasks-hud .profile-name span, .home-player-tasks-hud .coin-display { font-size: 11px; }
+  .home-player-tasks-hud .xp-label, .home-player-tasks-hud .xp-label > span:first-child::after { font-size: 9px; }
+  .home-player-tasks-hud .coin-display small { display: none; }
+  .today-tasks-panel { flex: 1; max-height: 202px; padding: 8px; }
+  .today-tasks-panel h2 { font-size: 10px; }
+  .today-tasks-empty p, .today-tasks-list li { font-size: 11px; }
+  .today-tasks-list { max-height: 148px; }
+  .today-task-check { flex-basis: 44px; width: 44px; height: 44px; }
+}
+
+/* Home Shop shortcut uses a crate from the existing interior sprite pack. */
+.home-shop-shortcut { position: absolute; left: 14px; bottom: 28px; z-index: 3; display: grid; place-items: center; width: 48px; height: 48px; touch-action: manipulation; }
+.home-shop-shortcut:hover { background: #edf0dc; }
+.home-shop-shortcut:active { transform: translateY(2px); box-shadow: 1px 2px #7f6b4b26; }
+.home-game:has(.home-shop-shortcut) > .room-caption { left: 74px; max-width: calc(100% - 90px); }
+@media (min-width: 700px) { .home-shop-shortcut { left: 24px; } }
+@media (max-width: 480px) {
+  .home-shop-shortcut { left: 12px; bottom: 18px; }
+  .home-game:has(.home-shop-shortcut) > .room-caption { left: 72px; max-width: calc(100% - 84px); }
+}
+
+/* Inventory and the existing room editor share placement state. */
+.home-backpack-shortcut { position: absolute; left: 72px; bottom: 28px; z-index: 3; display: grid; place-items: center; width: 48px; height: 48px; padding: 0; color: #534735; touch-action: manipulation; cursor: pointer; }
+.home-backpack-shortcut:hover { background: #edf0dc; }
+.home-backpack-shortcut:active { transform: translateY(2px); }
+.home-game:has(.home-backpack-shortcut) > .room-caption { left: 132px; max-width: calc(100% - 148px); }
+.home-placed-item { left: 45%; top: 55%; width: 72px; height: 96px; pointer-events: auto; }
+.home-placed-item .item-art { object-fit: contain; }
+.room-object-select { position: absolute; top: 0; right: 0; width: 36px; height: 36px; border: 2px solid #647c50; background: #fff8e5; color: #526d40; font-size: 22px; z-index: 4; }
+.room-object-actions { position: absolute; bottom: 0; left: 0; z-index: 5; display: flex; flex-direction: column; gap: 4px; min-width: 96px; max-width: 160px; padding: 6px; border: 2px solid #918064; background: #fff8e5; color: #534735; font: 11px monospace; overflow-wrap: anywhere; cursor: default; }
+.room-object-actions button { min-height: 36px; border: 2px solid #637c4e; background: #edf0dc; color: #526d40; font: bold 11px monospace; }
+.room-object-actions small { font-size: 9px; }
+.backpack-view h2 { font: bold 24px monospace; }
+.backpack-view > p, .backpack-view > small { font-size: 13px; line-height: 1.6; }
+@media (min-width: 700px) { .home-backpack-shortcut { left: 82px; } }
+@media (max-width: 480px) {
+  .home-backpack-shortcut { left: 70px; bottom: 18px; }
+  .home-game:has(.home-backpack-shortcut) > .room-caption { left: 128px; max-width: calc(100% - 140px); padding: 8px; }
+  .room-object-select, .room-object-actions button { min-width: 44px; min-height: 44px; }
+}
+
+/* Curated Shop categories and bounded browsing. */
+.shop-mode { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+.shop-mode .pixel-button { flex: 1; font-size: 12px; padding: 10px; }
+.shop-mode [aria-pressed="true"] { background: #607d4d; }
+.shop-item-grid { max-height: min(560px, 58svh); overflow-y: auto; overscroll-behavior-y: contain; scrollbar-width: thin; scrollbar-color: #9caf84 #f1ecd9; padding: 4px 6px 10px 4px; align-items: start; }
+.shop-item-grid:focus-visible { outline: 2px solid #648257; outline-offset: 2px; }
+
+/* Family → style → variant → quantity, using the same item artwork throughout. */
+.shop-product-detail { padding: 20px; max-width: 580px; margin: 20px auto; }
+.shop-product-detail h2 { font: bold 22px monospace; margin: 20px 0; }
+.shop-back, .shop-option-list button, .shop-quantity button { min-height: 44px; padding: 8px 12px; border: 2px solid #918064; background: #edf0dc; color: #536b42; font: bold 12px monospace; }
+.shop-product-preview { height: 144px; margin-bottom: 20px; }
+.shop-product-preview .item-art, .shop-product-preview .item-art-placeholder { height: 100%; }
+.shop-product-detail fieldset { border: 1px solid #b6bd98; padding: 10px; margin-bottom: 14px; min-width: 0; }
+.shop-product-detail legend { font: bold 12px monospace; }
+.shop-option-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.shop-option-list [aria-pressed="true"] { background: #d7e1bf; border-color: #637c4e; box-shadow: inset 0 -2px #9caf84; }
+.shop-quantity { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+.shop-quantity input { width: 64px; min-height: 44px; border: 2px solid #918064; color: #534735; background: #fffcf2; font: 16px monospace; text-align: center; }
+.shop-purchase-note { font-size: 12px; line-height: 1.6; color: #70634e; }
+.shop-insufficient { color: #87432d; }
+@media (max-width: 480px) { .shop-product-detail { padding: 14px; } }
+/* Sprite sheets played with CSS steps(); see SpriteAnimation.tsx. */
+.sprite-animation { flex-shrink: 0; background-repeat: no-repeat; background-position: 0 0; image-rendering: pixelated; }
+@keyframes sprite-play { from { background-position: 0 0; } to { background-position: calc(-1 * var(--sprite-sheet-width)) 0; } }
+@media (prefers-reduced-motion: reduce) { .sprite-animation { animation: none !important; background-position: 0 0 !important; } }
+
+/* Companion popup after completing a quest; shares the PixelModal frame. */
+.completion-popup { width: min(440px, calc(100% - 28px)); cursor: pointer; }
+.completion-popup-body { display: flex; align-items: center; gap: 18px; padding: 20px 18px 22px; }
+.completion-popup-bubble { position: relative; flex: 1; min-width: 0; margin: 0; padding: 12px 14px; background: #fffdf2; border: 3px solid #79775e; border-radius: 4px; box-shadow: 3px 3px #302b241f; line-height: 1.6; overflow-wrap: anywhere; }
+.completion-popup-bubble::before, .completion-popup-bubble::after { content: ''; position: absolute; top: 50%; transform: translateY(-50%); border-style: solid; border-color: transparent; }
+.completion-popup-bubble::before { left: -14px; border-width: 9px 14px 9px 0; border-right-color: #79775e; }
+.completion-popup-bubble::after { left: -9px; border-width: 6px 9px 6px 0; border-right-color: #fffdf2; }

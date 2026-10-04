@@ -24,6 +24,8 @@ export interface Quest {
   scheduledDate?: string;
   startTime?: string;
   endTime?: string;
+  /** Companion line shown on completion; missing on quests created before the field existed. */
+  completionLine?: string;
 }
 
 export interface GenerateQuestsResponse {

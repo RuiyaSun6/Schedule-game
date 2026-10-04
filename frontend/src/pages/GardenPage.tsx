@@ -9,18 +9,24 @@ import { worldAreas } from '../services/worldAreas';
 import { getAreaStatus } from '../types/world';
 import { useCatalog } from '../services/useCatalog';
 import { mockItems } from '../services/shop';
+import { GARDEN_SLOTS, latestOwned } from '../data/shopAssets';
 import { MovableObject, MoveModeScene } from '../components/MoveModeScene';
 
 function GardenScene() {
   const player = usePlayer();
   const catalog = useCatalog();
-  const supported = ['flowers', 'tree', 'bench', 'fountain'];
-  const items = (catalog.items.length ? catalog.items : mockItems).filter((item) => item.type === 'garden' && supported.includes(item.id) && player.ownedItems?.includes(item.id));
+  const known = catalog.items.length ? catalog.items : mockItems;
+  // One fixed slot per kind (flowers, tree, bench, fountain), showing the newest variant bought.
+  const slots = GARDEN_SLOTS.flatMap((family) => {
+    const id = latestOwned(player.ownedItems, family);
+    const item = id && known.find((entry) => entry.id === id);
+    return item ? [{ family, item }] : [];
+  });
   return <section className="home-game garden-game" aria-label="Your Garden">
     <MoveModeScene className="garden-stage" label="Garden decorations">
       <div className="garden-soil" aria-hidden="true" />
-      {items.map((item) => <MovableObject key={item.id} objectId={`garden-${item.id}`} className={`garden-item garden-slot-${item.id}`}>
-        <ItemArtwork item={item} /><span>{item.name}</span>
+      {slots.map(({ family, item }) => <MovableObject key={family} objectId={`garden-${family}`} className={`garden-item garden-slot-${family}`}>
+        <ItemArtwork item={item} fit={72} /><span>{item.name}</span>
       </MovableObject>)}
       <div className="garden-player"><PlayerAvatar /></div>
     </MoveModeScene>

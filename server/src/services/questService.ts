@@ -3,6 +3,7 @@ import type { Player, Quest, QuestCategory, QuestDifficulty } from "../types/gam
 import { calculateLevel, getUnlockedAreas } from "./levelService.js";
 import { getRewards } from "./rewardService.js";
 import { generateQuestsFromText } from "./geminiService.js";
+import { fallbackCompletionLine } from "./completionLine.js";
 import { getPlayer, getQuest, getQuests, savePlayer, saveQuest } from "./storageService.js";
 import { isTiDBEnabled } from "../db/tidb.js";
 import { getPlayer as getPlayerFromDb } from "../repositories/playerRepository.js";
@@ -24,7 +25,7 @@ function makeQuest(
   difficulty: QuestDifficulty,
   category: QuestCategory = "life",
   estimatedMinutes = 30,
-  schedule?: Pick<Quest, "scheduledDate" | "startTime" | "endTime">,
+  extra?: Pick<Quest, "scheduledDate" | "startTime" | "endTime" | "completionLine">,
 ): Quest {
   return {
     id: randomUUID(),
@@ -35,7 +36,7 @@ function makeQuest(
     estimatedMinutes,
     ...getRewards(difficulty),
     completed: false,
-    ...schedule,
+    ...extra,
   };
 }
 
@@ -45,7 +46,10 @@ export async function createQuest(
   category: QuestCategory = "life",
   estimatedMinutes = 30,
 ): Promise<Quest> {
-  const quest = makeQuest(DEFAULT_PLAYER_ID, title, difficulty, category, estimatedMinutes);
+  // Manually created quests skip Gemini, so they get the template line.
+  const quest = makeQuest(DEFAULT_PLAYER_ID, title, difficulty, category, estimatedMinutes, {
+    completionLine: fallbackCompletionLine(title),
+  });
   if (isTiDBEnabled()) {
     await createQuests([quest]);
     return quest;
@@ -64,6 +68,7 @@ export async function generateQuests(text: string): Promise<{ source: "gemini" |
       scheduledDate: draft.scheduledDate,
       startTime: draft.startTime,
       endTime: draft.endTime,
+      completionLine: draft.completionLine,
     }),
   );
   if (isTiDBEnabled()) await createQuests(quests);

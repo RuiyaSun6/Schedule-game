@@ -1,10 +1,12 @@
 import { Route, Routes } from 'react-router-dom';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Player, Quest } from './types';
+import { RoomPlacementProvider } from './services/RoomPlacementContext';
 import { AreaProvider } from './services/AreaContext';
 import { completeQuest, getPlayer, getQuests } from './services/api';
 import { PlayerContext, PlayerActionsContext } from './services/PlayerContext';
 import LevelUpModal, { type LevelUpDetails } from './components/LevelUpModal';
+import CompletionPopup from './components/CompletionPopup';
 import WelcomePage from './pages/WelcomePage';
 import WorldPage from './pages/WorldPage';
 import HomePage from './pages/HomePage';
@@ -27,6 +29,9 @@ export default function App() {
   const [completionErrors, setCompletionErrors] = useState<Record<string, string>>({});
   const [completionNotice, setCompletionNotice] = useState('');
   const [levelUp, setLevelUp] = useState<LevelUpDetails | null>(null);
+  // Companion line for the quest just completed. A level-up waits until it closes so the modals never stack.
+  const [completionLine, setCompletionLine] = useState<string | null>(null);
+  const queuedLevelUp = useRef<LevelUpDetails | null>(null);
   const [reward, setReward] = useState<{ xp: number; coins: number } | null>(null);
   useEffect(() => {
     let active = true;
@@ -57,6 +62,13 @@ export default function App() {
     return true;
   }
   function endMutation() { pending.current = false; }
+  // Called by click, Escape, and the 3s timer; safe to call more than once.
+  const closeCompletionPopup = useCallback(() => {
+    setCompletionLine(null);
+    const next = queuedLevelUp.current;
+    queuedLevelUp.current = null;
+    if (next) setLevelUp(next);
+  }, []);
 
   async function finishQuest(quest: Quest) {
     if (!player || quest.completed || !beginMutation()) return;
@@ -70,11 +82,12 @@ export default function App() {
       updatePlayer(result.player);
       setAcceptedQuests((current) => current.map((q) => q.id === result.quest.id ? result.quest : q));
       setCompletionNotice('Quest completed. Lovely work!');
-      if (result.player.level > player.level) setLevelUp({
+      if (result.player.level > player.level) queuedLevelUp.current = {
         previousLevel: player.level,
         level: result.player.level,
         newlyUnlocked: result.player.unlockedAreas.filter((area) => !player.unlockedAreas.includes(area)),
-      });
+      };
+      setCompletionLine(result.quest.completionLine?.trim() || `You finished ${quest.title}! I'm so proud of you.`);
     } catch (error) {
       setCompletionErrors({ [quest.id]: error instanceof Error ? error.message : 'Couldn’t complete this quest. Please retry.' });
     } finally {
@@ -92,12 +105,13 @@ export default function App() {
   return (
     <PlayerContext.Provider value={player}>
     <PlayerActionsContext.Provider value={{ updatePlayer, beginMutation, endMutation }}>
+    <RoomPlacementProvider key={player.id}>
     <AreaProvider>
     <main className="app">
         <Routes>
           <Route path="/" element={<WelcomePage />} />
           <Route path="/world" element={<WorldPage />} />
-          <Route path="/home" element={<HomePage onAcceptQuest={acceptQuest} acceptedCount={acceptedQuests.length} quests={acceptedQuests} hasSeenTutorial={hasSeenTutorial} onCompleteTutorial={() => setHasSeenTutorial(true)} />} />
+          <Route path="/home" element={<HomePage onComplete={finishQuest} completingId={completingId} errors={completionErrors} notice={completionNotice} onAcceptQuest={acceptQuest} acceptedCount={acceptedQuests.length} quests={acceptedQuests} hasSeenTutorial={hasSeenTutorial} onCompleteTutorial={() => setHasSeenTutorial(true)} />} />
           <Route path="/planner" element={<PlannerPage />} />
           <Route path="/quests" element={<QuestsPage quests={acceptedQuests} onComplete={finishQuest} completingId={completingId} errors={completionErrors} notice={completionNotice} />} />
           <Route path="/shop" element={<ShopPage />} />
@@ -107,9 +121,11 @@ export default function App() {
           <Route path="*" element={<h1>Page not found</h1>} />
         </Routes>
       {reward && (reward.xp > 0 || reward.coins > 0) && <div className="reward-feedback" role="status">+{reward.xp} XP · +{reward.coins} coins</div>}
+      <CompletionPopup line={completionLine} onClose={closeCompletionPopup} />
       <LevelUpModal details={levelUp} onClose={() => setLevelUp(null)} />
     </main>
     </AreaProvider>
+    </RoomPlacementProvider>
     </PlayerActionsContext.Provider>
     </PlayerContext.Provider>
   );

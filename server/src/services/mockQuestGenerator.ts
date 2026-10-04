@@ -1,4 +1,5 @@
 import type { QuestCategory, QuestDifficulty, QuestDraft } from "../types/game.js";
+import { randomCompletionLine } from "./completionLine.js";
 
 // Rule-based fallback used when Gemini is unavailable, so the demo never breaks.
 // Splits the user's text into tasks and builds titles from the user's own words.
@@ -131,9 +132,11 @@ export function generateMockQuestDrafts(text: string): QuestDraft[] {
       category: match.category,
       difficulty: match.difficulty,
       estimatedMinutes: Math.min(480, Math.max(5, minutes)),
+      completionLine: randomCompletionLine(title),
     });
   }
 
   if (drafts.length > 0) return drafts;
-  return [{ title: truncate(text.trim(), MAX_TITLE) || "Today's Plan", category: "life", difficulty: "medium", estimatedMinutes: 45 }];
+  const title = truncate(text.trim(), MAX_TITLE) || "Today's Plan";
+  return [{ title, category: "life", difficulty: "medium", estimatedMinutes: 45, completionLine: randomCompletionLine(title) }];
 }
