@@ -2,7 +2,7 @@
 
 export type QuestCategory = "study" | "health" | "life" | "social" | "creative";
 export type QuestDifficulty = "easy" | "medium" | "hard" | "boss";
-export type ItemType = "furniture" | "garden" | "clothing";
+export type ItemType = "furniture" | "garden" | "clothing" | "farm";
 
 export const QUEST_CATEGORIES: QuestCategory[] = ["study", "health", "life", "social", "creative"];
 export const QUEST_DIFFICULTIES: QuestDifficulty[] = ["easy", "medium", "hard", "boss"];
@@ -14,7 +14,10 @@ export interface Player {
   coins: number;
   outfit: string;
   unlockedAreas: string[];
+  // Distinct owned item IDs, oldest purchase first (unchanged contract).
   ownedItems: string[];
+  // How many of each owned item: 1 for regular items, 1+ for stackable ones.
+  itemCounts: Record<string, number>;
 }
 
 export interface Quest {
@@ -41,6 +44,9 @@ export interface Item {
   type: ItemType;
   price: number;
   asset: string;
+  // Stackable items (farm crops and decor) can be bought many times; each purchase adds one.
+  // Regular items can be owned once.
+  stackable: boolean;
   // Only set on per-player catalog responses.
   owned?: boolean;
 }

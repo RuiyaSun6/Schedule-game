@@ -26,3 +26,9 @@
   .room-slot-sofa { left: 27%; top: 66%; }
   .pet-corner-slot { left: 4%; bottom: 88px; }
 }
+
+/* Small furniture (a 3x chair is ~39px wide) would be covered by the 36-44px select button and the
+   STORE panel, leaving nothing to grab. For slots and placed furniture, keep both outside the item:
+   the button above it, the panel below it. */
+.move-mode-scene .room-slot > .room-object-select { top: auto; bottom: calc(100% + 4px); right: auto; left: 50%; transform: translateX(-50%); }
+.move-mode-scene .room-slot > .room-object-actions { bottom: auto; top: calc(100% + 4px); }

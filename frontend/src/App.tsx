@@ -16,6 +16,8 @@ import ShopPage from './pages/ShopPage';
 import WardrobePage from './pages/WardrobePage';
 import GardenPage from './pages/GardenPage';
 import CafePage from './pages/CafePage';
+import BuildingInteriorPage from './pages/buildings/BuildingInteriorPage';
+import { WorldBuildingsProvider } from './hooks/useWorldBuildings';
 
 export default function App() {
   const [hasSeenTutorial, setHasSeenTutorial] = useState(false);
@@ -107,6 +109,7 @@ export default function App() {
     <PlayerActionsContext.Provider value={{ updatePlayer, beginMutation, endMutation }}>
     <RoomPlacementProvider key={player.id}>
     <AreaProvider>
+    <WorldBuildingsProvider key={player.id}>
     <main className="app">
         <Routes>
           <Route path="/" element={<WelcomePage />} />
@@ -118,12 +121,14 @@ export default function App() {
           <Route path="/wardrobe" element={<WardrobePage />} />
           <Route path="/garden" element={<GardenPage />} />
           <Route path="/cafe" element={<CafePage />} />
+          <Route path="/building/:buildingId" element={<BuildingInteriorPage />} />
           <Route path="*" element={<h1>Page not found</h1>} />
         </Routes>
       {reward && (reward.xp > 0 || reward.coins > 0) && <div className="reward-feedback" role="status">+{reward.xp} XP · +{reward.coins} coins</div>}
       <CompletionPopup line={completionLine} onClose={closeCompletionPopup} />
       <LevelUpModal details={levelUp} onClose={() => setLevelUp(null)} />
     </main>
+    </WorldBuildingsProvider>
     </AreaProvider>
     </RoomPlacementProvider>
     </PlayerActionsContext.Provider>

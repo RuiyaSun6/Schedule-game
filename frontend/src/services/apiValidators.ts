@@ -11,7 +11,7 @@ export function isQuest(value: unknown): value is Quest {
 export function isItem(value: unknown): value is Item {
   if (!value || typeof value !== 'object') return false;
   const item = value as Item;
-  return typeof item.id === 'string' && !!item.id && typeof item.name === 'string' && ['furniture', 'garden', 'clothing'].includes(item.type)
+  return typeof item.id === 'string' && !!item.id && typeof item.name === 'string' && ['furniture', 'garden', 'clothing', 'farm'].includes(item.type)
     && typeof item.price === 'number' && Number.isFinite(item.price) && item.price >= 0 && typeof item.asset === 'string';
 }
 export function isPlayer(value: unknown): value is Player {

@@ -21,8 +21,8 @@ export default function PixelModal({ open, onClose, children, titleId }: PixelMo
     <dialog ref={ref} className="pixel-modal" aria-labelledby={titleId}
       onCancel={(event) => { event.preventDefault(); onClose(); }}>
       <div className="computer-titlebar">
-        <span><span aria-hidden="true">▣</span> {titleId === 'level-up-title' ? 'LIFEQUEST · A NEW CHAPTER' : titleId === 'backpack-title' ? 'LIFEQUEST · BACKPACK' : 'LIFEQUEST · PERSONAL COMPUTER'}</span>
-        <button className="close-button" onClick={onClose} aria-label={titleId === 'backpack-title' ? 'Close Backpack' : 'Close computer'}>×</button>
+        <span><span aria-hidden="true">▣</span> {titleId === 'level-up-title' ? 'LIFEQUEST · A NEW CHAPTER' : titleId === 'backpack-title' ? 'LIFEQUEST · BACKPACK' : titleId === 'building-shop-title' ? 'LIFEQUEST · BUILDING SHOP' : 'LIFEQUEST · PERSONAL COMPUTER'}</span>
+        <button className="close-button" onClick={onClose} aria-label={titleId === 'backpack-title' ? 'Close Backpack' : titleId === 'building-shop-title' ? 'Close Building Shop' : 'Close computer'}>×</button>
       </div>
       <div className="computer-content">{children}</div>
     </dialog>

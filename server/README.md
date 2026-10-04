@@ -47,11 +47,12 @@ Returns the current player (`200`). At startup:
   "level": 1,
   "coins": 0,
   "unlockedAreas": ["village"],
-  "ownedItems": []
+  "ownedItems": [],
+  "itemCounts": {}
 }
 ```
 
-`ownedItems` contains item **IDs**, not full item objects. Resolve them against `GET /api/items` to display item details.
+`ownedItems` contains distinct item **IDs** (oldest purchase first), not full item objects. Resolve them against `GET /api/items` to display item details. `itemCounts` maps each owned ID to how many the player owns: always 1 for regular items, 1 or more for stackable items (for example `{ "lamp-gold": 1, "crop-carrot": 3 }`). Clients that only need ownership can keep using `ownedItems`.
 
 ### `GET /api/quests`
 
@@ -148,41 +149,48 @@ Returns the fixed shop catalog as an array (`200`), in shop order:
 
 ```json
 [
-  { "id": "plant-red-pot", "name": "Plant (Red Pot)", "type": "furniture", "price": 20, "asset": "plant-red-pot.png" },
-  { "id": "lamp-gold", "name": "Gold Lamp", "type": "furniture", "price": 50, "asset": "lamp-gold.png" },
-  { "id": "flowers-red-pot", "name": "Flowers (Red Pot)", "type": "garden", "price": 30, "asset": "flowers-red-pot.png" },
-  { "id": "hat", "name": "Hat", "type": "clothing", "price": 40, "asset": "player-hat.png" }
+  { "id": "plant-red-pot", "name": "Plant (Red Pot)", "type": "furniture", "price": 20, "asset": "plant-red-pot.png", "stackable": false },
+  { "id": "flowers-red-pot", "name": "Flowers (Red Pot)", "type": "garden", "price": 30, "asset": "flowers-red-pot.png", "stackable": false },
+  { "id": "hat", "name": "Hat", "type": "clothing", "price": 40, "asset": "player-hat.png", "stackable": false },
+  { "id": "crop-carrot", "name": "Carrot", "type": "farm", "price": 5, "asset": "crop-carrot.png", "stackable": true }
 ]
 ```
 
-57 items in total: 49 colour variants named `<kind>-<colour>` (plant 20, lamp 50, chair 40, sofa 100, flowers 30, tree 50, bench 80 coins), the four pet corner items (`pet-bowl`, `pet-scratcher`, `pet-bed`, `pet-tree`), `fountain`, and the clothing items `hat`, `hoodie`, `sneakers`. Each variant is its own item: buying `lamp-gold` does not own `lamp-black`. The list and order match `CATALOG` in `src/services/shopService.ts` and the seed in `src/db/schema.sql` (TiDB keeps the order in `items.sort_order`). `npm run db:init` updates existing rows, adds new ones, and removes retired item IDs unless a player owns them; owned leftovers are kept and listed so they can be mapped to a current variant. Prices are in coins. Item types are `furniture`, `garden`, and `clothing`. `asset` is the image file name; the frontend bundles one PNG per item under `frontend/src/assets/<type>/`.
+73 items in total: 49 colour variants named `<kind>-<colour>` (plant 20, lamp 50, chair 40, sofa 100, flowers 30, tree 50, bench 80 coins), the four pet corner items (`pet-bowl`, `pet-scratcher`, `pet-bed`, `pet-tree`), `fountain`, the clothing items `hat`, `hoodie`, `sneakers`, and 16 farm items (type `farm`, 5 to 20 coins: crops `crop-*` and decor such as `fence-wood` and `haystack`). Each variant is its own item: buying `lamp-gold` does not own `lamp-black`.
 
-### `POST /api/shop/purchase`
+`stackable` says whether the item can be bought repeatedly. Farm items are stackable (each purchase adds one, see `itemCounts`); every other item is not and can be owned once.
 
-Buys an item once. Request body:
+The list and order match `CATALOG` in `src/services/shopService.ts` and the seed in `src/db/schema.sql` (TiDB keeps the order in `items.sort_order`). `npm run db:init` updates existing rows, adds new ones, and removes retired item IDs unless a player owns them; owned leftovers are kept and listed so they can be mapped to a current variant. It also adds `items.stackable` and `user_items.quantity` to databases created before them (existing rows get `quantity = 1`). Prices are in coins. Item types are `furniture`, `garden`, `clothing`, and `farm`. `asset` is the image file name; the frontend bundles furniture and garden PNGs under `frontend/src/assets/<type>/` and serves farm PNGs from `frontend/public/assets/farm/`.
+
+### `POST /api/shop/purchase` (also `POST /api/shop/buy`)
+
+Buys one of an item. Both paths run the same handler. Request body:
 
 ```json
-{ "itemId": "plant" }
+{ "itemId": "crop-carrot" }
 ```
 
-`itemId` must be a nonempty string. Example `200` response when the player has 20 coins:
+`itemId` must be a nonempty string. Example `200` response for a stackable item the player now owns three of:
 
 ```json
 {
-  "item": { "id": "plant", "name": "Plant", "type": "furniture", "price": 20, "asset": "plant.png" },
+  "item": { "id": "crop-carrot", "name": "Carrot", "type": "farm", "price": 5, "asset": "crop-carrot.png", "stackable": true },
   "player": {
     "id": "player-1",
     "xp": 40,
     "level": 1,
-    "coins": 0,
+    "coins": 5,
     "outfit": "default",
     "unlockedAreas": ["village"],
-    "ownedItems": ["plant"]
+    "ownedItems": ["crop-carrot"],
+    "itemCounts": { "crop-carrot": 3 }
   }
 }
 ```
 
-Invalid body: `400`. Unknown item ID: `404`. Already owned or insufficient coins: `409`. Failed purchases leave coins and owned items unchanged.
+Regular items (`stackable: false`) can be bought once; buying one again returns `409`. Stackable items can be bought again and again: each purchase charges the price once and adds 1 to `itemCounts`. With TiDB the purchase runs in one transaction that locks the player row, so concurrent purchases are charged exactly once each and a regular item is never sold twice.
+
+Invalid body: `400`. Unknown item ID: `404`. Already owned (regular items) or insufficient coins: `409`. Failed purchases leave coins and owned items unchanged.
 
 ## Game rules
 

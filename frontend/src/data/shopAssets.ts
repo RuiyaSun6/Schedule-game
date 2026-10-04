@@ -1,6 +1,10 @@
 import type { Item } from '../types';
 import { SHOP_SPRITES } from './shopSprites';
 import { PET_ITEM_ART } from '../components/PetCorner';
+import { FARM_SPRITES, type FarmSprite } from './farmSprites';
+
+// Record lookups can miss: type them as possibly undefined.
+const farmSprite = (id: string): FarmSprite | undefined => FARM_SPRITES[id];
 
 // One standalone PNG per shop item (cropped by scripts/split-shop-sprites.mjs, pet art by crop-pet-sprites.mjs).
 // Prices and names come from the backend catalog; this file only knows art, categories, and scene slots.
@@ -9,6 +13,9 @@ const urls = import.meta.glob('../assets/{furniture,garden,clothing}/*.png', { e
 export interface ItemArt { src: string; width: number; height: number; }
 
 export function getItemArt(id: string): ItemArt | undefined {
+  // Farm art is served from public/assets/farm/ (cropped by scripts/split-farm-sprites.mjs).
+  const farm = farmSprite(id);
+  if (farm) return { src: `/assets/farm/${id}.png`, width: farm.width, height: farm.height };
   const sprite = SHOP_SPRITES[id];
   if (sprite) {
     const src = urls[`../assets/${sprite.type}/${id}.png`];
@@ -17,23 +24,30 @@ export function getItemArt(id: string): ItemArt | undefined {
   return PET_ITEM_ART[id];
 }
 
-/** "lamp-gold" -> "lamp", "pet-bowl" -> "pet", "fountain" -> "fountain". */
-export function itemFamily(id: string) {
-  return SHOP_SPRITES[id]?.family ?? (id.startsWith('pet-') ? 'pet' : id);
+/** "lamp-gold" -> "lamp", "pet-bowl" -> "pet", "crop-carrot" -> "crop", "haystack" -> "farm-decor", "fountain" -> "fountain". */
+export function itemFamily(id: string): string {
+  return farmSprite(id)?.category ?? SHOP_SPRITES[id]?.family ?? (id.startsWith('pet-') ? 'pet' : id);
 }
 
-export const SHOP_CATEGORIES = ['Plants', 'Seating', 'Lighting', 'Pets', 'Garden', 'Clothing'] as const;
+/** How many of an item the player owns (stackable farm items can be more than 1). */
+export function ownedCount(player: { ownedItems?: string[]; itemCounts?: Record<string, number> }, id: string) {
+  return player.itemCounts?.[id] ?? (player.ownedItems?.includes(id) ? 1 : 0);
+}
+
+export const SHOP_CATEGORIES = ['Plants', 'Seating', 'Lighting', 'Pets', 'Garden', 'Farm', 'Clothing'] as const;
 export type ShopCategory = typeof SHOP_CATEGORIES[number];
 const FAMILY_CATEGORY: Record<string, ShopCategory> = {
   plant: 'Plants', chair: 'Seating', sofa: 'Seating', lamp: 'Lighting', pet: 'Pets',
   flowers: 'Garden', tree: 'Garden', bench: 'Garden', fountain: 'Garden',
+  crop: 'Farm', 'farm-decor': 'Farm',
 };
 export function shopCategory(item: Item): ShopCategory {
   return FAMILY_CATEGORY[itemFamily(item.id)] ?? (item.type === 'garden' ? 'Garden' : item.type === 'clothing' ? 'Clothing' : 'Seating');
 }
 
 // Fixed scene slots: one per family, showing the most recently bought variant.
-// Pet items are not slots; PetCorner shows them together.
+// Pet items are not slots; PetCorner shows them together. Where each owned item actually is
+// (slot, placed in a building, or Backpack) is decided by services/furnitureLocation.ts.
 export const HOME_SLOTS = ['plant', 'lamp', 'chair', 'sofa'] as const;
 export const GARDEN_SLOTS = ['flowers', 'tree', 'bench', 'fountain'] as const;
 
@@ -42,10 +56,3 @@ export function latestOwned(ownedItems: readonly string[] | undefined, family: s
   return [...(ownedItems ?? [])].reverse().find((id) => itemFamily(id) === family);
 }
 
-/** True when the item is currently shown in a scene (its slot's newest variant, or any pet item). */
-export function isDisplayed(ownedItems: readonly string[] | undefined, id: string) {
-  const family = itemFamily(id);
-  if (family === 'pet') return true;
-  const slotted = (HOME_SLOTS as readonly string[]).includes(family) || (GARDEN_SLOTS as readonly string[]).includes(family);
-  return slotted && latestOwned(ownedItems, family) === id;
-}

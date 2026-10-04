@@ -1,0 +1,52 @@
+/* World: one clean, muted green field. Buildings are the only scenery. */
+.home-game.outdoor-game.world-field { background: #a9c38b; border-color: #7c8b65; }
+.world-scene { position: absolute; inset: 0; overflow: hidden; }
+
+/* Home: existing exterior, at the same 2x scale as the other buildings. */
+.world-field .outdoor-home { top: 150px; width: 192px; }
+
+/* Placed buildings. MovableObject sets left/top from the saved position. */
+.world-building { position: absolute; left: 0; top: 0; z-index: 2; }
+.world-building-art { display: block; image-rendering: pixelated; }
+.world-building-button { position: relative; display: block; padding: 0; border: 0; background: transparent; cursor: pointer; }
+.world-building-button:hover .world-building-art, .world-building-button:focus-visible .world-building-art { filter: brightness(1.08); }
+.world-building-button:hover .door-prompt, .world-building-button:focus-visible .door-prompt { opacity: 1; }
+.world-building-button:focus-visible { outline: 3px solid #fff7dc; outline-offset: 3px; }
+.move-mode-scene.is-editing .world-building { cursor: grab; }
+
+/* Placement mode: tap anywhere to move the draft; the draft floats above everything. */
+.placement-catcher { position: absolute; inset: 0; z-index: 1; cursor: crosshair; }
+.world-building-draft { z-index: 3; opacity: .92; outline: 2px dashed #fff7dc; outline-offset: 4px; }
+.world-field.is-placing .move-mode-toggle { display: none; }
+.placement-banner { position: absolute; left: 50%; bottom: 28px; transform: translateX(-50%); z-index: 6; width: min(420px, calc(100% - 140px)); padding: 12px 14px; text-align: center; }
+.placement-banner p { margin: 0 0 10px; font-size: 13px; line-height: 1.5; }
+.placement-actions { display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap; }
+.placement-actions .pixel-button { min-height: 44px; }
+.placement-later { min-height: 44px; padding: 8px 12px; border: 2px solid #918064; background: #edf0dc; color: #534735; font: bold 12px monospace; cursor: pointer; }
+
+/* Building Shop icon: bottom-left, same pixel-panel style as the bedroom shortcuts. */
+.building-shop-button { position: absolute; left: 14px; bottom: 28px; z-index: 5; display: grid; place-items: center; width: 48px; height: 48px; padding: 0; cursor: pointer; touch-action: manipulation; }
+.building-shop-button:hover { background: #edf0dc; }
+.building-shop-button:active { transform: translateY(2px); }
+@media (min-width: 700px) { .building-shop-button { left: 24px; } }
+@media (max-width: 480px) {
+  .building-shop-button { left: 12px; bottom: 18px; }
+  .placement-banner { bottom: 18px; width: calc(100% - 92px); left: calc(50% + 32px); }
+}
+
+/* Building Shop modal. */
+.building-shop h2 { font: bold 24px monospace; margin: 8px 0; }
+.building-shop > p { font-size: 13px; line-height: 1.6; }
+.building-inventory { padding: 8px 10px; background: #f3f0de; border: 1px solid #c9bf9c; }
+.building-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
+@media (max-width: 480px) { .building-grid { grid-template-columns: 1fr; } }
+.building-card { display: flex; flex-direction: column; padding: 12px; text-align: center; min-width: 0; }
+.building-card-art { display: grid; place-items: center; height: 104px; margin-bottom: 8px; background: #a9c38b; border: 2px solid #8fa673; }
+.building-card-art img { image-rendering: pixelated; }
+.building-card h3 { font: bold 16px monospace; margin: 4px 0; }
+.building-card-description { font-size: 12px; line-height: 1.5; margin: 0 0 6px; }
+.building-card-meta { font: 12px monospace; color: #70634e; margin: 0 0 4px; }
+.building-card-status { font: bold 12px monospace; margin: 0 0 10px; min-height: 1.4em; color: #5f6f4a; }
+.building-card.is-locked .building-card-status, .building-card.is-not-enough-coins .building-card-status { color: #87432d; }
+.building-card.is-locked .building-card-art img { filter: grayscale(.8) opacity(.6); }
+.building-card .pixel-button { margin-top: auto; min-height: 44px; font-size: 12px; width: 100%; }

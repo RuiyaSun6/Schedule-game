@@ -3,6 +3,8 @@ import PetCorner from '../components/PetCorner';
 import { useRoomPlacement } from '../services/RoomPlacementContext';
 import { usePlayer } from '../services/PlayerContext';
 import { HOME_SLOTS, latestOwned } from '../data/shopAssets';
+import { furnitureState } from '../services/furnitureLocation';
+import PlacedFurnitureLayer from '../components/PlacedFurnitureLayer';
 import type { Item } from '../types';
 import './RoomSlots.css';
 import WorldDoor from '../components/WorldDoor';
@@ -52,16 +54,18 @@ export default function HomeScene({ onOpenComputer, items, editing, onEditingCha
       <MovableObject objectId="home-desk" className="room-desk" name="Desk" {...placement('home-desk')}>
         <Sprite src={tables} sheetWidth={448} sheetHeight={352} crop={[64, 48, 32, 32]} />
       </MovableObject>
-      {/* One fixed slot per kind of furniture, showing the newest variant the player bought. */}
+      {/* One fixed slot per kind of furniture, showing the newest variant bought, unless the player
+          moved it to another building or stored it. */}
       {HOME_SLOTS.map((family) => {
         const id = latestOwned(player.ownedItems, family);
-        const item = id && (items.find((entry) => entry.id === id) ?? { id, name: id, type: 'furniture' as const, price: 0, asset: '' });
-        if (!item) return null;
+        if (!id || furnitureState(id, player.ownedItems, room).kind !== 'home-slot') return null;
+        const item = items.find((entry) => entry.id === id) ?? { id, name: id, type: 'furniture' as const, price: 0, asset: '' };
         return <MovableObject key={family} objectId={`home-slot-${family}`} className={`room-owned-item room-slot room-slot-${family}`} name={item.name}
-          {...placement(`home-slot-${family}`)}>
+          {...placement(`home-slot-${family}`)} onStore={() => room.storeItem(id)}>
           <ItemArtwork item={item} fit={null} />
         </MovableObject>;
       })}
+      <PlacedFurnitureLayer locationId="home" items={items} />
       <MovableObject objectId="home-pet-corner" className="room-owned-item room-slot pet-corner-slot" name="Pet corner" {...placement('home-pet-corner')}>
         <PetCorner />
       </MovableObject>

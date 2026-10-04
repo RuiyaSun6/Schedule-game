@@ -10,7 +10,7 @@ export async function getPlayer(userId: string, db: Queryable = getPool()): Prom
   const [rows] = await db.query<RowDataPacket[]>("SELECT * FROM players WHERE id = ?", [userId]);
   if (rows.length === 0) return null;
   const [items] = await db.query<RowDataPacket[]>(
-    "SELECT item_id FROM user_items WHERE user_id = ? ORDER BY purchased_at",
+    "SELECT item_id, quantity FROM user_items WHERE user_id = ? ORDER BY purchased_at",
     [userId],
   );
   const p = rows[0];
@@ -22,6 +22,7 @@ export async function getPlayer(userId: string, db: Queryable = getPool()): Prom
     outfit: p.outfit,
     unlockedAreas: getUnlockedAreas(p.level),
     ownedItems: items.map((r) => r.item_id),
+    itemCounts: Object.fromEntries(items.map((r) => [r.item_id, Number(r.quantity) || 1])),
   };
 }
 

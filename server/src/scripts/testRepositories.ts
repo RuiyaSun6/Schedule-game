@@ -29,7 +29,7 @@ try {
   assert.ok(demo, `${DEFAULT_PLAYER_ID} not found; run npm run db:init`);
   console.log(`✓ getPlayer(${DEFAULT_PLAYER_ID}):`, demo);
 
-  await createPlayer({ id: testUserId, level: 1, xp: 0, coins: 0, outfit: "default", unlockedAreas: [], ownedItems: [] });
+  await createPlayer({ id: testUserId, level: 1, xp: 0, coins: 0, outfit: "default", unlockedAreas: [], ownedItems: [], itemCounts: {} });
   const sequential = { ...makeQuest("Sequential double complete"), completionLine: "Double complete, single cheer!" };
   const concurrent = makeQuest("Concurrent double complete");
   await createQuests([sequential, concurrent]);
