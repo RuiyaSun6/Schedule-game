@@ -9,7 +9,19 @@ const MAX_TITLE = 40;
 // Task separators: commas, semicolons, newlines, sentence ends, "&", and/then/also/plus.
 const SEPARATOR = /(?:\s*(?:[,;\n]|\.(?:\s|$)|&|\b(?:and|then|also|plus)\b)\s*)+/i;
 const FILLER = /^(?:(?:i|we)\s+(?:need|have|want|plan|gotta)\s+to\s+|(?:i\s+)?(?:should|must|will|need\s+to|have\s+to)\s+|to\s+|please\s+)+/i;
-const TIME_WORDS = /\s*\b(?:today|tonight|tomorrow|this\s+(?:morning|afternoon|evening|week)|later|asap|now)\b\s*$/i;
+const TIME_WORDS = /\s*\b(?:later|asap|now)\b\s*$/i;
+
+// Dates and clock times belong in schedule fields, not titles. Removed before splitting,
+// which also keeps the dot in "a.m." from being read as a sentence end.
+const CLOCK = String.raw`\d{1,2}(?::\d{2})?\s*(?:[ap]\.?m\b\.?)?`;
+const SCHEDULE_PHRASES: RegExp[] = [
+  /\b(?:on\s+)?\d{4}-\d{2}-\d{2}\b/gi,
+  new RegExp(String.raw`\b(?:from\s+)?${CLOCK}\s*(?:-|to|until)\s*\d{1,2}(?::\d{2}\s*(?:[ap]\.?m\b\.?)?|\s*[ap]\.?m\b\.?)`, "gi"),
+  /\b(?:at|by|around|before|after)?\s*\d{1,2}(?::\d{2})?\s*[ap]\.?m\b\.?/gi,
+  /\b(?:at|by|around|before|after)\s+(?:\d{1,2}:\d{2}|noon|midnight)\b/gi,
+  /\b(?:on\s+|this\s+|next\s+)?(?:mon|tues|wednes|thurs|fri|satur|sun)day\b/gi,
+  /\b(?:today|tonight|tomorrow|this\s+(?:morning|afternoon|evening|week|weekend))\b/gi,
+];
 const ARTICLE = /^(?:the|a|an|my|our)\s+/i;
 
 // Leading verb phrase. A fragment without one (e.g. "physics exam" in
@@ -73,21 +85,29 @@ function truncate(text: string, max: number): string {
 }
 
 export function splitTasks(text: string): string[] {
-  return text
+  const withoutSchedule = SCHEDULE_PHRASES.reduce((acc, pattern) => acc.replace(pattern, " "), text);
+  return withoutSchedule
     .split(SEPARATOR)
-    .map((part) => part.replace(FILLER, "").replace(TIME_WORDS, "").trim())
+    .map((part) => part.replace(/\s+/g, " ").trim().replace(FILLER, "").replace(TIME_WORDS, "").trim())
     .filter((part) => part.length > 0);
 }
+
+const classify = (text: string) => CLASSIFIERS.find((c) => c.pattern.test(text));
 
 export function generateMockQuestDrafts(text: string): QuestDraft[] {
   const drafts: QuestDraft[] = [];
   let previousVerb = "";
+  let previousCategory: QuestCategory | undefined;
 
   for (const fragment of splitTasks(text).slice(0, MAX_QUESTS)) {
     const verbMatch = fragment.match(VERB);
-    const verb = (verbMatch?.[1] ?? previousVerb).replace(/\s+/g, " ");
     let object = (verbMatch ? fragment.slice(verbMatch[0].length) : fragment).trim();
-    if (verbMatch) previousVerb = verb;
+    // Inherit only for the same kind of thing ("math exam and physics exam", "buy milk and eggs"),
+    // so "study for quiz, then laundry" does not become "Laundry Prep".
+    const ownCategory = classify(object)?.category;
+    const inherits = !verbMatch && (ownCategory === undefined || ownCategory === previousCategory);
+    const verb = (verbMatch?.[1] ?? (inherits ? previousVerb : "")).replace(/\s+/g, " ");
+    if (verbMatch || !inherits) previousVerb = verb;
     if (!object && !verb) continue;
     // Drop the article only when the verb is dropped too: "go to the gym" -> "Gym", but "Walk the Dog".
     if (!verb || PREP_VERBS.test(verb) || SILENT_VERBS.test(verb)) object = object.replace(ARTICLE, "");
@@ -100,7 +120,8 @@ export function generateMockQuestDrafts(text: string): QuestDraft[] {
     content = truncate(titleCase(content), MAX_TITLE);
 
     const fullText = `${verb} ${object}`;
-    const match = CLASSIFIERS.find((c) => c.pattern.test(fullText)) ?? DEFAULT_CLASS;
+    const match = classify(fullText) ?? DEFAULT_CLASS;
+    previousCategory = match.category;
     const suffix = SUFFIX[match.category];
     const title = content.length + suffix.length + 2 <= MAX_TITLE ? `${content}: ${suffix}` : content;
     const minutes = parseMinutes(fullText) ?? match.minutes;

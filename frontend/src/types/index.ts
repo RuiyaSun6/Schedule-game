@@ -21,6 +21,9 @@ export interface Quest {
   xpReward: number;
   coinReward: number;
   completed: boolean;
+  scheduledDate?: string;
+  startTime?: string;
+  endTime?: string;
 }
 
 export interface GenerateQuestsResponse {

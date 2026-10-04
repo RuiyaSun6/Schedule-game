@@ -51,3 +51,15 @@ test("titles stay within ~40 characters and never use vague names", () => {
     assert.doesNotMatch(q.title, VAGUE);
   }
 });
+
+test("dates and times stay out of titles", () => {
+  const quests = generateMockQuestDrafts("go to the gym tomorrow at 7 a.m. and call mom on Friday, math homework on 2030-10-05 from 5 PM to 7 PM");
+  assert.deepEqual(quests.map((q) => q.title.split(":")[0]), ["Gym", "Call Mom", "Math Homework"]);
+});
+
+test("verb is not inherited across unrelated tasks", () => {
+  const quests = generateMockQuestDrafts("study for chem quiz at 3pm, then laundry this Saturday");
+  assert.match(quests[0].title, /^Chem Quiz Prep/);
+  assert.match(quests[1].title, /^Laundry/);
+  assert.equal(quests[1].category, "life");
+});

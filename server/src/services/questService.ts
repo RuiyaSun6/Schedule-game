@@ -24,6 +24,7 @@ function makeQuest(
   difficulty: QuestDifficulty,
   category: QuestCategory = "life",
   estimatedMinutes = 30,
+  schedule?: Pick<Quest, "scheduledDate" | "startTime" | "endTime">,
 ): Quest {
   return {
     id: randomUUID(),
@@ -34,6 +35,7 @@ function makeQuest(
     estimatedMinutes,
     ...getRewards(difficulty),
     completed: false,
+    ...schedule,
   };
 }
 
@@ -58,7 +60,11 @@ export async function generateQuests(text: string): Promise<{ source: "gemini" |
   const similar = await findSimilarCompletedQuests(player.id, text);
   const { source, quests: drafts } = await generateQuestsFromText(player, text, similar);
   const quests = drafts.map((draft) =>
-    makeQuest(player.id, draft.title, draft.difficulty, draft.category, draft.estimatedMinutes),
+    makeQuest(player.id, draft.title, draft.difficulty, draft.category, draft.estimatedMinutes, {
+      scheduledDate: draft.scheduledDate,
+      startTime: draft.startTime,
+      endTime: draft.endTime,
+    }),
   );
   if (isTiDBEnabled()) await createQuests(quests);
   else quests.forEach(saveQuest);

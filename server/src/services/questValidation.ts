@@ -37,7 +37,19 @@ export function validateQuestDraft(raw: unknown): QuestDraft | null {
     ? Math.min(MAX_MINUTES, Math.max(MIN_MINUTES, Math.round(minutes)))
     : DEFAULT_MINUTES[difficulty];
 
-  return { title, category: normalizeCategory(q.category), difficulty, estimatedMinutes };
+  const scheduledDate = typeof q.scheduledDate === "string" ? q.scheduledDate.trim() : "";
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(scheduledDate) ? new Date(`${scheduledDate}T00:00:00Z`) : null;
+  const validDate = date && !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === scheduledDate;
+  const startTime = typeof q.startTime === "string" ? q.startTime.trim() : "";
+  const endTime = typeof q.endTime === "string" ? q.endTime.trim() : "";
+  const timePattern = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
+
+  return {
+    title, category: normalizeCategory(q.category), difficulty, estimatedMinutes,
+    ...(validDate && { scheduledDate }),
+    ...(timePattern.test(startTime) && { startTime }),
+    ...(timePattern.test(endTime) && { endTime }),
+  };
 }
 
 /**

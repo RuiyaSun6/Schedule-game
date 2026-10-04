@@ -97,7 +97,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<WelcomePage />} />
           <Route path="/world" element={<WorldPage />} />
-          <Route path="/home" element={<HomePage onAcceptQuest={acceptQuest} acceptedCount={acceptedQuests.length} hasSeenTutorial={hasSeenTutorial} onCompleteTutorial={() => setHasSeenTutorial(true)} />} />
+          <Route path="/home" element={<HomePage onAcceptQuest={acceptQuest} acceptedCount={acceptedQuests.length} quests={acceptedQuests} hasSeenTutorial={hasSeenTutorial} onCompleteTutorial={() => setHasSeenTutorial(true)} />} />
           <Route path="/planner" element={<PlannerPage />} />
           <Route path="/quests" element={<QuestsPage quests={acceptedQuests} onComplete={finishQuest} completingId={completingId} errors={completionErrors} notice={completionNotice} />} />
           <Route path="/shop" element={<ShopPage />} />

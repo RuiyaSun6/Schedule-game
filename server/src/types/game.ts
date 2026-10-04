@@ -27,6 +27,9 @@ export interface Quest {
   xpReward: number;
   coinReward: number;
   completed: boolean;
+  scheduledDate?: string;
+  startTime?: string;
+  endTime?: string;
 }
 
 export interface Item {
@@ -46,6 +49,9 @@ export interface QuestDraft {
   category: QuestCategory;
   difficulty: QuestDifficulty;
   estimatedMinutes: number;
+  scheduledDate?: string;
+  startTime?: string;
+  endTime?: string;
 }
 
 export interface SimilarQuest {
