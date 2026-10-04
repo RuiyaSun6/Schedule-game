@@ -1,0 +1,12 @@
+.game-hud-actions { position: absolute; left: 14px; bottom: 28px; z-index: 5; display: flex; gap: 10px; }
+.game-hud-actions > .home-shop-shortcut,
+.game-hud-actions > .home-backpack-shortcut,
+.game-hud-actions > .building-shop-button { position: static; flex: 0 0 48px; padding: 0; }
+.home-game:has(.game-hud-actions.with-secondary) > .room-caption { left: 132px; max-width: calc(100% - 148px); }
+.furniture-shop-content { min-width: 0; }
+.furniture-shop-content h1 { font: bold 24px monospace; margin: 8px 0 16px; }
+@media (min-width: 700px) { .game-hud-actions { left: 24px; } }
+@media (max-width: 480px) {
+  .game-hud-actions { left: 12px; bottom: 18px; }
+  .home-game:has(.game-hud-actions.with-secondary) > .room-caption { left: 128px; max-width: calc(100% - 140px); }
+}

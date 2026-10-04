@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import GameTopBar from '../../components/GameTopBar';
+import GameHudActions from '../../components/GameHudActions';
 import PixelModal from '../../components/PixelModal';
 import Backpack from '../../components/Backpack';
 import WorldDoor from '../../components/WorldDoor';
@@ -10,7 +11,7 @@ import { useCatalog } from '../../services/useCatalog';
 import { useRoomPlacement } from '../../services/RoomPlacementContext';
 import { defaultFurnitureSpot } from '../../services/furnitureLocation';
 import { useWorldBuildings } from '../../hooks/useWorldBuildings';
-import { getBuilding } from '../../data/buildingCatalog';
+import { getBuilding, buildingInteriorWidth } from '../../data/buildingCatalog';
 import { getItemArt, itemFamily } from '../../data/shopAssets';
 import FarmFieldBackground from '../../components/farm/FarmFieldBackground';
 import { cellKey, cellToPosition, tilledCells, useFieldGrid } from '../../components/farm/farmGrid';
@@ -28,6 +29,7 @@ export default function BuildingInteriorPage() {
   const catalog = useCatalog();
   const room = useRoomPlacement();
   const sceneRef = useRef<HTMLElement>(null);
+  const decorationRef = useRef<HTMLDivElement>(null);
   const [editing, setEditing] = useState(false);
   const [backpackOpen, setBackpackOpen] = useState(false);
   // Field interiors (the Farm): tiled background, crops snap to tilled tiles.
@@ -64,7 +66,7 @@ export default function BuildingInteriorPage() {
       setEditing(true);
       return;
     }
-    const scene = sceneRef.current;
+    const scene = decorationRef.current;
     const spot = defaultFurnitureSpot({ width: scene?.clientWidth ?? 360, height: scene?.clientHeight ?? 600 }, room.placed.filter((p) => p.locationId === id).length);
     if (!room.placeItem(item.id, id, spot.x, spot.y, { stackable: item.stackable })) setHint('No unplaced copies left. Buy another in the Shop.');
     setBackpackOpen(false);
@@ -72,32 +74,28 @@ export default function BuildingInteriorPage() {
   }
   const colours = {
     '--interior-wall': building.interior.wall, '--interior-floor': building.interior.floor,
+    '--interior-width': buildingInteriorWidth(id, buildings.level(id)),
     // On a field, items use the field's scale so crops line up with the tiles.
     ...(grid ? { '--room-scale': grid.scale } : {}),
   } as CSSProperties;
 
   return (
     <section ref={sceneRef} className={`home-game building-interior-game interior-${building.interiorType}`} style={colours} aria-label={`Inside the ${building.name}`}>
-      <MoveModeScene className="bedroom building-interior" label={`${building.name} interior`} editing={editing} onEditingChange={setEditing} floorOnly={!building.interior.field}>
+      <MoveModeScene className="bedroom building-interior" label={`${building.name} interior`} editing={editing} onEditingChange={setEditing} floorOnly={!building.interior.field} objectContainerRef={decorationRef}>
+        <div className="interior-expansion-scroll"><div ref={decorationRef} className="interior-expansion-canvas">
         {building.interior.field ? <FarmFieldBackground grid={grid} /> : <>
           <div className="room-wall" aria-hidden="true" />
           <div className="room-floor" aria-hidden="true" />
           <WorldDoor className="bedroom-door" to="/world" prompt={`EXIT ${building.name.toUpperCase()}`} />
         </>}
         <PlacedFurnitureLayer locationId={id} items={catalog.items} grid={grid} onHint={setHint} />
+        </div></div>
       </MoveModeScene>
       <GameTopBar />
+      {buildings.level(id) > 1 && <span className="interior-expansion-hint pixel-panel">Building Lv.{buildings.level(id)} · Scroll right for more space →</span>}
       {hint && <p className="farm-hint pixel-panel" role="status">{hint}</p>}
       <Link className="interior-exit pixel-panel" to="/world" aria-label={`Exit the ${building.name}`}>EXIT</Link>
-      <button type="button" className="home-backpack-shortcut interior-backpack pixel-panel" onClick={() => setBackpackOpen(true)} aria-label="Open Backpack" title="Backpack">
-        <svg width="30" height="32" viewBox="0 0 16 16" shapeRendering="crispEdges" aria-hidden="true">
-          <path fill="#75624c" d="M5 1h6v3h2v2h1v9H2V6h1V4h2z" />
-          <path fill="#fff8e5" d="M6 2h4v2H6z" />
-          <path fill="#9caf84" d="M4 5h8v8H4z" />
-          <path fill="#637c4e" d="M5 9h6v4H5z" />
-          <path fill="#edcd74" d="M7 8h2v2H7z" />
-        </svg>
-      </button>
+      <GameHudActions onOpenBackpack={() => setBackpackOpen(true)} />
       <div className="room-caption"><span>{building.interior.caption}</span><p>Open the Backpack to place furniture, then use MOVE OBJECTS to arrange it.</p></div>
       <PixelModal open={backpackOpen} onClose={() => setBackpackOpen(false)} titleId="backpack-title">
         <Backpack items={catalog.items} loading={catalog.loading} error={catalog.error} onRetry={catalog.retry} locationId={id} onPlace={placeFromBackpack} />

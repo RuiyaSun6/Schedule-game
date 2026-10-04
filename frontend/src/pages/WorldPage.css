@@ -49,7 +49,7 @@
 
 /* Placed buildings. MovableObject sets left/top from the saved position. */
 .world-building { position: absolute; left: 0; top: 0; z-index: 2; }
-.world-building-art { display: block; image-rendering: pixelated; }
+.world-building-art { display: block; object-fit: contain; image-rendering: pixelated; }
 .world-building-button { position: relative; display: block; padding: 0; border: 0; background: transparent; cursor: pointer; }
 .world-building-button:hover .world-building-art, .world-building-button:focus-visible .world-building-art { filter: brightness(1.08); }
 .world-building-button:hover .door-prompt, .world-building-button:focus-visible .door-prompt { opacity: 1; }
@@ -70,15 +70,9 @@
 .building-shop-button { position: absolute; left: 14px; bottom: 28px; z-index: 5; display: grid; place-items: center; width: 48px; height: 48px; padding: 0; cursor: pointer; touch-action: manipulation; }
 .building-shop-button:hover { background: #edf0dc; }
 .building-shop-button:active { transform: translateY(2px); }
-.world-home-button { position: absolute; left: 14px; bottom: 88px; z-index: 5; display: grid; place-items: center; width: 48px; height: 48px; padding: 0; cursor: pointer; touch-action: manipulation; }
-.world-home-button:hover { background: #edf0dc; }
-.world-home-button:active { transform: translateY(2px); }
-.world-home-button:focus-visible { outline: 3px solid #fff7dc; outline-offset: 3px; }
 @media (min-width: 700px) { .building-shop-button { left: 24px; } }
-@media (min-width: 700px) { .world-home-button { left: 24px; } }
 @media (max-width: 480px) {
   .building-shop-button { left: 12px; bottom: 18px; }
-  .world-home-button { left: 12px; bottom: 78px; }
   .placement-banner { bottom: 18px; width: calc(100% - 92px); left: calc(50% + 32px); }
 }
 
@@ -90,7 +84,7 @@
 @media (max-width: 480px) { .building-grid { grid-template-columns: 1fr; } }
 .building-card { display: flex; flex-direction: column; padding: 12px; text-align: center; min-width: 0; }
 .building-card-art { display: grid; place-items: center; height: 104px; margin-bottom: 8px; background: #a9c38b; border: 2px solid #8fa673; }
-.building-card-art img { image-rendering: pixelated; }
+.building-card-art img { max-width: 100%; max-height: 100%; object-fit: contain; image-rendering: pixelated; }
 .building-card h3 { font: bold 16px monospace; margin: 4px 0; }
 .building-card-description { font-size: 12px; line-height: 1.5; margin: 0 0 6px; }
 .building-card-meta { font: 12px monospace; color: #70634e; margin: 0 0 4px; }
@@ -98,3 +92,23 @@
 .building-card.is-locked .building-card-status, .building-card.is-not-enough-coins .building-card-status { color: #87432d; }
 .building-card.is-locked .building-card-art img { filter: grayscale(.8) opacity(.6); }
 .building-card .pixel-button { margin-top: auto; min-height: 44px; font-size: 12px; width: 100%; }
+
+/* Home stays in its original position and enters directly on a normal click. */
+button.outdoor-home { border: 0; padding: 0; background: transparent; }
+
+/* Match the two overlay panels; task content never determines their height. */
+.world-player-tasks-hud { display: grid; grid-template-columns: repeat(2, minmax(0, 258px)); }
+.world-player-tasks-hud > .game-top-bar { width: 100%; min-width: 0; max-width: 100%; }
+.world-player-tasks-hud > .today-tasks-panel { width: 100%; max-width: 100%; height: var(--player-hud-height); max-height: var(--player-hud-height); margin: 0; }
+.world-player-tasks-hud .today-tasks-panel h2 { flex: 0 0 auto; }
+.world-player-tasks-hud .today-tasks-list { flex: 1 1 0; min-height: 0; max-height: none; overflow-y: auto; }
+.world-player-tasks-hud .today-tasks-list li { min-height: 40px; padding: 4px 0; }
+.world-player-tasks-hud .today-task-title { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.world-player-tasks-hud .today-tasks-empty { min-height: 0; overflow-y: auto; }
+.world-field .move-mode-toggle { top: auto; bottom: 88px; }
+@media (max-width: 600px) {
+  .world-player-tasks-hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 360px) {
+  .world-player-tasks-hud { grid-template-columns: minmax(0, 258px); }
+}

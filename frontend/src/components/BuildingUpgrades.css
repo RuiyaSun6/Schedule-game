@@ -1,0 +1,16 @@
+.building-upgrade-view h2 { font: bold 21px monospace; margin-bottom: 0; }
+.building-upgrade-modal { width: min(460px, calc(100% - 28px)); }
+.building-upgrade-view { font-size: 14px; line-height: 1.7; }
+.building-upgrade-view h3 { font: bold 15px monospace; color: #637c4e; }
+.building-upgrade-view small { display: block; color: #887c65; margin-top: 16px; }
+.building-max-level { font: bold 13px monospace; color: #637c4e; }
+.building-card-upgrade { border-top: 1px solid #c9bf9c; padding-top: 10px; margin-top: auto; }
+.building-card-upgrade .eyebrow { font-size: 9px; letter-spacing: 1px; }
+.building-card-upgrade h4 { font: bold 13px monospace; margin: 6px 0; }
+.building-card-upgrade p { font: 12px monospace; margin: 0 0 8px; }
+.building-upgrade-confirm-actions { display: flex; justify-content: flex-end; align-items: center; gap: 10px; flex-wrap: wrap; }
+.building-level-badge { position: absolute; bottom: 0; right: 0; padding: 3px 5px; background: #fff8e5; border: 1px solid #807c59; color: #637c4e; font: bold 10px monospace; pointer-events: none; }
+.home-upstairs-link { position: absolute; right: 14px; bottom: 128px; z-index: 4; padding: 10px; color: #637c4e; text-decoration: none; font: bold 11px monospace; min-height: 40px; }
+.interior-expansion-scroll { position: absolute; inset: 0; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scrollbar-width: thin; scrollbar-color: #8f9c76 #ede4ce; }
+.interior-expansion-canvas { position: relative; width: calc(100% * var(--interior-width, 1)); height: 100%; }
+.interior-expansion-hint { position: absolute; top: 140px; left: 14px; z-index: 4; padding: 6px; font: 10px monospace; color: #637c4e; pointer-events: none; }

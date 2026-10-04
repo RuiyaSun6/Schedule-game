@@ -28,7 +28,7 @@ export function furnitureState(itemId: string, ownedItems: readonly string[] | u
 
 /** Whether an item's kind fits in a location (e.g. no sofas on the farm). */
 export function fitsLocation(itemId: string, locationId: LocationId) {
-  return getBuilding(locationId)?.interior.furnitureFamilies.includes(itemFamily(itemId)) ?? false;
+  return getBuilding(locationId === 'home-upstairs' ? 'home' : locationId)?.interior.furnitureFamilies.includes(itemFamily(itemId)) ?? false;
 }
 
 /** A starting spot for newly placed furniture: middle of the floor, nudged so new items don't stack. */

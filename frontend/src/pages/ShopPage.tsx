@@ -8,11 +8,13 @@ import { usePlayer, usePlayerActions } from '../services/PlayerContext';
 import { useCatalog } from '../services/useCatalog';
 import { buyItem } from '../services/shop';
 import { SHOP_CATEGORIES, ownedCount, shopCategory } from '../data/shopAssets';
+import { useRoomPlacement } from '../services/RoomPlacementContext';
 
-export default function ShopPage() {
+export default function ShopPage({ embedded = false }: { embedded?: boolean }) {
   const player = usePlayer();
   const actions = usePlayerActions();
   const catalog = useCatalog();
+  const room = useRoomPlacement();
   const [category, setCategory] = useState<string>('All');
   const [buying, setBuying] = useState<string | null>(null);
   const [notice, setNotice] = useState('');
@@ -27,6 +29,9 @@ export default function ShopPage() {
       const result = await buyItem(player, item);
       // The returned player is authoritative: coins and ownership update everywhere at once.
       actions.updatePlayer(result.player);
+      // New regular furniture waits in Backpack instead of filling a bedroom slot.
+      // Existing placed items and stackable copies keep their current placements.
+      if (result.item.type !== 'clothing' && !result.item.stackable && !player.ownedItems?.includes(result.item.id)) room.storeItem(result.item.id);
       setNotice(`${result.item.name} is yours! −${result.item.price} coins.`);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Purchase failed. Please try again.');
@@ -36,8 +41,8 @@ export default function ShopPage() {
     }
   }
 
-  return <section className="inventory-page accepted-quests-page">
-    <GameTopBar /><h1>SHOP</h1>
+  return <section className={embedded ? 'furniture-shop-content' : 'inventory-page accepted-quests-page'}>
+    {!embedded && <GameTopBar />}<h1 id="furniture-shop-title">SHOP</h1>
     <div className="shop-categories" aria-label="Shop categories">
       {['All', ...categories].map((name) => <PixelButton key={name} aria-pressed={name === category} onClick={() => setCategory(name)}>{name.toUpperCase()}</PixelButton>)}
     </div>
@@ -51,6 +56,6 @@ export default function ShopPage() {
         busy={buying !== null || catalog.demo} buying={buying === item.id} onBuy={() => void buy(item)} />)}
     </div>}
     {!catalog.loading && !catalog.error && shown.length === 0 && <p>No items in this category yet.</p>}
-    <div className="inventory-links"><Link to="/home">← Bedroom</Link><Link to="/wardrobe">Wardrobe →</Link></div>
+    {!embedded && <div className="inventory-links"><Link to="/home">← Bedroom</Link><Link to="/wardrobe">Wardrobe →</Link></div>}
   </section>;
 }

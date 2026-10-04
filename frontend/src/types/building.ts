@@ -3,7 +3,7 @@
 
 export type BuildingId = 'home' | 'farm' | 'cafe' | 'restaurant' | 'library';
 /** Every building interior is a location furniture can be placed in. */
-export type LocationId = BuildingId;
+export type LocationId = BuildingId | 'home-upstairs';
 
 /** A tiled outdoor field drawn from one background image (the Farm). Sizes are in tiles. */
 export interface FieldConfig {
@@ -26,6 +26,16 @@ export interface BuildingInterior {
   field?: FieldConfig;
 }
 
+export interface BuildingUpgrade {
+  level: number;
+  price: number;
+  name: string;
+  description: string;
+  exteriorAsset?: string;
+  /** Extra horizontal decoration space; coordinates in the original room stay unchanged. */
+  interiorWidthMultiplier?: number;
+}
+
 export interface BuildingDefinition {
   id: BuildingId;
   name: string;
@@ -38,6 +48,7 @@ export interface BuildingDefinition {
   /** True while exteriorAsset is a stand-in to be replaced with real art. */
   placeholder: boolean;
   description: string;
+  upgrades: readonly BuildingUpgrade[];
   interiorType: 'bedroom' | 'farm' | 'cafe' | 'restaurant' | 'library';
   interior: BuildingInterior;
 }

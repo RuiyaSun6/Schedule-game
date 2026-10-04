@@ -1,6 +1,8 @@
-import { Link } from 'react-router-dom';
 import { useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useWorldBuildings } from '../hooks/useWorldBuildings';
 import GameTopBar from '../components/GameTopBar';
+import GameHudActions from '../components/GameHudActions';
 import PixelModal from '../components/PixelModal';
 import DailyPlanner from '../components/DailyPlanner';
 import Backpack from '../components/Backpack';
@@ -22,6 +24,7 @@ interface HomePageProps extends QuestCompletionProps {
 
 export default function HomePage({ tutorialTab, onAcceptQuest, acceptedCount, quests, onComplete, completingId, errors, notice }: HomePageProps) {
   const catalog = useCatalog();
+  const buildings = useWorldBuildings();
   const [backpackOpen, setBackpackOpen] = useState(false);
   const room = useRoomPlacement();
   const sceneRef = useRef<HTMLElement>(null);
@@ -34,7 +37,7 @@ export default function HomePage({ tutorialTab, onAcceptQuest, acceptedCount, qu
   function placeFromBackpack(item: Item) {
     const scene = sceneRef.current;
     const spot = defaultFurnitureSpot({ width: scene?.clientWidth ?? 360, height: scene?.clientHeight ?? 600 }, room.placed.filter((p) => p.locationId === 'home').length);
-    room.placeItem(item.id, 'home', spot.x, spot.y);
+    room.placeItem(item.id, 'home', spot.x, spot.y, { stackable: item.stackable });
     setBackpackOpen(false);
     setEditing(true);
   }
@@ -70,20 +73,8 @@ export default function HomePage({ tutorialTab, onAcceptQuest, acceptedCount, qu
       <GameTopBar />
       <TodaysTasksPanel quests={quests} {...completion} />
     </div>
-    <Link className="home-shop-shortcut pixel-panel" to="/shop" aria-label="Open Shop" title="Shop" data-tutorial="shop">
-      <svg viewBox="40 28 16 16" width="32" height="32" aria-hidden="true" className="asset-sprite">
-        <image href={`${import.meta.env.BASE_URL}assets/interior%20full/furniture/boxes.png`} width="448" height="112" />
-      </svg>
-    </Link>
-    <button type="button" className="home-backpack-shortcut pixel-panel" onClick={() => setBackpackOpen(true)} aria-label="Open Backpack" title="Backpack">
-      <svg width="30" height="32" viewBox="0 0 16 16" shapeRendering="crispEdges" aria-hidden="true">
-        <path fill="#75624c" d="M5 1h6v3h2v2h1v9H2V6h1V4h2z" />
-        <path fill="#fff8e5" d="M6 2h4v2H6z" />
-        <path fill="#9caf84" d="M4 5h8v8H4z" />
-        <path fill="#637c4e" d="M5 9h6v4H5z" />
-        <path fill="#edcd74" d="M7 8h2v2H7z" />
-      </svg>
-    </button>
+    <GameHudActions onOpenBackpack={() => setBackpackOpen(true)} />
+    {buildings.level('home') >= 2 && <Link className="home-upstairs-link pixel-panel" to="/home/upstairs">↑ UPSTAIRS</Link>}
     <PixelModal open={backpackOpen} onClose={() => setBackpackOpen(false)} titleId="backpack-title">
       <Backpack items={catalog.items} loading={catalog.loading} error={catalog.error} onRetry={catalog.retry} locationId="home" onPlace={placeFromBackpack} />
     </PixelModal>

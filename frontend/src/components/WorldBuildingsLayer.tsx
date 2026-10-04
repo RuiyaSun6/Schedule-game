@@ -1,7 +1,7 @@
-import { useNavigate } from 'react-router-dom';
 import { MovableObject } from './MoveModeScene';
+import BuildingEntryButton from './BuildingEntryButton';
 import { useWorldBuildings } from '../hooks/useWorldBuildings';
-import { WORLD_BUILDING_SCALE, buildingRoute, getBuilding } from '../data/buildingCatalog';
+import { WORLD_BUILDING_SCALE, buildingExterior, getBuilding } from '../data/buildingCatalog';
 import type { BuildingId } from '../types/building';
 
 export function buildingDisplaySize(id: BuildingId) {
@@ -11,7 +11,8 @@ export function buildingDisplaySize(id: BuildingId) {
 
 function BuildingArt({ id }: { id: BuildingId }) {
   const size = buildingDisplaySize(id);
-  return <img className="world-building-art" src={getBuilding(id)!.exteriorAsset} alt="" width={size.width} height={size.height} draggable={false} />;
+  const buildings = useWorldBuildings();
+  return <img className="world-building-art" src={buildingExterior(id, buildings.level(id))} alt="" width={size.width} height={size.height} draggable={false} />;
 }
 
 // Placed buildings in the world (enter on click; drag/store in MOVE BUILDINGS mode), plus the
@@ -22,7 +23,6 @@ export default function WorldBuildingsLayer({ placing, onDraftMove, tileOrigin }
   tileOrigin: { x: number; y: number };
 }) {
   const buildings = useWorldBuildings();
-  const navigate = useNavigate();
   return <>
     {buildings.placed.filter((p) => p.buildingId !== placing?.id).map((p) => {
       const building = getBuilding(p.buildingId)!;
@@ -30,11 +30,11 @@ export default function WorldBuildingsLayer({ placing, onDraftMove, tileOrigin }
         position={{ objectId: p.instanceId, x: p.x + tileOrigin.x, y: p.y + tileOrigin.y }}
         onPositionChange={(pos) => buildings.move(p.instanceId, pos.x - tileOrigin.x, pos.y - tileOrigin.y)}
         onStore={() => buildings.store(p.instanceId)}>
-        {(moveMode) => <button type="button" className="world-building-button" aria-label={moveMode ? `Drag ${building.name}` : `Enter ${building.name}`}
-          onClick={() => { if (!moveMode) navigate(buildingRoute(p.buildingId)); }}>
+        {(moveMode) => <BuildingEntryButton id={p.buildingId} className="world-building-button" editing={moveMode || placing !== null}>
           <span className="door-prompt">ENTER {building.name.toUpperCase()}</span>
           <BuildingArt id={p.buildingId} />
-        </button>}
+          {buildings.level(p.buildingId) > 1 && <span className="building-level-badge">Lv.{buildings.level(p.buildingId)}</span>}
+        </BuildingEntryButton>}
       </MovableObject>;
     })}
     {placing && <>

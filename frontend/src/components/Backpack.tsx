@@ -24,7 +24,7 @@ export default function Backpack({ items, loading, error, onRetry, locationId, o
   const room = useRoomPlacement();
   const owned = items.filter((item) => item.type !== 'clothing' && player.ownedItems?.includes(item.id));
   const listed = owned.filter((item) => item.stackable || furnitureState(item.id, player.ownedItems, room).kind === 'backpack');
-  const here = getBuilding(locationId)?.name ?? 'here';
+  const here = locationId === 'home-upstairs' ? 'Home second floor' : getBuilding(locationId)?.name ?? 'here';
   return <div className="backpack-view">
     <h2 id="backpack-title">BACKPACK</h2>
     <p>Everything you own but haven’t placed. Place an item here in the {here}, or store furniture with MOVE OBJECTS to bring it back.</p>

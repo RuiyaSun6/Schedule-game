@@ -15,7 +15,7 @@ export const tutorialSteps: readonly TutorialStep[] = [
   { title: 'Your World', text: 'Head outside to your personal world. As you progress, you can explore and customize it.', target: 'world', route: '/home' },
   { title: 'Explore the Map', text: 'Click and drag empty ground to move around your world. There are nine regions beyond your starting view. Try dragging now!', target: 'world-viewport', route: '/world' },
   { title: 'Move Buildings', text: 'Normal dragging moves the camera. Use Move Buildings mode when you want to reposition buildings instead.', target: 'move-buildings', route: '/world' },
-  { title: 'Return Home', text: 'Explored too far? Press this house button to return to your starting area.', target: 'home', route: '/world' },
+  { title: 'Enter Home', text: 'Click your Home building to step inside. Drag empty ground to explore the map.', target: 'home', route: '/world' },
   { title: 'Shop', text: 'Use this Shop shortcut to spend the coins you earn from quests on items and decorations.', target: 'shop', route: '/home' },
   { title: "You're Ready!", text: 'Plan your day, complete quests, earn rewards, and build your world.', route: '/home' },
 ];

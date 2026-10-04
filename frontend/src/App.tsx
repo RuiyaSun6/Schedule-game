@@ -17,6 +17,7 @@ import WardrobePage from './pages/WardrobePage';
 import GardenPage from './pages/GardenPage';
 import CafePage from './pages/CafePage';
 import BuildingInteriorPage from './pages/buildings/BuildingInteriorPage';
+import HomeUpstairsPage from './pages/buildings/HomeUpstairsPage';
 import { WorldBuildingsProvider } from './hooks/useWorldBuildings';
 import TutorialOverlay from './components/TutorialOverlay';
 import { hasCompletedTutorial, markTutorialComplete, tutorialSteps } from './services/tutorial';
@@ -142,9 +143,10 @@ export default function App() {
     <main className="app">
         <Routes>
           <Route path="/" element={<WelcomePage />} />
-          <Route path="/world" element={<WorldPage />} />
+          <Route path="/world" element={<WorldPage quests={acceptedQuests} onComplete={finishQuest} completingId={completingId} errors={completionErrors} notice={completionNotice} />} />
           <Route path="/home" element={<HomePage onComplete={finishQuest} completingId={completingId} errors={completionErrors} notice={completionNotice} onAcceptQuest={acceptQuest} acceptedCount={acceptedQuests.length} quests={acceptedQuests} tutorialTab={tutorialIndex === null ? undefined : tutorialSteps[tutorialIndex].computerTab} />} />
           <Route path="/planner" element={<PlannerPage />} />
+          <Route path="/home/upstairs" element={<HomeUpstairsPage />} />
           <Route path="/quests" element={<QuestsPage quests={acceptedQuests} onComplete={finishQuest} completingId={completingId} errors={completionErrors} notice={completionNotice} />} />
           <Route path="/shop" element={<ShopPage />} />
           <Route path="/wardrobe" element={<WardrobePage />} />
