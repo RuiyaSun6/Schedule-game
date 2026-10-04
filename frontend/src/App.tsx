@@ -3,8 +3,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Player, Quest } from './types';
 import { RoomPlacementProvider } from './services/RoomPlacementContext';
 import { AreaProvider } from './services/AreaContext';
-import { completeQuest, getPlayer, getQuests } from './services/api';
-import { PlayerContext, PlayerActionsContext } from './services/PlayerContext';
+import { completeQuest, getAuthSession, getPlayer, getQuests, logoutAccount, setActiveUserId, type AuthUser } from './services/api';
+import { AuthUserContext, PlayerContext, PlayerActionsContext } from './services/PlayerContext';
 import LevelUpModal, { type LevelUpDetails } from './components/LevelUpModal';
 import CompletionPopup from './components/CompletionPopup';
 import WelcomePage from './pages/WelcomePage';
@@ -21,6 +21,8 @@ import HomeUpstairsPage from './pages/buildings/HomeUpstairsPage';
 import { WorldBuildingsProvider } from './hooks/useWorldBuildings';
 import TutorialOverlay from './components/TutorialOverlay';
 import { hasCompletedTutorial, markTutorialComplete, tutorialSteps } from './services/tutorial';
+import AuthPage from './pages/AuthPage';
+import { WorldLayoutProvider } from './components/MoveModeScene';
 
 export default function App() {
   const navigate = useNavigate();
@@ -31,6 +33,9 @@ export default function App() {
   const [questsLoaded, setQuestsLoaded] = useState(false);
   const [questsError, setQuestsError] = useState('');
   const [player, setPlayer] = useState<Player | null>(null);
+  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [authError, setAuthError] = useState('');
   const [playerError, setPlayerError] = useState('');
   const [completingId, setCompletingId] = useState<string | null>(null);
   const pending = useRef(false);
@@ -67,18 +72,43 @@ export default function App() {
   }
   useEffect(() => {
     let active = true;
-    getPlayer()
-      .then((loaded) => { if (active) setPlayer(loaded); })
-      .catch((error: unknown) => { if (active) setPlayerError(error instanceof Error ? error.message : 'Could not load player.'); });
+    getAuthSession().then((user) => {
+      if (!active) return;
+      setActiveUserId(user?.userId ?? null);
+      setAuthUser(user);
+      setAuthLoading(false);
+    }).catch((error: unknown) => {
+      if (active) { setAuthError(error instanceof Error ? error.message : 'Could not check login.'); setAuthLoading(false); }
+    });
     return () => { active = false; };
   }, []);
   useEffect(() => {
+    if (!authUser) return;
     let active = true;
-    getQuests()
-      .then((loaded) => { if (active) { setAcceptedQuests(loaded); setQuestsLoaded(true); } })
-      .catch((error: unknown) => { if (active) setQuestsError(error instanceof Error ? error.message : 'Could not load quests.'); });
+    setPlayer(null); setQuestsLoaded(false); setPlayerError(''); setQuestsError('');
+    Promise.all([getPlayer(), getQuests()]).then(([loadedPlayer, loadedQuests]) => {
+      if (active) { setPlayer(loadedPlayer); setAcceptedQuests(loadedQuests); setQuestsLoaded(true); }
+    }).catch((error: unknown) => {
+      if (active) setPlayerError(error instanceof Error ? error.message : 'Could not load your game.');
+    });
     return () => { active = false; };
-  }, []);
+  }, [authUser]);
+  useEffect(() => {
+    const expired = () => { setActiveUserId(null); setAuthUser(null); setPlayer(null); setTutorialIndex(null); initializedTutorialFor.current = null; navigate('/'); };
+    window.addEventListener('lifequest:session-expired', expired);
+    return () => window.removeEventListener('lifequest:session-expired', expired);
+  }, [navigate]);
+  function authenticated(user: AuthUser) {
+    setActiveUserId(user.userId); setAuthUser(user); setAuthError(''); navigate('/home');
+  }
+  async function logout() {
+    try {
+      await logoutAccount();
+      setActiveUserId(null); setAuthUser(null); setPlayer(null); setTutorialIndex(null);
+      initializedTutorialFor.current = null;
+      setAcceptedQuests([]); setQuestsLoaded(false); navigate('/');
+    } catch (error) { setAuthError(error instanceof Error ? error.message : 'Could not log out.'); }
+  }
   useEffect(() => {
     if (!reward) return;
     const timeout = setTimeout(() => setReward(null), 2800);
@@ -130,17 +160,24 @@ export default function App() {
   function acceptQuest(quest: Quest) {
     setAcceptedQuests((current) => current.some((q) => q.id === quest.id) ? current : [...current, quest]);
   }
+  if (authLoading) return <main className="app"><p role="status">Checking your session…</p></main>;
+  if (authError && !authUser) return <main className="app"><p role="alert">{authError}</p><button onClick={() => window.location.reload()}>RETRY</button></main>;
+  if (!authUser) return <AuthPage onAuthenticated={authenticated} />;
   if (!player || !questsLoaded) {
     const error = playerError || questsError;
     return <main className="app"><p role={error ? 'alert' : 'status'}>{error || 'Loading player and quests...'}</p></main>;
   }
   return (
+    <AuthUserContext.Provider value={authUser}>
     <PlayerContext.Provider value={player}>
     <PlayerActionsContext.Provider value={{ updatePlayer, beginMutation, endMutation }}>
+    <WorldLayoutProvider key={player.id}>
     <RoomPlacementProvider key={player.id}>
     <AreaProvider>
     <WorldBuildingsProvider key={player.id}>
     <main className="app">
+      <button type="button" className="auth-logout" onClick={() => void logout()}>LOG OUT {authUser.username}</button>
+      {authError && <p role="alert" className="auth-game-error">{authError}</p>}
         <Routes>
           <Route path="/" element={<WelcomePage />} />
           <Route path="/world" element={<WorldPage quests={acceptedQuests} onComplete={finishQuest} completingId={completingId} errors={completionErrors} notice={completionNotice} tutorialTarget={tutorialIndex === null ? undefined : tutorialSteps[tutorialIndex].target} />} />
@@ -165,7 +202,9 @@ export default function App() {
     </WorldBuildingsProvider>
     </AreaProvider>
     </RoomPlacementProvider>
+    </WorldLayoutProvider>
     </PlayerActionsContext.Provider>
     </PlayerContext.Provider>
+    </AuthUserContext.Provider>
   );
 }

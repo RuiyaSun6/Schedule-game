@@ -10,14 +10,35 @@ import habitRoutes from "./routes/habitRoutes.js";
 import { isTiDBEnabled } from "./db/tidb.js";
 import { createPlayer } from "./repositories/playerRepository.js";
 import { makeDefaultPlayer } from "./types/defaultPlayer.js";
+import authRoutes, { requireAuth } from "./routes/authRoutes.js";
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5001;
 
-app.use(cors());
+const configuredOrigins = process.env.CLIENT_ORIGIN?.split(",").map((origin) => origin.trim()).filter(Boolean);
+const allowedOrigins = new Set(configuredOrigins ?? []);
+function isAllowedOrigin(origin: string): boolean {
+  if (allowedOrigins.has(origin)) return true;
+  // Vite picks the next free port when 5173 is occupied. Allow loopback dev ports
+  // unless the user explicitly configured CLIENT_ORIGIN or this is production.
+  return !configuredOrigins && process.env.NODE_ENV !== "production"
+    && /^http:\/\/(?:localhost|127\.0\.0\.1):\d+$/.test(origin);
+}
+app.use(cors({ credentials: true, origin: (origin, callback) => callback(null, !origin || isAllowedOrigin(origin)) }));
 app.use(express.json());
+app.use((request, response, next) => {
+  const origin = request.header("Origin");
+  if (origin && !["GET", "HEAD", "OPTIONS"].includes(request.method) && !isAllowedOrigin(origin)) {
+    response.status(403).json({ error: "Origin not allowed." }); return;
+  }
+  next();
+});
+
+app.get("/api/health", (_req, res) => { res.json({ ok: true }); });
+app.use("/api/auth", authRoutes);
+app.use("/api", requireAuth);
 
 app.use("/api/player", playerRoutes);
 app.use("/api/quests", questRoutes);
@@ -25,9 +46,6 @@ app.use("/api/items", itemRoutes);
 app.use("/api/shop", shopRoutes);
 app.use("/api/habits", habitRoutes);
 
-app.get("/api/health", (_req, res) => {
-  res.json({ ok: true });
-});
 
 app.use((_req, res) => {
   res.status(404).json({ error: "Endpoint not found." });

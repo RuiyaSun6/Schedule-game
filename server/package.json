@@ -11,13 +11,16 @@
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
     "db:init": "tsx src/scripts/initDb.ts",
+    "db:auth": "tsx src/scripts/migrateAuth.ts",
+    "auth:link-demo": "tsx src/scripts/linkLegacyDemo.ts",
     "test:ai": "tsc && node dist/scripts/testGemini.js",
     "test:http": "tsc && node dist/scripts/testHttp.js",
     "test:db": "tsc && node dist/scripts/testRepositories.js",
     "test:mock": "tsc && node --test dist/scripts/testMockQuests.js",
     "test:api": "tsc && node dist/scripts/testApi.js",
     "test:levels": "tsc && node --test dist/scripts/testLevelProgression.js",
-    "test:habits": "tsc && node --test dist/scripts/testHabits.js"
+    "test:habits": "tsc && node --test dist/scripts/testHabits.js",
+    "test:auth": "tsc && node --test dist/scripts/testAuth.js"
   },
   "dependencies": {
     "@google/genai": "^2.27.0",

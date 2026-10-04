@@ -1,6 +1,6 @@
 // End-to-end API check against a real server process: npm run test:api [-- memory|tidb]
 // memory (default): blanks TIDB_HOST so the server uses in-memory storage.
-// tidb: uses TiDB from .env, then restores player-1 and deletes the quests and purchases this run created.
+// tidb: uses TiDB from .env, then removes only the test account and its data.
 // Both modes blank GEMINI_API_KEY, so quest generation uses the mock and costs no Gemini quota.
 import "dotenv/config";
 import assert from "node:assert/strict";
@@ -13,7 +13,6 @@ import { createQuests } from "../repositories/questRepository.js";
 import { MAX_COMPLETION_LINE } from "../services/completionLine.js";
 import { getRewards } from "../services/rewardService.js";
 import { CATALOG } from "../services/shopService.js";
-import { DEFAULT_PLAYER_ID } from "../types/defaultPlayer.js";
 import type { Item, Player, Quest } from "../types/game.js";
 import { twelveTaskDates, twelveTaskPlan } from "./twelveTaskPlan.js";
 
@@ -32,6 +31,8 @@ async function freePort(): Promise<number> {
 
 const port = await freePort();
 const base = `http://127.0.0.1:${port}/api`;
+let cookie = "";
+let testUserId = "";
 const child = spawn(process.execPath, ["dist/server.js"], {
   env: { ...process.env, PORT: String(port), GEMINI_API_KEY: "", ...(mode === "memory" ? { TIDB_HOST: "" } : {}) },
   stdio: ["ignore", "pipe", "pipe"],
@@ -43,9 +44,10 @@ child.stderr.on("data", (chunk: Buffer) => { serverLog += chunk.toString(); });
 async function call<T = any>(method: string, path: string, body?: unknown): Promise<{ status: number; body: T }> {
   const response = await fetch(base + path, {
     method,
-    headers: body === undefined ? undefined : { "Content-Type": "application/json" },
+    headers: { ...(body === undefined ? {} : { "Content-Type": "application/json" }), ...(cookie ? { Cookie: cookie } : {}) },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
+  if (response.headers.get("set-cookie")) cookie = response.headers.get("set-cookie")!.split(";")[0];
   return { status: response.status, body: (await response.json()) as T };
 }
 
@@ -67,7 +69,6 @@ const PET_ITEMS: [string, string, number][] = [
 ];
 
 const createdIds: string[] = [];
-const purchasedItemIds: string[] = [];
 let startPlayer: Player | undefined;
 
 try {
@@ -78,9 +79,13 @@ try {
   }
   ok(`server up (storage: ${mode})`);
 
+  assert.equal((await call("GET", "/player")).status, 401);
+  const registration = await call<{ user: { userId: string } }>("POST", "/auth/register", { username: `api_${randomUUID().slice(0, 8)}`, email: `api_${randomUUID()}@example.test`, password: "testpass123", confirmPassword: "testpass123" });
+  assert.equal(registration.status, 201);
+  testUserId = registration.body.user.userId;
   const player = await call<Player>("GET", "/player");
   assert.equal(player.status, 200);
-  assert.equal(player.body.id, DEFAULT_PLAYER_ID);
+  assert.equal(player.body.id, testUserId);
   startPlayer = player.body;
   ok(`GET /player -> level ${startPlayer.level}, xp ${startPlayer.xp}, coins ${startPlayer.coins}`);
 
@@ -174,7 +179,6 @@ try {
     assert.ok(item, `no unowned ${label} affordable with ${before.coins} coins`);
     const bought = await call<{ item: Item; player: Player }>("POST", "/shop/purchase", { itemId: item.id });
     assert.equal(bought.status, 200);
-    purchasedItemIds.push(item.id);
     assert.equal(bought.body.player.coins, before.coins - item.price);
     assert.ok(bought.body.player.ownedItems.includes(item.id));
     const rebuy = await call("POST", "/shop/purchase", { itemId: item.id });
@@ -191,7 +195,6 @@ try {
   const stackable = items.body.filter((i) => i.stackable).sort((a, b) => a.price - b.price)[0];
   assert.equal(stackable.type, "farm");
   assert.ok(items.body.filter((i) => !i.stackable).every((i) => i.type !== "farm"), "non-farm items must not be stackable");
-  purchasedItemIds.push(stackable.id);
   const s0 = (await call<Player>("GET", "/player")).body;
   const have = s0.itemCounts[stackable.id] ?? 0;
   for (let n = 1; n <= 3; n++) {
@@ -215,7 +218,6 @@ try {
 
   const single = items.body.filter((i) => !i.stackable && !s2.ownedItems.includes(i.id) && i.price <= s2.coins).sort((a, b) => a.price - b.price)[0];
   assert.ok(single, `no unowned regular item affordable with ${s2.coins} coins`);
-  purchasedItemIds.push(single.id);
   const race = await Promise.all([1, 2].map(() => call("POST", "/shop/buy", { itemId: single.id })));
   assert.deepEqual(race.map((r) => r.status).sort(), [200, 409]);
   const s3 = (await call<Player>("GET", "/player")).body;
@@ -228,7 +230,6 @@ try {
   const limited = items.body.find((i) => i.maxQuantity !== undefined);
   assert.ok(limited && limited.stackable, "a limited stackable item is in the catalog");
   const max = limited.maxQuantity!;
-  purchasedItemIds.push(limited.id);
   for (let earned = (await call<Player>("GET", "/player")).body.coins; earned < max * limited.price; earned += 100) {
     const extra = await call<Quest>("POST", "/quests", { title: "Shop limit bonus", difficulty: "boss" });
     createdIds.push(extra.body.id);
@@ -257,7 +258,7 @@ try {
   if (mode === "tidb") {
     // A quest stored before the column existed (NULL) completes fine and simply has no line.
     const legacy: Quest = {
-      id: randomUUID(), userId: DEFAULT_PLAYER_ID, title: "Legacy quest", category: "life",
+      id: randomUUID(), userId: testUserId, title: "Legacy quest", category: "life",
       difficulty: "easy", estimatedMinutes: 10, ...getRewards("easy"), completed: false,
     };
     await createQuests([legacy]);
@@ -293,17 +294,18 @@ try {
   child.kill();
   if (mode === "tidb") {
     if (createdIds.length) await getPool().query("DELETE FROM quests WHERE id IN (?)", [createdIds]);
-    // Put item ownership back as it was: restore earlier quantities, remove items that were new.
-    for (const id of new Set(purchasedItemIds)) {
-      const before = startPlayer?.itemCounts?.[id];
-      if (before) await getPool().query("UPDATE user_items SET quantity = ? WHERE user_id = ? AND item_id = ?", [before, DEFAULT_PLAYER_ID, id]);
-      else await getPool().query("DELETE FROM user_items WHERE user_id = ? AND item_id = ?", [DEFAULT_PLAYER_ID, id]);
-    }
-    if (startPlayer) {
-      await getPool().query("UPDATE players SET xp = ?, coins = ?, level = ? WHERE id = ?",
-        [startPlayer.xp, startPlayer.coins, startPlayer.level, startPlayer.id]);
+    // Only this test-created account is removed. Existing player-1 data is never touched.
+    if (testUserId) {
+      await getPool().query("DELETE FROM quest_memory WHERE user_id = ?", [testUserId]);
+      await getPool().query("DELETE FROM user_items WHERE user_id = ?", [testUserId]);
+      await getPool().query("DELETE FROM habit_checkins WHERE user_id = ?", [testUserId]);
+      await getPool().query("DELETE FROM habit_claims WHERE user_id = ?", [testUserId]);
+      await getPool().query("DELETE FROM habits WHERE user_id = ?", [testUserId]);
+      await getPool().query("DELETE FROM auth_sessions WHERE user_id = ?", [testUserId]);
+      await getPool().query("DELETE FROM players WHERE id = ?", [testUserId]);
+      await getPool().query("DELETE FROM users WHERE user_id = ?", [testUserId]);
     }
     await getPool().end();
-    ok("TiDB cleanup: test quests and purchases deleted, player-1 restored");
+    ok("TiDB cleanup: test account and its data removed; player-1 untouched");
   }
 }

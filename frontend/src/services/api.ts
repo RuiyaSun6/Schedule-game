@@ -2,7 +2,9 @@ import type { CompleteQuestResponse, GenerateQuestsResponse, HabitBoard, Item, P
 import { isItem, isPlayer, isQuest } from './apiValidators';
 
 export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001').replace(/\/+$/, '');
-export const MVP_PLAYER_ID = 'player-1';
+export interface AuthUser { userId: string; username: string; email: string }
+let activeUserId: string | null = null;
+export function setActiveUserId(userId: string | null) { activeUserId = userId; }
 
 /** What went wrong, so screens can explain it: no connection, too slow, rate limited, server error, or bad data. */
 export type ApiErrorKind = 'network' | 'timeout' | 'rate-limit' | 'server' | 'format';
@@ -35,6 +37,7 @@ async function request(path: string, method = 'GET', body?: unknown, timeoutMs =
     const response = await fetch(`${API_BASE_URL}${path}`, {
       method,
       headers,
+      credentials: 'include',
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
       signal: controller.signal,
     });
@@ -44,7 +47,10 @@ async function request(path: string, method = 'GET', body?: unknown, timeoutMs =
       try { data = JSON.parse(text); } catch { /* Validate below without leaking HTML errors. */ }
     }
     const serverError = data && typeof data === 'object' && 'error' in data && typeof data.error === 'string' ? data.error : undefined;
-    if (!response.ok) throw new ApiError(serverError ?? `Request failed (${response.status}). Please try again.`, response.status, [404, 502, 503, 504].includes(response.status), { body: text });
+    if (!response.ok) {
+      if (response.status === 401 && !path.startsWith('/api/auth')) window.dispatchEvent(new Event('lifequest:session-expired'));
+      throw new ApiError(serverError ?? `Request failed (${response.status}). Please try again.`, response.status, [404, 502, 503, 504].includes(response.status), { body: text });
+    }
     if (serverError) throw new ApiError(serverError, response.status, false, { body: text });
     if (data === null) throw new ApiError(text.trim() ? 'The backend returned an unreadable response.' : 'The backend returned an empty response.', response.status, response.headers.get('content-type')?.includes('text/html') ?? false, { kind: 'format', body: text });
     return data;
@@ -62,18 +68,36 @@ function unwrap(data: unknown, key: string): unknown {
 }
 function playerResponse(data: unknown, userId?: string): Player {
   const player = unwrap(data, 'player');
-  if (!isPlayer(player) || (userId !== undefined && player.id !== userId)) return invalid('The backend returned invalid player data.');
+  if (!isPlayer(player) || (userId !== undefined && player.id !== userId) || (activeUserId && player.id !== activeUserId)) return invalid('The backend returned invalid player data.');
   return player;
 }
 
+function authUserResponse(data: unknown): AuthUser {
+  const user = unwrap(data, 'user');
+  if (!user || typeof user !== 'object' || !('userId' in user) || !('username' in user) || !('email' in user)
+    || typeof user.userId !== 'string' || typeof user.username !== 'string' || typeof user.email !== 'string') return invalid('The backend returned invalid account data.');
+  return user as AuthUser;
+}
+export async function getAuthSession(): Promise<AuthUser | null> {
+  try { return authUserResponse(await request('/api/auth/session')); }
+  catch (error) { if (error instanceof ApiError && error.status === 401) return null; throw error; }
+}
+export async function registerAccount(input: { username: string; email: string; password: string; confirmPassword: string }): Promise<AuthUser> {
+  return authUserResponse(await request('/api/auth/register', 'POST', input));
+}
+export async function loginAccount(identity: string, password: string): Promise<AuthUser> {
+  return authUserResponse(await request('/api/auth/login', 'POST', { identity, password }));
+}
+export async function logoutAccount(): Promise<void> { await request('/api/auth/logout', 'POST'); }
+
 export async function getPlayer(): Promise<Player> {
-  return playerResponse(await request('/api/player'), MVP_PLAYER_ID);
+  return playerResponse(await request('/api/player'), activeUserId ?? undefined);
 }
 export async function generateQuests(userId: string, text: string): Promise<GenerateQuestsResponse> {
   if (!text.trim()) return invalid('Please enter at least one task for this week.');
   // Generation waits for the AI (the backend allows ~11s before falling back), so give it more time
   // than ordinary requests; otherwise the browser gives up while the backend is still answering.
-  const data = await request('/api/quests/generate', 'POST', { userId, text }, GENERATE_TIMEOUT_MS);
+  const data = await request('/api/quests/generate', 'POST', { text }, GENERATE_TIMEOUT_MS);
   const result = data as GenerateQuestsResponse;
   if (!result || !['gemini', 'mock-fallback'].includes(result.source) || !Array.isArray(result.quests) || !result.quests.every(isQuest)
     || result.quests.some((quest) => quest.userId !== userId) || new Set(result.quests.map((quest) => quest.id)).size !== result.quests.length) {
@@ -83,13 +107,13 @@ export async function generateQuests(userId: string, text: string): Promise<Gene
 }
 export async function getQuests(): Promise<Quest[]> {
   const quests = await request('/api/quests');
-  if (!Array.isArray(quests) || !quests.every(isQuest) || quests.some((quest) => quest.userId !== MVP_PLAYER_ID)) return invalid('The backend returned invalid quests.');
+  if (!Array.isArray(quests) || !quests.every(isQuest) || quests.some((quest) => activeUserId && quest.userId !== activeUserId)) return invalid('The backend returned invalid quests.');
   return quests;
 }
 export async function completeQuest(questId: string): Promise<CompleteQuestResponse> {
   const result = await request(`/api/quests/${encodeURIComponent(questId)}/complete`, 'POST') as CompleteQuestResponse;
   if (!result || !isQuest(result.quest) || result.quest.id !== questId || !result.quest.completed || !isPlayer(result.player)
-    || result.quest.userId !== MVP_PLAYER_ID || result.player.id !== MVP_PLAYER_ID) return invalid('The backend returned invalid completion data. Please retry to confirm your progress.');
+    || (activeUserId && (result.quest.userId !== activeUserId || result.player.id !== activeUserId))) return invalid('The backend returned invalid completion data. Please retry to confirm your progress.');
   return result;
 }
 export async function getItems(): Promise<Item[]> {
@@ -119,5 +143,5 @@ export async function checkInHabit(id: string): Promise<HabitBoard> {
 }
 export async function claimHabitReward(id: string): Promise<{ board: HabitBoard; player: Player }> {
   const data = await request(`/api/habits/rewards/${encodeURIComponent(id)}/claim`, 'POST') as { board: HabitBoard; player: unknown };
-  return { board: data.board, player: playerResponse(data.player, MVP_PLAYER_ID) };
+  return { board: data.board, player: playerResponse(data.player, activeUserId ?? undefined) };
 }

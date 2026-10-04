@@ -1,8 +1,8 @@
 import type { Request, Response } from "express";
 import { getCatalog, purchaseItem } from "../services/shopService.js";
 
-export async function getItems(_request: Request, response: Response): Promise<void> {
-  response.json(await getCatalog());
+export async function getItems(request: Request, response: Response): Promise<void> {
+  response.json(await getCatalog(request.authUser!.userId));
 }
 
 export async function postPurchase(request: Request, response: Response): Promise<void> {
@@ -18,7 +18,7 @@ export async function postPurchase(request: Request, response: Response): Promis
     return;
   }
 
-  const result = await purchaseItem(itemId.trim());
+  const result = await purchaseItem(itemId.trim(), request.authUser!.userId);
   if (result.status === "player_not_found") {
     response.status(404).json({ error: "Player not found." });
     return;

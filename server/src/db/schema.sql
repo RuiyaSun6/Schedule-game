@@ -10,6 +10,24 @@ CREATE TABLE IF NOT EXISTS players (
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
+-- Account credentials and revocable browser sessions. Existing player-1 data is untouched.
+CREATE TABLE IF NOT EXISTS users (
+  user_id VARCHAR(64) PRIMARY KEY,
+  username VARCHAR(24) NOT NULL,
+  username_key VARCHAR(24) NOT NULL UNIQUE,
+  email VARCHAR(254) NOT NULL,
+  email_key VARCHAR(254) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS auth_sessions (
+  token_hash CHAR(64) PRIMARY KEY,
+  user_id VARCHAR(64) NOT NULL,
+  expires_at DATETIME NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_auth_sessions_user (user_id)
+);
+
 CREATE TABLE IF NOT EXISTS quests (
   id VARCHAR(64) PRIMARY KEY,
   user_id VARCHAR(64) NOT NULL,

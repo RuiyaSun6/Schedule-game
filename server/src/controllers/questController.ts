@@ -2,10 +2,9 @@ import type { Request, Response } from "express";
 import { QUEST_CATEGORIES, QUEST_DIFFICULTIES as DIFFICULTIES } from "../types/game.js";
 import type { QuestCategory, QuestDifficulty } from "../types/game.js";
 import { completeQuest, createQuest, generateQuests, listQuests } from "../services/questService.js";
-import { DEFAULT_PLAYER_ID } from "../types/defaultPlayer.js";
 
-export async function getAllQuests(_request: Request, response: Response): Promise<void> {
-  response.json(await listQuests());
+export async function getAllQuests(request: Request, response: Response): Promise<void> {
+  response.json(await listQuests(request.authUser!.userId));
 }
 
 export async function postQuest(request: Request, response: Response): Promise<void> {
@@ -44,6 +43,7 @@ export async function postQuest(request: Request, response: Response): Promise<v
         difficulty as QuestDifficulty,
         category as QuestCategory | undefined,
         estimatedMinutes as number | undefined,
+        request.authUser!.userId,
       ),
     );
 }
@@ -64,16 +64,16 @@ export async function postGenerateQuests(request: Request, response: Response): 
     response.status(400).json({ error: "userId must be a nonempty string." });
     return;
   }
-  if (userId !== undefined && userId !== DEFAULT_PLAYER_ID) {
-    response.status(404).json({ error: "Player not found." });
+  if (userId !== undefined && userId !== request.authUser!.userId) {
+    response.status(403).json({ error: "Cannot generate quests for another player." });
     return;
   }
 
-  response.status(201).json(await generateQuests(text.trim()));
+  response.status(201).json(await generateQuests(text.trim(), request.authUser!.userId));
 }
 
 export async function postQuestCompletion(request: Request<{ id: string }>, response: Response): Promise<void> {
-  const result = await completeQuest(request.params.id);
+  const result = await completeQuest(request.params.id, request.authUser!.userId);
   if (result.status === "not_found") {
     response.status(404).json({ error: "Quest not found." });
     return;

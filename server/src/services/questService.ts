@@ -15,8 +15,8 @@ import {
 import { DEFAULT_PLAYER_ID } from "../types/defaultPlayer.js";
 import { findSimilarCompletedQuests, rememberCompletedQuest } from "./questMemoryService.js";
 
-export async function listQuests(): Promise<Quest[]> {
-  return isTiDBEnabled() ? getQuestsByUser(DEFAULT_PLAYER_ID) : getQuests();
+export async function listQuests(userId = DEFAULT_PLAYER_ID): Promise<Quest[]> {
+  return isTiDBEnabled() ? getQuestsByUser(userId) : getQuests(userId);
 }
 
 function makeQuest(
@@ -45,9 +45,10 @@ export async function createQuest(
   difficulty: QuestDifficulty,
   category: QuestCategory = "life",
   estimatedMinutes = 30,
+  userId = DEFAULT_PLAYER_ID,
 ): Promise<Quest> {
   // Manually created quests skip Gemini, so they get the template line.
-  const quest = makeQuest(DEFAULT_PLAYER_ID, title, difficulty, category, estimatedMinutes, {
+  const quest = makeQuest(userId, title, difficulty, category, estimatedMinutes, {
     completionLine: fallbackCompletionLine(title),
   });
   if (isTiDBEnabled()) {
@@ -66,8 +67,8 @@ function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T
   });
 }
 
-export async function generateQuests(text: string): Promise<{ source: "gemini" | "mock-fallback"; quests: Quest[] }> {
-  const player = isTiDBEnabled() ? await getPlayerFromDb(DEFAULT_PLAYER_ID) : getPlayer();
+export async function generateQuests(text: string, userId = DEFAULT_PLAYER_ID): Promise<{ source: "gemini" | "mock-fallback"; quests: Quest[] }> {
+  const player = isTiDBEnabled() ? await getPlayerFromDb(userId) : getPlayer(userId);
   if (!player) throw new Error("Default player is missing");
   // Quest Memory is optional context: never let a slow embedding call delay generation.
   const similar = await withTimeout(findSimilarCompletedQuests(player.id, text), SIMILAR_QUESTS_TIMEOUT_MS, []);
@@ -90,19 +91,19 @@ type CompletionResult =
   | { status: "already_completed" }
   | { status: "completed"; quest: Quest; player: Player };
 
-export async function completeQuest(id: string): Promise<CompletionResult> {
+export async function completeQuest(id: string, userId = DEFAULT_PLAYER_ID): Promise<CompletionResult> {
   if (isTiDBEnabled()) {
-    const result = await completeQuestInDb(id, calculateLevel, DEFAULT_PLAYER_ID);
+    const result = await completeQuestInDb(id, calculateLevel, userId);
     if (!result) return { status: "not_found" };
     if (result.alreadyCompleted) return { status: "already_completed" };
     void rememberCompletedQuest(result.quest);
     return { status: "completed", quest: result.quest, player: result.player };
   }
-  const quest = getQuest(id);
+  const quest = getQuest(id, userId);
   if (!quest) return { status: "not_found" };
   if (quest.completed) return { status: "already_completed" };
 
-  const currentPlayer = getPlayer();
+  const currentPlayer = getPlayer(userId);
   const xp = currentPlayer.xp + quest.xpReward;
   const level = calculateLevel(xp);
   const updatedPlayer: Player = {

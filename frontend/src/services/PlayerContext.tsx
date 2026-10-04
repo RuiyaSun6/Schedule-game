@@ -1,5 +1,13 @@
 import { createContext, useContext } from 'react';
 import type { Player } from '../types';
+import type { AuthUser } from './api';
+
+export const AuthUserContext = createContext<AuthUser | null>(null);
+export function useAuthUser() {
+  const user = useContext(AuthUserContext);
+  if (!user) throw new Error('Authenticated user provider is missing');
+  return user;
+}
 
 export const PlayerContext = createContext<Player | null>(null);
 export function usePlayer() {

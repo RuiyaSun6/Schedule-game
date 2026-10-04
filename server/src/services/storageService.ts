@@ -1,5 +1,5 @@
 import type { Player, Quest } from "../types/game.js";
-import { makeDefaultPlayer } from "../types/defaultPlayer.js";
+import { DEFAULT_PLAYER_ID, makeDefaultPlayer } from "../types/defaultPlayer.js";
 
 // Process-local storage for MVP game state. Data resets when the server restarts.
 export class InMemoryStorage<T> {
@@ -22,11 +22,14 @@ export class InMemoryStorage<T> {
   }
 }
 
-let player: Player = makeDefaultPlayer();
+const players = new InMemoryStorage<Player>();
+players.set(DEFAULT_PLAYER_ID, makeDefaultPlayer());
 
 const quests = new InMemoryStorage<Quest>();
 
-export function getPlayer(): Player {
+export function getPlayer(userId = DEFAULT_PLAYER_ID): Player {
+  const player = players.get(userId);
+  if (!player) throw new Error(`Player ${userId} not found`);
   return {
     ...player,
     unlockedAreas: [...player.unlockedAreas],
@@ -36,21 +39,21 @@ export function getPlayer(): Player {
 }
 
 export function savePlayer(updatedPlayer: Player): void {
-  player = {
+  players.set(updatedPlayer.id, {
     ...updatedPlayer,
     unlockedAreas: [...updatedPlayer.unlockedAreas],
     ownedItems: [...updatedPlayer.ownedItems],
     itemCounts: { ...updatedPlayer.itemCounts },
-  };
+  });
 }
 
-export function getQuests(): Quest[] {
-  return quests.values().map((quest) => ({ ...quest }));
+export function getQuests(userId = DEFAULT_PLAYER_ID): Quest[] {
+  return quests.values().filter((quest) => quest.userId === userId).map((quest) => ({ ...quest }));
 }
 
-export function getQuest(id: string): Quest | undefined {
+export function getQuest(id: string, userId = DEFAULT_PLAYER_ID): Quest | undefined {
   const quest = quests.get(id);
-  return quest ? { ...quest } : undefined;
+  return quest?.userId === userId ? { ...quest } : undefined;
 }
 
 export function saveQuest(quest: Quest): void {

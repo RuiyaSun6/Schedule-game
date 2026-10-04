@@ -47,7 +47,9 @@ body:has(.welcome-screen) { background: radial-gradient(ellipse at 50% 45%, #fff
 .pixel-avatar::after { content: ''; position: absolute; width: 26px; height: 24px; left: 7px; top: 31px; background: #80956d; box-shadow: inset 6px 0 #9dae84; }
 .profile-details { flex: 1; min-width: 0; }
 .profile-name { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 7px; font-size: 13px; }
-.profile-name span { font-family: monospace; font-size: 11px; color: #7f785b; }
+.profile-name strong { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.profile-name span { flex: 0 0 auto; font-family: monospace; font-size: 11px; color: #7f785b; white-space: nowrap; }
+.profile-id { margin: -4px 0 7px; color: #7f785b; font-family: monospace; font-size: 10px; line-height: 1.2; overflow-wrap: anywhere; }
 .xp-label { display: flex; justify-content: space-between; gap: 4px; margin-bottom: 4px; font-family: monospace; font-size: 9px; }
 .xp-label > span:first-child { font-size: 0; } .xp-label > span:first-child::after { content: 'XP'; font-size: 9px; }
 .xp-track { height: 10px; background: #e5e1c9; border: 1px solid #8a9673; padding: 1px; }
@@ -369,7 +371,7 @@ h1 { font-family: monospace; font-size: clamp(25px, 5vw, 34px); letter-spacing: 
 @media (max-width: 600px) {
   .home-player-tasks-hud { top: 12px; left: 12px; right: 12px; gap: 8px; }
   .home-player-tasks-hud > .game-top-bar { flex: 0 0 46%; width: auto; padding: 8px; gap: 6px; }
-  .home-player-tasks-hud .profile-name { flex-wrap: wrap; gap: 2px 6px; font-size: 12px; }
+  .home-player-tasks-hud .profile-name { gap: 2px 6px; font-size: 12px; }
   .home-player-tasks-hud .profile-name span, .home-player-tasks-hud .coin-display { font-size: 11px; }
   .home-player-tasks-hud .xp-label, .home-player-tasks-hud .xp-label > span:first-child::after { font-size: 9px; }
   .home-player-tasks-hud .coin-display small { display: none; }

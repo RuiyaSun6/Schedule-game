@@ -20,9 +20,17 @@ npm start
 
 On Windows PowerShell, use `npm.cmd` in place of `npm` if script execution policy blocks `npm.ps1`. The base URL with the default port is `http://localhost:5001`.
 
-**Storage selection:** With `TIDB_HOST` configured, run `npm run db:init` and the HTTP API uses TiDB for players, quests, and purchases. Without `TIDB_HOST`, it uses in-memory storage; progress then resets whenever the server restarts. There is one shared API player (`player-1`) and no authentication or per-user state yet. A configured TiDB connection must be available at startup.
+**Storage selection:** With `TIDB_HOST` configured, the API uses TiDB for accounts and player progress. For an existing database, run `npm run db:auth` once to add only the `users` and `auth_sessions` tables. For a brand-new database, run `npm run db:init`. Without `TIDB_HOST`, accounts, sessions, and progress use in-memory storage and reset when the server restarts. Existing `player-1` rows are preserved.
 
-**Tests:** `npm run typecheck`, `npm run test:mock` (unit tests for the mock generator and `completionLine` validation), `npm run test:http`, `npm run test:api` (end-to-end, in-memory; add `-- tidb` to run against TiDB, which restores `player-1` and deletes its test quests afterwards), and `npm run test:db` (TiDB repositories). `test:api` and `test:http` blank `GEMINI_API_KEY`, so they use no Gemini quota; `npm run test:ai` makes one real Gemini call.
+**Tests:** `npm run typecheck`, `npm run test:auth`, `npm run test:mock`, `npm run test:habits`, `npm run test:levels`, `npm run test:http`, `npm run test:api` (in-memory; add `-- tidb` to use a temporary TiDB test account), and `npm run test:db`. `test:api` and `test:http` blank `GEMINI_API_KEY`, so they use no Gemini quota; `npm run test:ai` makes one real Gemini call.
+
+## Accounts and sessions
+
+`POST /api/auth/register` accepts `username`, `email`, `password`, and `confirmPassword`; `POST /api/auth/login` accepts `identity` (username or email) and `password`. Both set a 30-day, HttpOnly, SameSite=Lax session cookie and return `{ "user": { "userId", "username", "email" } }`. `GET /api/auth/session` restores a login; `POST /api/auth/logout` revokes it. All other `/api` game routes require this cookie. Passwords use salted scrypt hashes; the database stores only a SHA-256 hash of each random session token. Use HTTPS with `NODE_ENV=production` so cookies are Secure.
+
+For a frontend on another origin, set `CLIENT_ORIGIN` to its exact origin (comma-separated origins are supported). Without that setting, local development allows loopback frontend ports so Vite can use the next free port if 5173 is occupied. Use `localhost` for both Vite and the default API URL so the cookie is same-site. Set `CLIENT_ORIGIN` explicitly in production. No JWT signing secret is required.
+
+The old `player-1` progress is not assigned to a new sign-up. If you want to log into that existing TiDB player, first run `npm run db:auth`, then explicitly set `LEGACY_DEMO_USERNAME`, `LEGACY_DEMO_EMAIL`, and `LEGACY_DEMO_PASSWORD` in your private environment and run `npm run auth:link-demo` once. This links credentials to `player-1` without modifying quests, habits, inventory, or other progress. Do not commit those credentials.
 
 ## API conventions
 
@@ -38,11 +46,11 @@ Returns `200`:
 
 ### `GET /api/player`
 
-Returns the current player (`200`). At startup:
+Returns the authenticated player's data (`200`). A newly registered account starts with:
 
 ```json
 {
-  "id": "player-1",
+  "id": "backend-generated-user-id",
   "xp": 0,
   "level": 1,
   "coins": 0,
@@ -73,7 +81,7 @@ Creates an active quest (`201`). Request body:
 ```json
 {
   "id": "generated-quest-id",
-  "userId": "player-1",
+  "userId": "backend-generated-user-id",
   "title": "Take a walk",
   "category": "health",
   "difficulty": "easy",

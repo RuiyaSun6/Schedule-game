@@ -107,11 +107,11 @@ export const CATALOG: readonly Item[] = [
 // Retired items someone still owns stay in TiDB (see db:init) but are no longer sold.
 const CATALOG_IDS = new Set(CATALOG.map((item) => item.id));
 
-export async function getCatalog(): Promise<Item[]> {
+export async function getCatalog(userId = DEFAULT_PLAYER_ID): Promise<Item[]> {
   const sold = isTiDBEnabled()
     ? (await getItems()).filter((item) => CATALOG_IDS.has(item.id))
     : CATALOG.map((item) => ({ ...item }));
-  const owned = new Set(isTiDBEnabled() ? await getOwnedItems(DEFAULT_PLAYER_ID) : getMemoryPlayer().ownedItems);
+  const owned = new Set(isTiDBEnabled() ? await getOwnedItems(userId) : getMemoryPlayer(userId).ownedItems);
   return [...sold, ...HABIT_REWARD_ITEMS.filter((item) => owned.has(item.id))];
 }
 
@@ -123,10 +123,10 @@ type PurchaseResult =
   | { status: "player_not_found" }
   | { status: "purchased"; item: Item; player: Player };
 
-export async function purchaseItem(itemId: string): Promise<PurchaseResult> {
+export async function purchaseItem(itemId: string, userId = DEFAULT_PLAYER_ID): Promise<PurchaseResult> {
   if (!CATALOG_IDS.has(itemId)) return { status: "not_found" };
   if (isTiDBEnabled()) {
-    const result = await purchaseItemInDb(DEFAULT_PLAYER_ID, itemId);
+    const result = await purchaseItemInDb(userId, itemId);
     return result.ok
       ? { status: "purchased", item: result.item, player: result.player }
       : { status: result.reason };
@@ -135,7 +135,7 @@ export async function purchaseItem(itemId: string): Promise<PurchaseResult> {
   if (!item) return { status: "not_found" };
 
   // In-memory storage is synchronous, so check-then-update cannot interleave between requests.
-  const player = getPlayer();
+  const player = getPlayer(userId);
   const owned = player.ownedItems.includes(item.id);
   if (owned && !item.stackable) return { status: "already_owned" };
   if (item.maxQuantity !== undefined && (player.itemCounts[item.id] ?? 0) >= item.maxQuantity) return { status: "limit_reached" };
