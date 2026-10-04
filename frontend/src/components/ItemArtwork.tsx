@@ -4,6 +4,7 @@ import { getItemArt, isWallpaper } from '../data/shopAssets';
 import { WallpaperSwatch } from './Wallpaper';
 import AnimalSprite from './animals/AnimalSprite';
 import { ANIMALS } from '../data/animals';
+import { BedPreview, isBedColor } from './BedColors';
 
 // One standalone sprite per item, scaled by a whole number so pixels stay crisp and nothing is cropped.
 // fit: the largest square (px) the art may fill; the scale is the biggest integer that fits.
@@ -12,6 +13,8 @@ export default function ItemArtwork({ item, fit = 96 }: { item: Item; fit?: numb
   const [failed, setFailed] = useState(false);
   // Wallpapers preview as a tiled swatch, not a single small tile.
   if (isWallpaper(item.id)) return <WallpaperSwatch item={item} />;
+  // Bed colours preview the whole recoloured bed.
+  if (isBedColor(item.id)) return <BedPreview colorId={item.id} label={item.name} />;
   // Animals show the first (standing) frame of their sprite sheet, not the whole sheet.
   const animal = ANIMALS[item.id];
   if (animal) return <AnimalSprite spec={animal} scale={fit === null ? 2 : Math.max(1, Math.floor(fit / Math.max(animal.frameWidth, animal.frameHeight)))} label={item.name} />;

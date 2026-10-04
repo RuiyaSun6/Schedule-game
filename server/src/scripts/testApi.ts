@@ -240,14 +240,18 @@ try {
     count++;
   }
   const l0 = (await call<Player>("GET", "/player")).body;
-  const lastSlot = await Promise.all([1, 2].map(() => call("POST", "/shop/buy", { itemId: limited.id })));
-  assert.deepEqual(lastSlot.map((r) => r.status).sort(), [200, 409]);
+  // The real TiDB player may already be at the limit; then there is no last slot to race for.
+  const raced = count < max;
+  if (raced) {
+    const lastSlot = await Promise.all([1, 2].map(() => call("POST", "/shop/buy", { itemId: limited.id })));
+    assert.deepEqual(lastSlot.map((r) => r.status).sort(), [200, 409]);
+  }
   const full = await call<{ error: string }>("POST", "/shop/buy", { itemId: limited.id });
   assert.equal(full.status, 409);
   const l1 = (await call<Player>("GET", "/player")).body;
   assert.equal(l1.itemCounts[limited.id], max);
-  assert.equal(l1.coins, l0.coins - limited.price, "only the purchase that fit was charged");
-  ok(`${limited.id} limit ${max}: racing for the last slot -> 200 + 409, then 409 "${full.body.error}"; count ${max}, charged once`);
+  assert.equal(l1.coins, l0.coins - (raced ? limited.price : 0), "only the purchase that fit was charged");
+  ok(`${limited.id} limit ${max}: ${raced ? "racing for the last slot -> 200 + 409, then " : "already full, "}409 "${full.body.error}"; count ${max}, charged ${raced ? "once" : "nothing"}`);
 
 
   if (mode === "tidb") {

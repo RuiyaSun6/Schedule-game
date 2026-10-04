@@ -3,6 +3,7 @@ import { SHOP_SPRITES } from './shopSprites';
 import { PET_ITEM_ART } from '../components/PetCorner';
 import { PET_BIRD_ART, PET_BIRD_ID } from '../components/PetBird';
 import { TV_ITEMS, isElectronics } from '../components/RoomTV';
+import { isBedColor } from '../components/BedColors';
 import { FARM_SPRITES, type FarmSprite } from './farmSprites';
 import { WALLPAPERS, wallpaperSrc, type WallpaperTile } from './wallpapers';
 import { isAnimal } from './animals';
@@ -45,6 +46,7 @@ export function itemFamily(id: string): string {
   // Animals walk around the Farm on their own; they are never placed like furniture.
   if (isAnimal(id)) return 'animal';
   if (isElectronics(id)) return 'electronics';
+  if (isBedColor(id)) return 'bed';
   return farmSprite(id)?.category ?? SHOP_SPRITES[id]?.family ?? (id.startsWith('pet-') ? 'pet' : id);
 }
 
@@ -54,13 +56,14 @@ export function ownedCount(player: { ownedItems?: string[]; itemCounts?: Record<
 }
 
 // Garden and Clothing were retired: potted trees moved to Plants; garden extras and clothing are no longer sold.
-export const SHOP_CATEGORIES = ['Plants', 'Seating', 'Lighting', 'Wallpaper', 'Electronics', 'Pets', 'Farm'] as const;
+export const SHOP_CATEGORIES = ['Plants', 'Seating', 'Lighting', 'Bed', 'Wallpaper', 'Electronics', 'Pets', 'Farm'] as const;
 export type ShopCategory = typeof SHOP_CATEGORIES[number];
 const FAMILY_CATEGORY: Record<string, ShopCategory> = {
   plant: 'Plants', chair: 'Seating', sofa: 'Seating', lamp: 'Lighting', pet: 'Pets',
   tree: 'Plants',
   wallpaper: 'Wallpaper',
   electronics: 'Electronics',
+  bed: 'Bed',
   crop: 'Farm', 'farm-decor': 'Farm', animal: 'Farm',
 };
 /** Shop tab for an item, or null for items the shop no longer sells (e.g. retired garden or clothing items). */
